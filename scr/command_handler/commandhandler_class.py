@@ -3,11 +3,11 @@ import inspect
 import sys
 import logging
 
-from mediator import AppMediatorClient, MediatorActionMessage
+from mediator import AppMediatorClient, MediatorActionMessage, CommandData, parser_message, send_message
 from app_enums import ClientCommands, ComponentType, ActionType
-from database import DB_Manager
+from database import DbManager
 
-logger = logging.getLogger('BotApp')
+logger = logging.getLogger(__name__)
 
 
 class CommandMessageHandler(AppMediatorClient):
@@ -21,7 +21,7 @@ class CommandMessageHandler(AppMediatorClient):
 
     def __init__(self, in_queue, out_queue, config):
         super(self.__class__, self).__init__(in_queue, out_queue, config)
-        self.db_manager = DB_Manager(self.config)
+        self.db_manager = DbManager(self.config)
 
     def run(self):
         """
@@ -43,15 +43,18 @@ class CommandMessageHandler(AppMediatorClient):
             message.data)
         )
         message_data = message.data
-        if 'command' not in message_data.keys():
-            logger.error('Message for command handler must have key command!')
-            raise ValueError('Message for command handler must have key command!')
+
+        if not isinstance(message_data, CommandData):
+            logger.error('Message for command handler must be CommandData type!')
+            raise TypeError('Message for command handler must be CommandData type!')
 
         for handler in get_command_handlers():
             command_dict = handler.get_command_list()
-            dict().keys()
-            if message_data['command'].value in command_dict.keys():
-                command_dict[message_data['command'].value](message_data, self.db_manager)
+
+            if message_data.command.value in command_dict.keys():
+                message = command_dict[message_data.command.value](message_data, self.db_manager)
+                if message is not None:
+                    self.send_message(message)
                 break
 
 
@@ -71,18 +74,22 @@ class FilmHandler(AbstractHandler):
         return {ClientCommands.ADD_FILM.value: cls.add_film}
 
     @classmethod
-    def add_film(cls, data: dict, db_manager: DB_Manager):
+    def add_film(cls, data: CommandData, db_manager: DbManager):
         """
         Command add film to base
 
         :return:
         """
+
         # TODO add command logic
         logger.debug('Поступил новый запрос на поиск фильма, от {0} c данными:{1}'.format(
-            data['chat_id'],
-            data['text'])
+            data.client_id,
+            data.text)
         )
-        pass
+
+        message = parser_message(ComponentType.COMMAND_HANDLER, {'query': data.text}, data.client_id)
+
+        return message
 
 
 class SerialHandler(AbstractHandler):
@@ -94,24 +101,34 @@ class SerialHandler(AbstractHandler):
             ClientCommands.ADD_SERIAL_BY_THEAN.value: cls.add_serial_by_them,
         }
 
-    def add_serial(self, data: dict, db_manager: DB_Manager):
+    @classmethod
+    def add_serial(cls, data: CommandData, db_manager: DbManager):
         """
         Command add serial to base
 
         :return:
         """
         # TODO add command logic
-        pass
+        logger.debug('Поступил новый запрос на поиск сериала, от {0} c данными:{1}'.format(
+            data.client_id,
+            data.text)
+        )
 
-    def add_serial_by_them(self, data: dict, db_manager: DB_Manager):
+        message = parser_message(ComponentType.COMMAND_HANDLER, {'serial_query': data.text}, data.client_id)
+
+        return message
+
+    @classmethod
+    def add_serial_by_them(cls, data: CommandData, db_manager: DbManager):
         """
         Command add serial to base
 
         :return:
         """
         # TODO add command logic
-        pass
+        message = parser_message(ComponentType.COMMAND_HANDLER, {'thread': data.text}, data.client_id)
 
+        return message
 
 class UserHandler(AbstractHandler):
 
@@ -124,16 +141,19 @@ class UserHandler(AbstractHandler):
         }
 
     @classmethod
-    def add_user(cls, data: dict, db_manager: DB_Manager):
+    def add_user(cls, data: CommandData, db_manager: DbManager):
         """
         Add user to base
         :return:
         """
+        user = db_manager.find_user(data.client_id)
+        if user is not None:
+            pass
         # TODO add command logic
         pass
 
     @classmethod
-    def set_user_option(cls, data: dict, db_manager: DB_Manager):
+    def set_user_option(cls, data: CommandData, db_manager: DbManager):
         """
         Change some user option
         :return:
@@ -142,10 +162,11 @@ class UserHandler(AbstractHandler):
         pass
 
     @classmethod
-    def auth_query(cls, data, db_manager: DB_Manager):
+    def auth_query(cls, data: CommandData, db_manager: DbManager):
         """
         Query for authentication from new user/
         :param data:
+        :param db_manager:
         :return:
         """
         # TODO add command logic
