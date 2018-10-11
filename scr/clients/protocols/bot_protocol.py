@@ -155,7 +155,7 @@ class Bot:
 
     def save_callback_data(self, data):
 
-        return self.cache.save(data)
+        return self.cache.set(data)
 
     def get_callback_data(self, key):
 
@@ -274,7 +274,9 @@ class Bot:
         cache_data = self.cache.get(json.loads(update.callback_query.data))
         if cache_data is None:
             return
-        parser_message(ComponentType.CLIENT, cache_data, update.message.chat_id)
+        self.protocol.send_message(
+            parser_message(ComponentType.CLIENT, cache_data, update.callback_query.from_user.id)
+        )
 
 
 class BotCache:
@@ -284,25 +286,22 @@ class BotCache:
 
     def __init__(self):
         self.dump_name = 'cachedb.db'
-        self.base = pickledb.pickledb()
-        self.stop = False
-        self.base.load(self.dump_name, False)
-        p_dump = Process(target=self.dumping())
-        p_dump.daemon = True
-        p_dump.start()
+        self.base = my_pickledb(self.dump_name, True)
 
     def get(self, key):
-        self.base.get(key)
+        return self.base.get(key)
 
     def set(self, value):
-        key = uuid.uuid4()
+        key = uuid.uuid4().urn
         self.base.set(key, value)
         return key
 
-    def dumping(self):
-        while not self.stop:
-            time.sleep(10)
-            self.base.dump()
+
+class my_pickledb(pickledb.pickledb):
+
+    def set_sigterm_handler(self):
+        '''Assigns sigterm_handler for graceful shutdown during dump()'''
+        pass
 
 
 class BotCommandParser:
