@@ -7,4 +7,4 @@
 
 """
 
-from .db_functions import DB_Manager
+from .db_functions import DbManager

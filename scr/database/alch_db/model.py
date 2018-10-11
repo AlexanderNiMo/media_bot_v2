@@ -51,6 +51,9 @@ class UserOptionsT(Base):
 
     user = relationship('User', back_populates="options")
 
+    def __repr__(self):
+        return '<UserOption(user={0}, option={1}, value={2})>'.format(self.user_id, self.option, self.value)
+
 User.options = relationship("UserOptionsT", order_by=UserOptionsT.id, back_populates="user")
 
 
@@ -191,7 +194,13 @@ def test_user_env(s):
 
     alex = s.query(User).filter_by(name='Alex').first()
 
-    print(alex)
+    result = s.query(User, UserOptionsT).\
+                    filter(User.id==UserOptionsT.user_id).\
+                    filter(UserOptionsT.option==UserOptions.NOTIFICATION).first()
+    if result is not None:
+        alex, opt = result
+        print(opt)
+        print(alex)
 
 
 def test_serial_env(s):
