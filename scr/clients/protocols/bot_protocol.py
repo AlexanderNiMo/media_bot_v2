@@ -1,43 +1,22 @@
 
 import logging
 import telegram
+from IPython.core import logger
 from telegram.ext import Updater
+import json
 
 import app.config as conf
-from scr.mediator import AppMediatorClient
+from scr.mediator import AppMediatorClient, MediatorActionMessage, parser_message
 from scr.app_enums import ActionType, ComponentType, ClientCommands
-from mediator.mediator_types.mediator_message import ParserMessage
 from mediator import command_message
+from multiprocessing import Process
+import pickledb
+import time
+import uuid
 
-logger = logging.getLogger('BotApp')
+logger = logging.getLogger(__name__)
+
 # TODO refactor inline arguments
-
-
-class WebHookServer:
-    """
-    Server for webhook telegram bot
-    """
-    WEBHOOK_HOST = ''
-    WEBHOOK_LISTEN = ''
-    WEBHOOK_PORT = ''
-    WEBHOOK_SSL_CERT = ''
-    WEBHOOK_SSL_PRIV = ''
-    WEBHOOK_URL_PATH = ''
-    WEBHOOK_URL_BASE = ''
-
-    def __init__(self, config, bot):
-        for key in config.WEBHOOK.keys():
-            self.__setattr__(key, config.WEBHOOK[key])
-
-        self.WEBHOOK_URL_PATH = "https://{0}:{1}".format(self.WEBHOOK_HOST, self.WEBHOOK_PORT)
-        self.WEBHOOK_URL_BASE = "/{}/".format(bot.token)
-
-        updater = Updater(bot=bot.bot)
-        updater.start_webhook(listen=self.WEBHOOK_HOST,
-                              port=self.WEBHOOK_PORT,
-                              cert=self.WEBHOOK_SSL_CERT,
-                              key=self.WEBHOOK_SSL_PRIV
-                              )
 
 
 class BotProtocol(AppMediatorClient):
@@ -48,23 +27,23 @@ class BotProtocol(AppMediatorClient):
     def main_actions(self):
         logger.debug('Запуск основного потока работы {}'.format(self))
 
-        bot = Bot(self.config, 1, self)
-
+        bot = Bot(self.config, self.config.BOT_MODE, self)
         self.__bot = bot
-
         start_action = bot.get_start_bot_action()
-        start_action()
+        p = Process(target=start_action)
+        p.daemon = True
+        p.start()
+
+        self.listen()
 
     def send_bot_message(self, text, user_id, choices=[]):
-        logger.debug('Отправка сообщение {1} для пользователя {0} новое сообщение в {}'.format(user_id, text))
-        if not len(choices):
-            self.__bot.send_message(user_id, text)
-        else:
-            pass
+        logger.debug('Отправка сообщение {1} для пользователя {0}'.format(user_id, text))
 
-    def handle_message(self, message):
+        self.__bot.send_message(user_id, text, choices)
+
+    def handle_message(self, message: MediatorActionMessage):
         logger.debug('Полученно новое сообщение. {}'.format(message))
-        self.send_bot_message(message.data['text'], message.data['chst_id'], message.data['choices'])
+        self.send_bot_message(message.data.message_text, message.data.user_id, message.data.choices)
 
 
 class Bot:
@@ -75,21 +54,23 @@ class Bot:
     WEBHOOK_SSL_PRIV = ''
     WEBHOOK_URL_BASE = ''
 
-    def __init__(self, config, mode, protocol:AppMediatorClient):
+    def __init__(self, config, mode, protocol: AppMediatorClient):
 
         for key in config.WEBHOOK.keys():
             self.__setattr__(key, config.WEBHOOK[key])
 
-        self.__config = config
         self.token = config.TELEGRAMM_BOT_TOKEN
-        self.__mode = mode
         self.protocol = protocol
+
+        self.__config = config
+        self.__mode = mode
         self.__bot = None
         self.__updater = None
+        self.__cache = None
 
     def get_start_bot_action(self):
         logger.debug('Запуск бота в режиме работы {}'.format(self.__mode))
-        if self.__mode == 1:
+        if int(self.__mode) == 1:
             return self._start_webhook_server
         else:
             return self._start_pooling
@@ -119,11 +100,74 @@ class Bot:
         start bot using polling
         :return:
         """
-        self.__updater = telegram.ext.Updater(bot=self.bot)
-        self.__updater.start_polling()
+        self.updater.start_polling()
 
-    def send_message(self, chat_id, text):
-        self.__bot.send_message(chat_id=chat_id, text=text)
+    def send_message(self, chat_id, text, choices=[]):
+
+        self.handle_choice(chat_id, choices)
+
+        self.bot.send_message(chat_id=chat_id, text=text)
+
+    def handle_choice(self, chat_id, choices):
+
+        if len(choices) == 0:
+            return
+
+        self.send_choise_messages(chat_id, choices)
+
+        message_text = 'Выбери номер ссылки на фильм.'
+        keyboard_markup = self.constract_keyboard(choices)
+
+        self.bot.send_message(
+            chat_id=chat_id,
+            text=message_text,
+            reply_markup=keyboard_markup
+        )
+
+    def send_choise_messages(self, chat_id, choices):
+        for i, choise in enumerate(choices):
+            self.bot.send_message(
+                    chat_id=chat_id,
+                    text='{1} {0}'.format(choise['message_text'], i)
+                )
+
+    def constract_keyboard(self, choices)-> telegram.InlineKeyboardMarkup:
+
+        buttons_in_row = 3
+        KeyBoard = []
+        row_buttons = []
+        a = 1
+        for i, choise in enumerate(choices):
+            if a > buttons_in_row:
+                KeyBoard.append(row_buttons.copy())
+                a = 1
+                row_buttons = []
+            row_buttons.append(
+                telegram.InlineKeyboardButton(
+                    text=choise['button_text'],
+                    callback_data=json.dumps(self.save_callback_data(choise['call_back_data']))
+                )
+            )
+
+            a += 1
+        if a <= buttons_in_row:
+            KeyBoard.append(row_buttons.copy())
+
+        return telegram.InlineKeyboardMarkup(KeyBoard)
+
+    def save_callback_data(self, data):
+
+        return self.cache.save(data)
+
+    def get_callback_data(self, key):
+
+        return self.cache.get(key)
+
+    @property
+    def cache(self):
+        if self.__cache is None:
+            self.__cache = BotCache()
+        return self.__cache
 
     @property
     def updater(self):
@@ -148,7 +192,7 @@ class Bot:
         return BotCommandParser.get_commands()
 
     def set_bot_hendlers(self, dispatcher):
-        from telegram.ext import MessageHandler, CommandHandler, Filters
+        from telegram.ext import MessageHandler, CommandHandler, Filters, CallbackQueryHandler
 
         message_handler = MessageHandler(
             filters=Filters.text,
@@ -174,6 +218,9 @@ class Bot:
         )
         dispatcher.add_handler(cmd_handler)
 
+        call_back_handler  = CallbackQueryHandler(callback=self.call_back_handler)
+        dispatcher.add_handler(call_back_handler)
+
     @staticmethod
     def auth_handler(bot, update):
         """
@@ -186,8 +233,7 @@ class Bot:
         """
         print('New user {0}'.format(update.message.text))
 
-    @staticmethod
-    def serial_handler(bot, update):
+    def serial_handler(self, bot, update):
         """
 
         Handle serial command
@@ -200,7 +246,8 @@ class Bot:
         import time
         # bot.send_chat_action(chat_id=update.message.chat_id, action=TorrentBotChatAction.CHECKING_SERIAL)
         # time.sleep(7)
-        print('New serial {0}'.format(update.message.text))
+        logger.info('New serial {0}'.format(update.message.text))
+        BotCommandParser.start_command('/serial', update.message.text, self.protocol, update.message.chat_id)
 
     def film_handler(self, bot, update):
         """
@@ -224,6 +271,41 @@ class Bot:
         """
         update.message.reply_text("Эээээ, чето ты хотел этим сказать?")
 
+    def call_back_handler(self, bot, update):
+        logger.debug('Пришел inline callback с данными {}'.format(update.callback_query.data))
+        cache_data = self.cache.get(json.loads(update.callback_query.data))
+        if cache_data is None:
+            return
+        parser_message(ComponentType.CLIENT, cache_data, update.message.chat_id)
+
+
+class BotCache:
+    """
+    Класс реализует логику работы с кэшом для хранения callback данных
+    """
+
+    def __init__(self):
+        self.dump_name = 'cachedb.db'
+        self.base = pickledb.pickledb()
+        self.stop = False
+        self.base.load(self.dump_name, False)
+        p_dump = Process(target=self.dumping())
+        p_dump.daemon = True
+        p_dump.start()
+
+    def get(self, key):
+        self.base.get(key)
+
+    def set(self, value):
+        key = uuid.uuid4()
+        self.base.set(key, value)
+        return key
+
+    def dumping(self):
+        while not self.stop:
+            time.sleep(10)
+            self.base.dump()
+
 
 class BotCommandParser:
     """
@@ -236,12 +318,13 @@ class BotCommandParser:
         return [command['command_text'] for command in cls.message_commands()]
 
     @classmethod
-    def start_command(cls, command: str, text: str, protocol: AppMediatorClient, chat_id: str):
+    def start_command(cls, command: str, text: str, protocol: AppMediatorClient, chat_id: int):
         """
         Send message to command exsecuter
         :param command:
         :param text:
         :param protocol:
+        :param chat_id:
         :return:
         """
         text = text.replace(command, '')
@@ -254,19 +337,6 @@ class BotCommandParser:
 
         protocol.send_message(command_message(ComponentType.CLIENT, client_command, text, chat_id))
 
-        pass
-
-    def construct_command_message(self, text: str, user_id: str):
-
-        command_type = None
-        message_text = text
-        for command in self.message_commands():
-            if text.find(command['command_text']):
-                command_type, message_text = command['command'], text.replace(command['command_text'])
-                break
-
-        return ParserMessage(message_text, user_id, command_type, ComponentType.CLIENT)
-
     @classmethod
     def message_commands(cls)->list:
         return [
@@ -276,10 +346,12 @@ class BotCommandParser:
 
 if __name__ == '__main__':
 
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                        level=logging.INFO)
+    from multiprocessing import Queue
 
-    b = Bot(conf, 1)
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                        level=logging.DEBUG)
+
+    b = Bot(conf, conf.BOT_MODE, BotProtocol(Queue(), Queue(), conf))
 
     a = b.get_start_bot_action()
     a()
