@@ -1,7 +1,6 @@
 
 import logging
 import telegram
-from IPython.core import logger
 from telegram.ext import Updater
 import json
 
