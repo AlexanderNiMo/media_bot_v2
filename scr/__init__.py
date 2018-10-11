@@ -1,7 +1,7 @@
-import scr.app
-import scr.parser
-import scr.clients
-import scr.app_enums
-import scr.crawler
-import scr.database
-import scr.mediator
+import app
+import parser
+import clients
+import app_enums
+import crawler
+import database
+import mediator

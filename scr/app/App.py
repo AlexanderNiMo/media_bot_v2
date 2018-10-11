@@ -3,13 +3,13 @@
 def create_app_test():
     from multiprocessing import Queue
 
-    from mediator import AppMediator, MediatorActionMessage
-    from app_enums import ComponentType, ActionType
+    from scr.mediator import AppMediator, MediatorActionMessage
+    from scr.app_enums import ComponentType, ActionType
 
-    from clients.protocols.bot_protocol import BotProtocol
-    from parser.parser_class import Parser
-    from crawler import Crawler
-    from command_handler.commandhandler_class import CommandMessageHandler
+    from scr.clients.protocols.bot_protocol import BotProtocol
+    from scr.parser.parser_class import Parser
+    from scr.crawler import Crawler
+    from scr.command_handler import CommandMessageHandler
     import app.config as config
 
     import logging
@@ -17,7 +17,7 @@ def create_app_test():
 
     LOG_FILE_NAME = 'main.log'
 
-    logger = logging.getLogger('BotApp')
+    logger = logging.getLogger()
 
     consol_hndl = logging.StreamHandler()
     file_hndl = logging.FileHandler(LOG_FILE_NAME)

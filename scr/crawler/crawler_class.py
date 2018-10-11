@@ -6,7 +6,7 @@ from multiprocessing import pool, Queue
 from app_enums import ComponentType, ActionType
 from mediator import AppMediatorClient, MediatorActionMessage
 
-logger = logging.getLogger('BotApp')
+logger = logging.getLogger(__name__)
 
 
 class Crawler(AppMediatorClient):
