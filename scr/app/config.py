@@ -7,7 +7,8 @@ CONFIG_FILE_NAME = '.config.ini'
 def create_default_config(parser: configparser.ConfigParser):
 
     parser['client'] = {
-        'bot_token': ''
+        'bot_token': '',
+        'bot_mode': 1
     }
     parser['proxy'] = {
             'url': '',
@@ -34,6 +35,7 @@ else:
 
 
 TELEGRAMM_BOT_TOKEN = conf_parser['client']['bot_token']
+BOT_MODE = conf_parser['client']['bot_mode']
 
 PROXY_URL = conf_parser['proxy']['url']
 PROXY_USER = conf_parser['proxy']['user']
@@ -41,7 +43,7 @@ PROXY_PASS = conf_parser['proxy']['pass']
 
 WEBHOOK = {
     'WEBHOOK_HOST': conf_parser['webhook']['host'],
-    'WEBHOOK_PORT': conf_parser['webhook']['port'],
+    'WEBHOOK_PORT': int(conf_parser['webhook']['port']),
     'WEBHOOK_SSL_CERT': conf_parser['webhook']['ssl_cert'],
     'WEBHOOK_SSL_PRIV': conf_parser['webhook']['ssl_prv_key'],
     'WEBHOOK_URL_BASE': conf_parser['webhook']['url_base'],
