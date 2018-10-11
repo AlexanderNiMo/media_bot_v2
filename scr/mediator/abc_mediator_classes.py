@@ -29,10 +29,13 @@ class MediatorMessage(metaclass=ABCMeta):
     def action(self)-> ActionType:
         pass
 
-    @property
-    @abstractmethod
-    def data(self)-> dict:
-        pass
+
+class MessageData(metaclass=ABCMeta):
+    """
+
+    Абстрактный класс описывающий данные сообщения
+
+    """
 
 
 class MediatorClient(Process, metaclass=ABCMeta):

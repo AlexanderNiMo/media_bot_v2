@@ -7,7 +7,7 @@ import app_enums
 from mediator.abc_mediator_classes import MediatorClient, MediatorMessage
 from mediator.mediator_types import mediator_message
 
-logger = logging.getLogger('BotApp')
+logger = logging.getLogger(__name__)
 
 
 class AppMediatorClient(MediatorClient):
@@ -15,7 +15,8 @@ class AppMediatorClient(MediatorClient):
     def __init__(self, in_queue: Queue, out_queue: Queue, config):
         
         super(AppMediatorClient, self).__init__()
-        
+
+        self.daemon = True
         self.__in_queue = in_queue
         self.__out_queue = out_queue
         self.__config = config
@@ -66,20 +67,73 @@ class AppMediatorClient(MediatorClient):
         return '{} {}'.format(self.CLIENT_TYPE, ' '.join(str(action) for action in self.CLIENT_ACTIONS))
 
 
+def parser_message(
+        client_from: app_enums.ComponentType,
+        data: dict,
+        client_id: int)->MediatorMessage:
+
+    """
+    send message to parser
+
+
+    :param client_from:
+    :param data:
+    :param client_id:
+    :return:
+    """
+
+    message = mediator_message.MediatorActionMessage(app_enums.ComponentType.PARSER,
+                                                     app_enums.ActionType.PARSE,
+                                                     client_from)
+
+    message.data = mediator_message.ParserData(data, client_id)
+
+    return message
+
+
 def command_message(
         client_from: app_enums.ComponentType,
-        command: app_enums.ActionType,
+        command: app_enums.ClientCommands,
         text: str,
-        chat_id: str)->MediatorMessage:
+        client_id: int)->MediatorMessage:
     """
     Send message to command handler
 
     :param client_from:
     :param command:
     :param text:
+    :param client_id:
     :return:
     """
-    return mediator_message.CommandMessage(text, chat_id, command, client_from)
+
+    message = mediator_message.MediatorActionMessage(app_enums.ComponentType.COMMAND_HANDLER,
+                                                     app_enums.ActionType.HANDLE_COMMAND,
+                                                     client_from)
+
+    message.data = mediator_message.CommandData(text, client_id, command)
+
+    return message
+
+
+def send_message(
+        client_from: app_enums.ComponentType,
+        message_data: dict)->MediatorMessage:
+    """
+    Send message to command handler
+
+    :param client_from:
+    :param message_data: dict :{user_id, message_text, choices}
+    :return:
+    """
+
+    message = mediator_message.MediatorActionMessage(
+        app_enums.ComponentType.CLIENT,
+        app_enums.ActionType.SEND_MESSAGE,
+        client_from)
+
+    message.data = mediator_message.ClientData(**message_data)
+
+    return message
 
 if __name__ == '__main__':
 

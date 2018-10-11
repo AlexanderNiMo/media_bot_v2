@@ -10,7 +10,7 @@ import logging
 
 from .abc_mediator_classes import MediatorMessage, Mediator, MediatorClient
 
-logger = logging.getLogger('BotApp')
+logger = logging.getLogger(__name__)
 
 
 class AppMediator(Mediator):
@@ -27,6 +27,7 @@ class AppMediator(Mediator):
 
         """
         super(AppMediator, self).__init__()
+        self.daemon = True
         self.__in_queue = in_queue
         self.__clients = clients
         logger.debug('Создание объекта посредника для сообщений')
