@@ -23,6 +23,12 @@ def create_default_config(parser: configparser.ConfigParser):
             'url_base': '',
         }
 
+    parser['plex'] = {
+            'host': '127.0.0.1',
+            'port': '32400',
+            'token': '',
+        }
+
     with open(CONFIG_FILE_NAME, 'w') as configfile:
         parser.write(configfile)
 
@@ -49,6 +55,8 @@ WEBHOOK = {
     'WEBHOOK_URL_BASE': conf_parser['webhook']['url_base'],
 }
 
-
+PLEX_HOST = conf_parser['plex']['host']
+PLEX_PORT = conf_parser['plex']['port']
+PLEX_TOKEN = conf_parser['plex']['token']
 
 

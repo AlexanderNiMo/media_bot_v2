@@ -2,3 +2,4 @@ python-telegram-bot
 SQLAlchemy
 pickledb
 kinopoiskpy
+plexapi
