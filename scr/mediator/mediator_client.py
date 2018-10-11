@@ -16,7 +16,6 @@ class AppMediatorClient(MediatorClient):
         
         super(AppMediatorClient, self).__init__()
 
-        self.daemon = True
         self.__in_queue = in_queue
         self.__out_queue = out_queue
         self.__config = config

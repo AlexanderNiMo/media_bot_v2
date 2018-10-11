@@ -30,7 +30,6 @@ class BotProtocol(AppMediatorClient):
         self.__bot = bot
         start_action = bot.get_start_bot_action()
         p = Process(target=start_action)
-        p.daemon = True
         p.start()
 
         self.listen()
