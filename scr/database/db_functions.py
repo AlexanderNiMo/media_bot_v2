@@ -80,20 +80,27 @@ class DbManager:
         :return:
         """
         data = self.session.query(self.User).filter_by(client_id=client_id).first()
-        if client_id == self.config.TELEGRAMM_BOT_USER_ADMIN:
+        if client_id == int(self.config.TELEGRAMM_BOT_USER_ADMIN):
             if data is None:
                 data = self.add_user(client_id)
         self.close_session()
         return data
 
-    def add_film(self, kinopoisk_id, label, year):
-        film = self.Film(kinopoisk_id=kinopoisk_id, label=label, year=year)
+    def add_film(self, kinopoisk_id, label, year, url):
+        film = self.Film(kinopoisk_id=kinopoisk_id, label=label, year=year, kinopoisk_url=url)
         self.session.add(film)
         self.session.commit()
         return film
 
-    def add_serial(self, kinopoisk_id, label, year, season, max_series=0):
-        serial = self.Serial(kinopoisk_id=kinopoisk_id, label=label, year=year, season=season, series=max_series)
+    def add_serial(self, kinopoisk_id, label, year, season, url, max_series=0):
+        serial = self.Serial(
+            kinopoisk_id=kinopoisk_id,
+            label=label,
+            year=year,
+            season=season,
+            series=max_series,
+            kinopoisk_url=url)
+
         self.session.add(serial)
         self.session.commit()
         return serial
@@ -133,5 +140,11 @@ if __name__ == '__main__':
 
     db = DbManager(config)
 
-    user = db.find_user(config.TELEGRAMM_BOT_USER_ADMIN)
-    a =1
+    db.add_serial(
+            1,
+            'Игра престолов',
+            2011,
+            1,
+            'http://kp',
+            0
+        )

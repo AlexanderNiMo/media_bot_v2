@@ -240,8 +240,10 @@ def test_integreation_users_media(s):
 
 def init_db(connection_str, db_name):
     from sqlalchemy import create_engine
-    enj = create_engine(connection_str)
-    enj.execute('USE {}'.format(db_name))
+    enj = create_engine(
+        '{0}/{1}?charset=utf8'.format(connection_str, db_name),
+        encoding='utf-8'
+    )
     Base.metadata.create_all(enj)
     return enj
 
@@ -254,8 +256,8 @@ def get_session(enj):
 
 def create_db(connection_str, db_name):
     from sqlalchemy import create_engine
-    enj = create_engine(connection_str)
-    enj.execute('CREATE DATABASE {}'.format(db_name))
+    enj = create_engine(connection_str, encoding='utf-8')
+    enj.execute('CREATE DATABASE {} CHARACTER SET utf8 COLLATE utf8_general_ci'.format(db_name))
     enj.execute('USE {}'.format(db_name))
     Base.metadata.create_all(enj)
     return enj
