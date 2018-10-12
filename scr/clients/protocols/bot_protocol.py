@@ -274,8 +274,9 @@ class Bot:
         cache_data = self.cache.get(json.loads(update.callback_query.data))
         if cache_data is None:
             return
+        message = parser_message(ComponentType.CLIENT, cache_data, update.callback_query.from_user.id)
         self.protocol.send_message(
-            parser_message(ComponentType.CLIENT, cache_data, update.callback_query.from_user.id)
+            message
         )
 
 
@@ -332,7 +333,7 @@ class BotCommandParser:
             logging.error('Wrong command for execution {0}'.format(command))
             return
 
-        protocol.send_message(command_message(ComponentType.CLIENT, client_command, text, chat_id))
+        protocol.send_message(command_message(ComponentType.CLIENT, client_command, {'text': text}, chat_id))
 
     @classmethod
     def message_commands(cls)->list:
