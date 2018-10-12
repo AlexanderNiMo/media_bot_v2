@@ -3,7 +3,13 @@ import inspect
 import sys
 import logging
 
-from mediator import AppMediatorClient, MediatorActionMessage, CommandData, parser_message, send_message
+from mediator import (
+    AppMediatorClient,
+    MediatorActionMessage,
+    CommandData,
+    parser_message, send_message, crawler_message
+)
+
 from app_enums import ClientCommands, ComponentType, ActionType
 from database import DbManager
 
@@ -52,8 +58,8 @@ class CommandMessageHandler(AppMediatorClient):
             command_dict = handler.get_command_list()
 
             if message_data.command.value in command_dict.keys():
-                message = handler.exsecute_command(message_data, self.db_manager)
-                if message is not None:
+                messages = handler.exsecute_command(message_data, self.db_manager)
+                for message in messages:
                     self.send_message(message)
                 break
 
@@ -65,9 +71,9 @@ class AbstractHandler(ABC):
     def get_command_list(cls)-> dict:
         return {}
 
-    @abstractmethod
-    def exsecute_command(self, message_data: CommandData, db_manager):
-        if not self.check_rule(message_data.client_id, db_manager):
+    @classmethod
+    def exsecute_command(cls, message_data: CommandData, db_manager):
+        if not cls.check_rule(message_data.client_id, db_manager):
             return send_message(
                 ComponentType.COMMAND_HANDLER,
                 {
@@ -76,11 +82,17 @@ class AbstractHandler(ABC):
                     'choices': []
                 }
             )
-        command_dict = self.get_command_list()
-        return command_dict[message_data.command.value](message_data, db_manager)
+        command_dict = cls.get_command_list()
+        message = command_dict[message_data.command.value](message_data, db_manager)
+        result = []
+        if isinstance(message, MediatorActionMessage):
+            result.append(message_data)
+        elif isinstance(message, list):
+            result = message
+        return result
 
-    @abstractmethod
-    def check_rule(self, client_id: int, db_manager: DbManager):
+    @classmethod
+    def check_rule(cls, client_id: int, db_manager: DbManager):
         user = db_manager.find_user(client_id)
         return user is not None
 
@@ -99,14 +111,14 @@ class FilmHandler(AbstractHandler):
 
         :return:
         """
-
+        text = data.command_data['text']
         # TODO add command logic
         logger.debug('Поступил новый запрос на поиск фильма, от {0} c данными:{1}'.format(
             data.client_id,
-            data.text)
+            text)
         )
 
-        message = parser_message(ComponentType.COMMAND_HANDLER, {'query': data.text, 'serial': False}, data.client_id)
+        message = parser_message(ComponentType.COMMAND_HANDLER, {'query': text, 'serial': False}, data.client_id)
 
         return message
 
@@ -127,13 +139,14 @@ class SerialHandler(AbstractHandler):
 
         :return:
         """
-        # TODO add command logic
+        text = data.command_data['text']
+
         logger.debug('Поступил новый запрос на поиск сериала, от {0} c данными:{1}'.format(
             data.client_id,
-            data.text)
+            text)
         )
 
-        message = parser_message(ComponentType.COMMAND_HANDLER, {'query': data.text, 'serial': True}, data.client_id)
+        message = parser_message(ComponentType.COMMAND_HANDLER, {'query': text, 'serial': True}, data.client_id)
 
         return message
 
@@ -144,8 +157,8 @@ class SerialHandler(AbstractHandler):
 
         :return:
         """
-        # TODO add command logic
-        message = parser_message(ComponentType.COMMAND_HANDLER, {'thread': data.text}, data.client_id)
+        text = data.command_data['text']
+        message = parser_message(ComponentType.COMMAND_HANDLER, {'thread': text}, data.client_id)
 
         return message
 
@@ -155,22 +168,9 @@ class UserHandler(AbstractHandler):
     @classmethod
     def get_command_list(cls):
         return {
-            ClientCommands.ADD_USER.value: cls.add_user,
             ClientCommands.EDIT_SETTINGS.value: cls.set_user_option,
             ClientCommands.AUTHENTICATION.value: cls.auth_query,
         }
-
-    @classmethod
-    def add_user(cls, data: CommandData, db_manager: DbManager):
-        """
-        Add user to base
-        :return:
-        """
-        user = db_manager.find_user(data.client_id)
-        if user is not None:
-            pass
-        # TODO add command logic
-        pass
 
     @classmethod
     def set_user_option(cls, data: CommandData, db_manager: DbManager):
@@ -191,6 +191,80 @@ class UserHandler(AbstractHandler):
         """
         # TODO add command logic
         pass
+
+
+class AddDataHandler(AbstractHandler):
+
+    @classmethod
+    def get_command_list(cls):
+        return {
+            ClientCommands.ADD_DATA_FILM.value: cls.add_user,
+            ClientCommands.ADD_DATA_SERIAL.value: cls.add_serial,
+            ClientCommands.ADD_DATA_USER.value: cls.add_film,
+        }
+
+    @classmethod
+    def add_user(cls, data: CommandData, db_manager: DbManager):
+        """
+        Add user to base
+        :return:
+        """
+        user = db_manager.find_user(data.client_id)
+        if user is not None:
+            pass
+        # TODO add command logic
+        pass
+
+    @classmethod
+    def add_film(cls, data: CommandData, db_manager: DbManager):
+        film = db_manager.add_film(
+            data.command_data['kinopoisk_id'],
+            data.command_data['title'],
+            data.command_data['year'],
+            data.command_data['url']
+        )
+
+        message_text = 'Фильм {} добавлен к поску'.format(data.command_data['title'])
+
+        messages = []
+
+        messages.append(
+            send_message(
+                ComponentType.COMMAND_HANDLER,
+                {
+                    'user_id': data.client_id, 'message_text': message_text, 'choices': []
+                }
+            )
+        )
+
+        messages.append(
+            crawler_message(ComponentType.COMMAND_HANDLER, film.id)
+        )
+
+        return messages
+
+    @classmethod
+    def add_serial(self, data: CommandData, db_manager: DbManager):
+        serial = db_manager.add_serial(
+            data.command_data['kinopoisk_id'],
+            data.command_data['title'],
+            data.command_data['year'],
+            data.command_data['season'],
+            data.command_data['url'],
+            data.command_data['series']
+        )
+
+        message_text = 'Сериал {} добавлен к поску'.format(data.command_data['title'])
+
+        messages = [
+            send_message(
+                ComponentType.COMMAND_HANDLER,
+                {'user_id': data.client_id, 'message_text': message_text, 'choices': []}
+            ),
+            crawler_message(ComponentType.COMMAND_HANDLER, serial.id)
+        ]
+
+        return messages
 
 
 def get_command_handlers():
