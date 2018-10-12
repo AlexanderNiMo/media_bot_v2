@@ -52,7 +52,7 @@ class CommandMessageHandler(AppMediatorClient):
             command_dict = handler.get_command_list()
 
             if message_data.command.value in command_dict.keys():
-                message = command_dict[message_data.command.value](message_data, self.db_manager)
+                message = handler.exsecute_command(message_data, self.db_manager)
                 if message is not None:
                     self.send_message(message)
                 break
@@ -64,6 +64,25 @@ class AbstractHandler(ABC):
     @abstractmethod
     def get_command_list(cls)-> dict:
         return {}
+
+    @abstractmethod
+    def exsecute_command(self, message_data: CommandData, db_manager):
+        if not self.check_rule(message_data.client_id, db_manager):
+            return send_message(
+                ComponentType.COMMAND_HANDLER,
+                {
+                    'user_id': message_data.client_id,
+                    'message_text': 'Для авторизации скинь свой id Морозу. Вот он: {}'.format(message_data.client_id),
+                    'choices': []
+                }
+            )
+        command_dict = self.get_command_list()
+        return command_dict[message_data.command.value](message_data, db_manager)
+
+    @abstractmethod
+    def check_rule(self, client_id: int, db_manager: DbManager):
+        user = db_manager.find_user(client_id)
+        return user is not None
 
 
 class FilmHandler(AbstractHandler):
@@ -130,6 +149,7 @@ class SerialHandler(AbstractHandler):
 
         return message
 
+
 class UserHandler(AbstractHandler):
 
     @classmethod
@@ -180,4 +200,7 @@ def get_command_handlers():
     )
     for mod in mods:
         yield mod[1]
+
+if __name__ == '__main__':
+    pass
 
