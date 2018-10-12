@@ -10,6 +10,6 @@
 
 from .mediator_types.mediator_message import MediatorActionMessage, CommandData, ClientData, CrawlerData
 from .mediator_class import AppMediator
-from .mediator_client import AppMediatorClient, command_message, send_message, parser_message
+from .mediator_client import AppMediatorClient, command_message, send_message, parser_message, crawler_message
 
 

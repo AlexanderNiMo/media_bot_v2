@@ -37,7 +37,9 @@ class ActionType(MyEnum):
     PARSE = 2
     FORCE_CHECK = 3
     HANDLE_COMMAND = 4
-
+    CHECK_FILMS = 5
+    CHECK_SERIALS = 6
+    CHECK = 7
 
 class ClientCommands(MyEnum):
     """
@@ -52,6 +54,10 @@ class ClientCommands(MyEnum):
     AUTHENTICATION = 5
     SEND_MESSAGES_ALL_USERS = 6
     EDIT_SETTINGS = 7
+
+    ADD_DATA_FILM = 8
+    ADD_DATA_SERIAL = 9
+    ADD_DATA_USER = 10
 
 
 class MediaType(MyEnum):

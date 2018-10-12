@@ -74,8 +74,8 @@ class CrawlerData(MessageData):
 
 class CommandData(MessageData):
 
-    def __init__(self, text: str, client_id: int, command: ClientCommands):
-        self.text = text
+    def __init__(self, command_data: dict, client_id: int, command: ClientCommands):
+        self.command_data = command_data
         self.client_id = client_id
         self.command = command
 

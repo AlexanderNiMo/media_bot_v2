@@ -93,14 +93,14 @@ def parser_message(
 def command_message(
         client_from: app_enums.ComponentType,
         command: app_enums.ClientCommands,
-        text: str,
+        command_data: dict,
         client_id: int)->MediatorMessage:
     """
     Send message to command handler
 
     :param client_from:
     :param command:
-    :param text:
+    :param command_data:
     :param client_id:
     :return:
     """
@@ -109,7 +109,7 @@ def command_message(
                                                      app_enums.ActionType.HANDLE_COMMAND,
                                                      client_from)
 
-    message.data = mediator_message.CommandData(text, client_id, command)
+    message.data = mediator_message.CommandData(command_data, client_id, command)
 
     return message
 
@@ -131,6 +131,26 @@ def send_message(
         client_from)
 
     message.data = mediator_message.ClientData(**message_data)
+
+    return message
+
+
+def crawler_message(
+        client_from: app_enums.ComponentType,
+        media_id: int=0)->MediatorMessage:
+    """
+    Send message to crawler
+    :param client_from:
+    :param media_id:
+    :return:
+    """
+
+    message = mediator_message.MediatorActionMessage(
+        app_enums.ComponentType.CRAWLER,
+        app_enums.ActionType.FORCE_CHECK,
+        client_from)
+
+    message.data = mediator_message.CrawlerData(media_id)
 
     return message
 
