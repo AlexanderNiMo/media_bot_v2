@@ -2,6 +2,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, SmallInteger, Unicode, Boolean, ForeignKey, Table
 from sqlalchemy import Enum
 from sqlalchemy.orm import relationship, backref
+from sqlalchemy.exc import OperationalError
 
 from app_enums import UserOptions, MediaType, LockingStatus, TorrentType
 
@@ -21,9 +22,9 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
 
-    name = Column(Unicode)
-    last_name = Column(Unicode)
-    nick_name = Column(Unicode, nullable=False)
+    name = Column(Unicode(200))
+    last_name = Column(Unicode(200))
+    nick_name = Column(Unicode(200), nullable=False)
 
     client_id = Column(Integer, nullable=False)
 
@@ -36,7 +37,12 @@ class User(Base):
         cascade="save-update, merge, delete")
 
     def __repr__(self):
-        return '<User(name={0}, last_name={1}, nick_name={2})>'.format(self.name, self.last_name, self.nick_name)
+        return '<User(name={0}, last_name={1}, nick_name={2}, client_id)>'.format(
+            self.name,
+            self.last_name,
+            self.nick_name,
+            self.client_id
+        )
 
 
 class UserOptionsT(Base):
@@ -232,9 +238,10 @@ def test_integreation_users_media(s):
     s.commit()
 
 
-def init_db(connection_str):
+def init_db(connection_str, db_name):
     from sqlalchemy import create_engine
     enj = create_engine(connection_str)
+    enj.execute('USE {}'.format(db_name))
     Base.metadata.create_all(enj)
     return enj
 
@@ -244,6 +251,14 @@ def get_session(enj):
     Session = sessionmaker(bind=enj)
     return Session()
 
+
+def create_db(connection_str, db_name):
+    from sqlalchemy import create_engine
+    enj = create_engine(connection_str)
+    enj.execute('CREATE DATABASE {}'.format(db_name))
+    enj.execute('USE {}'.format(db_name))
+    Base.metadata.create_all(enj)
+    return enj
 
 if __name__ == '__main__':
 

@@ -1,1 +1,1 @@
-from .model import init_db, get_session, Film, User, Serial
+from .model import init_db, get_session, Film, User, Serial, OperationalError, create_db

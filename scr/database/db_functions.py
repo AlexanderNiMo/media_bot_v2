@@ -1,9 +1,9 @@
-from .alch_db import get_session, init_db
+from database.alch_db import get_session, init_db, OperationalError, create_db
 from app_enums import UserRule, UserOptions, MediaType
 
 
 class DbManager:
-    from .alch_db.model import User, MediaData, Serial, Film, UserOptionsT
+    from database.alch_db.model import User, MediaData, Serial, Film, UserOptionsT
 
     def __init__(self, config):
 
@@ -12,17 +12,26 @@ class DbManager:
         self.__session = None
 
     def __get_connection_str(self):
-        return ''
+        return 'mysql+mysqldb://{0}:{1}@{2}:{3}'.format(
+            self.config.DATABASE_USER,
+            self.config.DATABASE_PASSWORD,
+            self.config.DATABASE_HOST,
+            self.config.DATABASE_PORT
+        )
 
     @property
     def engine(self):
         if self.__enj is None:
-            return init_db(self.__get_connection_str())
+            try:
+                self.__enj = init_db(self.__get_connection_str(), self.config.DATABASE_NAME)
+            except OperationalError:
+                self.__enj = create_db(self.__get_connection_str(), self.config.DATABASE_NAME)
+        return self.__enj
 
     @property
     def session(self):
         if self.__session is None:
-            self.__session = get_session(self.engine)()
+            self.__session = get_session(self.engine)
         return self.__session
 
     def close_session(self):
@@ -45,19 +54,20 @@ class DbManager:
         self.close_session()
         return data
 
-    def find_media_by_label(self, label, year, type, season=None):
+    def find_media_by_label(self, label, year, media_type, season=None):
         """
         Ищет фильм по стандартным реквизитам
 
         :param label:
         :param year:
-        :param type:
+        :param media_type:
+        :param season:
         :return:
         """
         filter_dict = dict(label=label, year=year)
         data_class = self.Film
-        if type == MediaType.SERIALS:
-            filter_dict['season'] =  season
+        if media_type == MediaType.SERIALS:
+            filter_dict['season'] = season
             data_class = self.Serial
         data = self.session.query(data_class).filter_by(**filter_dict).first()
         self.close_session()
@@ -69,19 +79,30 @@ class DbManager:
         :param client_id:
         :return:
         """
-
         data = self.session.query(self.User).filter_by(client_id=client_id).first()
+        if client_id == self.config.TELEGRAMM_BOT_USER_ADMIN:
+            if data is None:
+                data = self.add_user(client_id)
         self.close_session()
         return data
 
     def add_film(self, kinopoisk_id, label, year):
-        pass
+        film = self.Film(kinopoisk_id=kinopoisk_id, label=label, year=year)
+        self.session.add(film)
+        self.session.commit()
+        return film
 
     def add_serial(self, kinopoisk_id, label, year, season, max_series=0):
-        pass
+        serial = self.Serial(kinopoisk_id=kinopoisk_id, label=label, year=year, season=season, series=max_series)
+        self.session.add(serial)
+        self.session.commit()
+        return serial
 
     def add_user(self, clien_id, name='', last_name='', nick_name='', rule=UserRule.USER):
-        pass
+        user = self.User(name=name, last_name=last_name, nick_name=nick_name, client_id=clien_id)
+        self.session.add(user)
+        self.session.commit()
+        return user
 
     def change_user_option(self, clien_id, option_name: UserOptions, value):
 
@@ -108,12 +129,9 @@ class DbManager:
 
 if __name__ == '__main__':
 
-    from .alch_db.model import User
-    from .alch_db.model import create_test_env
+    from app import config
 
-    s = create_test_env()
+    db = DbManager(config)
 
-    result = s.query(User).\
-                    filter(User.id == '111').first()
-    print(result)
-
+    user = db.find_user(config.TELEGRAMM_BOT_USER_ADMIN)
+    a =1
