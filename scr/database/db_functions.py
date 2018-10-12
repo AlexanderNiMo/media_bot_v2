@@ -1,14 +1,15 @@
 from .alch_db import get_session, init_db
-from app_enums import UserRule, UserOptions
+from app_enums import UserRule, UserOptions, MediaType
 
 
 class DbManager:
-    from .alch_db.model import User, Serial, Film, UserOptionsT
+    from .alch_db.model import User, MediaData, Serial, Film, UserOptionsT
 
     def __init__(self, config):
 
         self.config = config
         self.__enj = None
+        self.__session = None
 
     def __get_connection_str(self):
         return ''
@@ -20,18 +21,31 @@ class DbManager:
 
     @property
     def session(self):
-        return get_session(self.engine)()
+        if self.__session is None:
+            self.__session = get_session(self.engine)()
+        return self.__session
 
-    def find_media(self, kinopoisk_id, type):
+    def close_session(self):
+        self.session.close()
+        self.__session = None
+
+    def find_media(self, kinopoisk_id, type, season=None):
         """
         Ищет фильм по kinopoisk_id
 
         :param kinopoisk_id:
         :return:
         """
-        pass
+        filter_dict = dict(kinopoisk_id=kinopoisk_id)
+        data_class = self.Film
+        if type == MediaType.SERIALS:
+            filter_dict['season'] = season
+            data_class = self.Serial
+        data = self.session.query(data_class).filter_by(**filter_dict).first()
+        self.close_session()
+        return data
 
-    def find_media_by_label(self, label, year, type):
+    def find_media_by_label(self, label, year, type, season=None):
         """
         Ищет фильм по стандартным реквизитам
 
@@ -40,7 +54,14 @@ class DbManager:
         :param type:
         :return:
         """
-        pass
+        filter_dict = dict(label=label, year=year)
+        data_class = self.Film
+        if type == MediaType.SERIALS:
+            filter_dict['season'] =  season
+            data_class = self.Serial
+        data = self.session.query(data_class).filter_by(**filter_dict).first()
+        self.close_session()
+        return data
 
     def find_user(self, client_id):
         """
@@ -48,7 +69,10 @@ class DbManager:
         :param client_id:
         :return:
         """
-        return self.session.query(self.User).filter_by(client_id=client_id).first()
+
+        data = self.session.query(self.User).filter_by(client_id=client_id).first()
+        self.close_session()
+        return data
 
     def add_film(self, kinopoisk_id, label, year):
         pass
@@ -80,6 +104,7 @@ class DbManager:
         session.add(opt)
         session.add(user)
         session.commit()
+        self.close_session()
 
 if __name__ == '__main__':
 
