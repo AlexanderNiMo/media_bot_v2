@@ -29,6 +29,14 @@ def create_default_config(parser: configparser.ConfigParser):
             'token': '',
         }
 
+    parser['database'] = {
+            'host': '127.0.0.1',
+            'port': '32400',
+            'user': 'root',
+            'password': 'qwerty',
+            'base_name': 'media_data',
+        }
+
     with open(CONFIG_FILE_NAME, 'w') as configfile:
         parser.write(configfile)
 
@@ -58,5 +66,11 @@ WEBHOOK = {
 PLEX_HOST = conf_parser['plex']['host']
 PLEX_PORT = conf_parser['plex']['port']
 PLEX_TOKEN = conf_parser['plex']['token']
+
+DATABASE_HOST = conf_parser['database']['host']
+DATABASE_PORT = conf_parser['database']['port']
+DATABASE_USER = conf_parser['database']['user']
+DATABASE_PASSWORD = conf_parser['database']['password']
+DATABASE_NAME = conf_parser['database']['base_name']
 
 
