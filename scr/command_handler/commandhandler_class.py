@@ -87,7 +87,7 @@ class FilmHandler(AbstractHandler):
             data.text)
         )
 
-        message = parser_message(ComponentType.COMMAND_HANDLER, {'query': data.text}, data.client_id)
+        message = parser_message(ComponentType.COMMAND_HANDLER, {'query': data.text, 'serial': False}, data.client_id)
 
         return message
 
@@ -114,7 +114,7 @@ class SerialHandler(AbstractHandler):
             data.text)
         )
 
-        message = parser_message(ComponentType.COMMAND_HANDLER, {'serial_query': data.text}, data.client_id)
+        message = parser_message(ComponentType.COMMAND_HANDLER, {'query': data.text, 'serial': True}, data.client_id)
 
         return message
 
