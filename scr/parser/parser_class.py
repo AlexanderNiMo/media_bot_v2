@@ -8,7 +8,7 @@ from plexapi.server import PlexServer
 
 from database import DbManager
 from app_enums import ActionType, ComponentType, ClientCommands, MediaType
-from mediator import AppMediatorClient, MediatorActionMessage, send_message, parser_message
+from mediator import AppMediatorClient, MediatorActionMessage, send_message, parser_message, command_message
 from mediator.mediator_types.mediator_message import ParserData
 from kinopoisk import movie, utils
 
@@ -126,8 +126,15 @@ class BaseParser(AbstractParser):
     def can_parse(self, data: dict)->bool:
         return True
 
-    def end_chain(self, data)-> dict:
-        return None
+    def end_chain(self, data: ParserData)-> list:
+
+        command = ClientCommands.ADD_DATA_FILM if 'serial' in data.data.keys() and \
+                                                 not data.data['serial'] else ClientCommands.ADD_DATA_SERIAL
+
+        self.messages.append(
+            command_message(ComponentType.PARSER, command, data.data, data.client_id)
+        )
+        return self.messages
 
     @staticmethod
     def _get_words(text: str)->list:
@@ -191,7 +198,8 @@ class KinopoiskParser(BaseParser):
                 'kinopoisk_id': element.id,
                 'title': self._normalize_query_text(element.title),
                 'year': element.year,
-                'url': element.get_url('main_page')
+                'url': element.get_url('main_page'),
+                'serial': False
             }
             self.next_data['choices'].append(choise)
             if exact_match:
@@ -213,7 +221,14 @@ class KinopoiskParser(BaseParser):
             self.next_data = {'choices': []}
 
         for element in result:
+            element.get_content('series')
             exact_match = self.check_title_match_query_data(element, data)
+
+            series = 0
+            if len(element.seasons) <= data['season']-1:
+                season = element.seasons[data['season']-1]
+                series = len(season.episodes)
+
             if exact_match:
                 self.next_data['choices'].clear()
             choise = {
@@ -221,7 +236,9 @@ class KinopoiskParser(BaseParser):
                 'title': self._normalize_query_text(element.title),
                 'year': element.year,
                 'url': element.get_url('main_page'),
-                'season': data['season']
+                'season': data['season'],
+                'serial': True,
+                'series': series
             }
             self.next_data['choices'].append(choise)
             if exact_match:
@@ -298,7 +315,7 @@ class PlexParser(BaseParser):
         else:
             section = 'TV Shows'
         plex_data = server.search(data['title'])
-        self.next_data = data
+        self.next_data = data.copy()
 
         if 'serial' in data.keys() and data['serial']:
             result = self.check_serials(plex_data, data)
@@ -363,7 +380,8 @@ class DataBaseParser(BaseParser):
             media = db.find_media_by_label(data['label'], data['year'], media_type)
         if media is not None:
             result = False
-            self.next_data = data.copy()
+
+        self.next_data = data.copy()
 
         return result
 
@@ -388,6 +406,7 @@ class DataBaseParser(BaseParser):
 
         return self.messages
 
+
 class TextQueryParser(BaseParser):
     """
     Парсит текстовый запрос для дальнейшей обработки
@@ -402,9 +421,9 @@ class TextQueryParser(BaseParser):
     def parse_data(self, data: dict):
 
         Errors = False
+
         query_text = self._normalize_query_text(data['query'])
         self.next_data = data.copy()
-
 
         # Проверка года в запросе
         year = self._get_year(query_text)
@@ -415,7 +434,7 @@ class TextQueryParser(BaseParser):
             self.year = year
 
         # Проверка сезона в запросе
-        if 'serial' in data.keys():
+        if 'serial' in data.keys() and data['serial']:
             self.serial = True
             season = self._get_season(query_text)
             if season is None:
