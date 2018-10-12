@@ -8,7 +8,8 @@ def create_default_config(parser: configparser.ConfigParser):
 
     parser['client'] = {
         'bot_token': '',
-        'bot_mode': 1
+        'bot_mode': 1,
+        'admin_id': 1
     }
     parser['proxy'] = {
             'url': '',
@@ -31,7 +32,7 @@ def create_default_config(parser: configparser.ConfigParser):
 
     parser['database'] = {
             'host': '127.0.0.1',
-            'port': '32400',
+            'port': '3306',
             'user': 'root',
             'password': 'qwerty',
             'base_name': 'media_data',
@@ -50,6 +51,7 @@ else:
 
 TELEGRAMM_BOT_TOKEN = conf_parser['client']['bot_token']
 BOT_MODE = conf_parser['client']['bot_mode']
+TELEGRAMM_BOT_USER_ADMIN = conf_parser['client']['admin_id']
 
 PROXY_URL = conf_parser['proxy']['url']
 PROXY_USER = conf_parser['proxy']['user']
