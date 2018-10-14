@@ -27,7 +27,7 @@ class Crawler(AppMediatorClient):
                 message
             )
         )
-        pass
+        self.add_thread(message)
 
     def main_actions(self):
         logger.info('Запуск основного потока работы {}'.format(self))

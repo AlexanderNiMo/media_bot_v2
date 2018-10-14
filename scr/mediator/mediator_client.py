@@ -134,10 +134,12 @@ def send_message(
 
 def crawler_message(
         client_from: app_enums.ComponentType,
+        client_id,
         data: dict) -> MediatorMessage:
     """
     Send message to crawler
     :param client_from:
+    :pram client_id:
     :param data: {media_id, media_type, force}
     :return:
     """
@@ -153,6 +155,7 @@ def crawler_message(
         data['force'] = False
     if 'media_type' not in data.keys():
         data['media_type'] = app_enums.MediaType.BASE_MEDIA
+    data['client_id'] = client_id
 
     message.data = mediator_message.CrawlerData(**data)
 
