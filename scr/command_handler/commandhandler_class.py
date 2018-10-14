@@ -238,7 +238,7 @@ class AddDataHandler(AbstractHandler):
         )
 
         messages.append(
-            crawler_message(ComponentType.COMMAND_HANDLER, film.id)
+            crawler_message(ComponentType.COMMAND_HANDLER, {'media_id': film.id})
         )
 
         return messages
@@ -261,7 +261,7 @@ class AddDataHandler(AbstractHandler):
                 ComponentType.COMMAND_HANDLER,
                 {'user_id': data.client_id, 'message_text': message_text, 'choices': []}
             ),
-            crawler_message(ComponentType.COMMAND_HANDLER, serial.id)
+            crawler_message(ComponentType.COMMAND_HANDLER, {'media_id': serial.id})
         ]
 
         return messages

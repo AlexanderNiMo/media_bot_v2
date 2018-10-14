@@ -68,8 +68,10 @@ class ClientData(MessageData):
 
 class CrawlerData(MessageData):
 
-    def __init__(self, media_id):
+    def __init__(self, media_id, force, media_type, *args, **kwargs):
         self.media_id = media_id
+        self.force = force
+        self.media_type = media_type
 
 
 class CommandData(MessageData):

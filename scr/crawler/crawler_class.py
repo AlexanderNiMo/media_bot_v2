@@ -21,7 +21,12 @@ class Crawler(AppMediatorClient):
         self.__threads = threads
 
     def handle_message(self, message: MediatorActionMessage):
-        logger.info('Полученно новое сообщение. {}'.format(message))
+        logger.info(
+            'Полученно новое сообщение. для Crawler от {0} с данными {}'.format(
+                message.from_component,
+                message
+            )
+        )
         pass
 
     def main_actions(self):

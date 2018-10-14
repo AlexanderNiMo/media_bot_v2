@@ -1,4 +1,3 @@
-
 from multiprocessing import Queue
 from queue import Empty
 import logging
@@ -11,9 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 class AppMediatorClient(MediatorClient):
-    
     def __init__(self, in_queue: Queue, out_queue: Queue, config):
-        
+
         super(AppMediatorClient, self).__init__()
 
         self.__in_queue = in_queue
@@ -59,7 +57,7 @@ class AppMediatorClient(MediatorClient):
         return self.__config
 
     @property
-    def queue(self)-> Queue:
+    def queue(self) -> Queue:
         return self.__in_queue
 
     def __str__(self):
@@ -69,8 +67,7 @@ class AppMediatorClient(MediatorClient):
 def parser_message(
         client_from: app_enums.ComponentType,
         data: dict,
-        client_id: int)->MediatorMessage:
-
+        client_id: int) -> MediatorMessage:
     """
     send message to parser
 
@@ -94,7 +91,7 @@ def command_message(
         client_from: app_enums.ComponentType,
         command: app_enums.ClientCommands,
         command_data: dict,
-        client_id: int)->MediatorMessage:
+        client_id: int) -> MediatorMessage:
     """
     Send message to command handler
 
@@ -116,7 +113,7 @@ def command_message(
 
 def send_message(
         client_from: app_enums.ComponentType,
-        message_data: dict)->MediatorMessage:
+        message_data: dict) -> MediatorMessage:
     """
     Send message to command handler
 
@@ -137,11 +134,11 @@ def send_message(
 
 def crawler_message(
         client_from: app_enums.ComponentType,
-        media_id: int=0)->MediatorMessage:
+        data: dict) -> MediatorMessage:
     """
     Send message to crawler
     :param client_from:
-    :param media_id:
+    :param data: {media_id, media_type, force}
     :return:
     """
 
@@ -150,12 +147,19 @@ def crawler_message(
         app_enums.ActionType.FORCE_CHECK,
         client_from)
 
-    message.data = mediator_message.CrawlerData(media_id)
+    if 'media_id' not in data.keys():
+        data['media_id'] = 0
+    if 'force' not in data.keys():
+        data['force'] = False
+    if 'media_type' not in data.keys():
+        data['media_type'] = app_enums.MediaType.BASE_MEDIA
+
+    message.data = mediator_message.CrawlerData(**data)
 
     return message
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     q_in = Queue()
     q_out = Queue()
 
