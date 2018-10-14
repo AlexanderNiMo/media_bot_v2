@@ -48,41 +48,13 @@ def create_app_test():
 
     try:
         while True:
-            time.sleep(5)
+            time.sleep(30)
+            logger.debug('Проверка активности медиатора....')
             if not mediator.is_alive():
-                print('Медиатор умер.')
-            else:
-                pass
-                # Сообщение для клиента
-                # message = MediatorActionMessage(
-                #     action=ActionType.SEND_MESSAGE,
-                #     component=ComponentType.CLIENT,
-                #     from_component=ComponentType.COMMAND_HANDLER
-                # )
-                # mediator_q.put(message)
-                # Сообщение для парсера
-                # message = MediatorActionMessage(
-                #     action=ActionType.PARSE,
-                #     component=ComponentType.PARSER,
-                #     from_component=ComponentType.COMMAND_HANDLER,
-                # )
-                # mediator_q.put(message)
-                # #
-                # # Сообщение для craulera
-                # message = MediatorActionMessage(
-                #     action=ActionType.FORCE_CHECK,
-                #     component=ComponentType.CRAWLER,
-                #     from_component=ComponentType.COMMAND_HANDLER,
-                # )
-                # mediator_q.put(message)
-                #
-                # Сообщеине для commandhandler
-                # message = MediatorActionMessage(
-                #     action=ActionType.HANDLE_COMMAND,
-                #     component=ComponentType.COMMAND_HANDLER,
-                #     from_component=ComponentType.CLIENT
-                # )
-                # mediator_q.put(message)
+                logger.error('Медиатор умер, пеерзапускаю...')
+                mediator = AppMediator(mediator_q, mediator.clients)
+                mediator.start()
+            mediator.check_clients()
     finally:
         file_hndl.close()
 

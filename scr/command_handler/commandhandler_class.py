@@ -86,7 +86,7 @@ class AbstractHandler(ABC):
         message = command_dict[message_data.command.value](message_data, db_manager)
         result = []
         if isinstance(message, MediatorActionMessage):
-            result.append(message_data)
+            result.append(message)
         elif isinstance(message, list):
             result = message
         return result

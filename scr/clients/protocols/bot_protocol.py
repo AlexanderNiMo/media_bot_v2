@@ -23,14 +23,15 @@ class BotProtocol(AppMediatorClient):
     CLIENT_TYPE = ComponentType.CLIENT
     CLIENT_ACTIONS = [ActionType.SEND_MESSAGE, ]
 
+    def __init__(self, in_queue: Queue, out_queue: Queue, config):
+        super(self.__class__, self).__init__(in_queue, out_queue, config)
+        self.__bot = None
+        self.bot_process = None
+
     def main_actions(self):
         logger.debug('Запуск основного потока работы {}'.format(self))
 
-        bot = Bot(self.config, self.config.BOT_MODE, self)
-        self.__bot = bot
-        start_action = bot.get_start_bot_action()
-        p = Process(target=start_action)
-        p.start()
+        self.create_bot()
 
         self.listen()
 
@@ -42,6 +43,25 @@ class BotProtocol(AppMediatorClient):
     def handle_message(self, message: MediatorActionMessage):
         logger.debug('Полученно новое сообщение. {}'.format(message))
         self.send_bot_message(message.data.message_text, message.data.user_id, message.data.choices)
+
+    def create_bot(self):
+        logger.debug('Создание бота.')
+        self.__bot = Bot(self.config, self.config.BOT_MODE, self)
+        if self.bot_process is None:
+            self.start_bot_process()
+
+    def start_bot_process(self):
+        logger.debug('Запуск процесса прослушивания бота.')
+        start_action = self.__bot.get_start_bot_action()
+        self.bot_process = Process(target=start_action)
+        self.bot_process.start()
+
+    def check_bot_instanse(self):
+        while True:
+            time.sleep(60)
+            logger.debug('Начало проверки состояния процесса bot.')
+            if not self.bot_process.is_alive():
+                self.start_bot_process()
 
 
 class Bot:

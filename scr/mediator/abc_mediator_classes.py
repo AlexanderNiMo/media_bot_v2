@@ -65,6 +65,11 @@ class MediatorClient(Process, metaclass=ABCMeta):
     def queue(self)-> Queue:
         pass
 
+    @property
+    @abstractmethod
+    def config(self):
+        pass
+
 
 class Application(metaclass=ABCMeta):
     """

@@ -190,10 +190,14 @@ class KinopoiskParser(BaseParser):
 
         for element in result:
 
+            if 'year' in data.keys() and not element.year == data['year']:
+                continue
+
             exact_match = self.check_title_match_query_data(element, data)
 
             if exact_match:
                 self.next_data['choices'].clear()
+
             choise = {
                 'kinopoisk_id': element.id,
                 'title': self._normalize_query_text(element.title),
@@ -221,6 +225,10 @@ class KinopoiskParser(BaseParser):
             self.next_data = {'choices': []}
 
         for element in result:
+
+            if 'year' in data.keys() and not element.year == data['year']:
+                continue
+
             element.get_content('series')
             exact_match = self.check_title_match_query_data(element, data)
 
