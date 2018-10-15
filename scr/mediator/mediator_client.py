@@ -151,6 +151,8 @@ def crawler_message(
 
     if 'media_id' not in data.keys():
         data['media_id'] = 0
+    if 'season' not in data.keys():
+        data['season'] = 0
     if 'force' not in data.keys():
         data['force'] = False
     if 'media_type' not in data.keys():

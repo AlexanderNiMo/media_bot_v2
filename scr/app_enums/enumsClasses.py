@@ -40,6 +40,7 @@ class ActionType(MyEnum):
     CHECK_FILMS = 5
     CHECK_SERIALS = 6
     CHECK = 7
+    DOWNLOAD_TORREN = 8
 
 class ClientCommands(MyEnum):
     """

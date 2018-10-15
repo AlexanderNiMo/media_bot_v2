@@ -1,5 +1,5 @@
 from database.alch_db import get_session, init_db, OperationalError, create_db
-from app_enums import UserRule, UserOptions, MediaType
+from app_enums import UserRule, UserOptions, MediaType, LockingStatus
 
 
 class DbManager:
@@ -37,6 +37,18 @@ class DbManager:
     def close_session(self):
         self.session.close()
         self.__session = None
+
+    def find_all_media(self, type):
+        """
+        Находит все данные для поиска по тиапу
+        :param type:
+        :return:
+        """
+        data_class = self.Film
+        if type == MediaType.SERIALS:
+            data_class = self.Serial
+        data = self.session.query(data_class).filter_by(data_class.status != LockingStatus.ENDED).all()
+        return data
 
     def find_media(self, kinopoisk_id, type, season=None):
         """

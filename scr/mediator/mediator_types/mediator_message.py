@@ -6,7 +6,7 @@
 
 """
 
-from app_enums import ActionType, ComponentType, ClientCommands
+from app_enums import ActionType, ComponentType, ClientCommands, MediaType
 from mediator.abc_mediator_classes import MediatorMessage, MessageData
 
 
@@ -68,11 +68,12 @@ class ClientData(MessageData):
 
 class CrawlerData(MessageData):
 
-    def __init__(self, client_id, media_id, force, media_type, *args, **kwargs):
+    def __init__(self, client_id, media_id, season=0, force=False, media_type=MediaType.BASE_MEDIA, *args, **kwargs):
         self.media_id = media_id
         self.force = force
         self.media_type = media_type
         self.client_id = client_id
+        self.season = season
 
 
 class CommandData(MessageData):

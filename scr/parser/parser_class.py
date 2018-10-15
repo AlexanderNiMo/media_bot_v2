@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from plexapi.server import PlexServer
 
 from database import DbManager
-from app_enums import ActionType, ComponentType, ClientCommands, MediaType
+from app_enums import ActionType, ComponentType, ClientCommands, MediaType, LockingStatus
 from mediator import AppMediatorClient, MediatorActionMessage, send_message, parser_message, command_message
 from mediator.mediator_types.mediator_message import ParserData
 from kinopoisk import movie, utils
@@ -386,7 +386,7 @@ class DataBaseParser(BaseParser):
             media = db.find_media(data['kinopoisk_id'], media_type)
         elif all(key in data.keys() for key in ('label', 'year')):
             media = db.find_media_by_label(data['label'], data['year'], media_type)
-        if media is not None:
+        if media is not None and media.status == LockingStatus.ENDED:
             result = False
 
         self.next_data = data.copy()
