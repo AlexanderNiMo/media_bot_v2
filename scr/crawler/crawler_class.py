@@ -1,18 +1,16 @@
-
 import logging
 import time
-from multiprocessing import Process, Queue
-from abc import ABCMeta, abstractmethod
 
 from app_enums import ComponentType, ActionType, MediaType
-from mediator import AppMediatorClient, MediatorActionMessage, CrawlerData
+from crawler.Workers import DownloadWorker
+from crawler.Workers import TorrentSearchWorker
 from database import DbManager
+from mediator import AppMediatorClient, MediatorActionMessage, CrawlerData
 
 logger = logging.getLogger(__name__)
 
 
 class Crawler(AppMediatorClient):
-
     CLIENT_TYPE = ComponentType.CRAWLER
     CLIENT_ACTIONS = [
         ActionType.FORCE_CHECK,
@@ -30,8 +28,17 @@ class Crawler(AppMediatorClient):
         self.active_workers = []
         self.jobs = []
         db_manager = DbManager(self.config)
-        self.db_handler = DataBaseHandler(db_manager)
+        self.db_handler = CrawlerMessageHandler(db_manager)
         self.messages = []
+
+    def main_actions(self):
+        logger.info('Запуск основного потока работы {}'.format(self))
+        while True:
+            time.sleep(10)
+            try:
+                self.update_jobs()
+            except Exception as ex:
+                logging.error('При обновлении обработчиков произошла ощибка {}'.format(ex))
 
     def handle_message(self, message: MediatorActionMessage):
         logger.info(
@@ -45,25 +52,9 @@ class Crawler(AppMediatorClient):
 
     def add_jobs(self, message: MediatorActionMessage):
 
-        if message.action == ActionType.DOWNLOAD_TORREN:
-            return [
-                {
-                    'type': message.action,
-                    'client_id': message.data.client_id,
-                    'media_id': message.data.media_id
-                 }
-            ]
-
         jobs = self.db_handler.get_job_list(message)
         for job in jobs:
-            job.update({'type': message.action})
             self.jobs.append(job)
-
-    def main_actions(self):
-        logger.info('Запуск основного потока работы {}'.format(self))
-        while True:
-            time.sleep(10)
-            self.update_jobs()
 
     def update_jobs(self):
         """
@@ -101,26 +92,27 @@ class Crawler(AppMediatorClient):
                 break
             self.add_thread(self.jobs.pop(0))
 
-    def get_worker(self, job: dict):
-        if job['type'] in [
+    def add_thread(self, job):
+        worker = self.get_worker(job)
+        worker.start()
+        self.active_workers.append(worker)
+
+    @staticmethod
+    def get_worker(job: Job):
+        if job.action_type in [
             ActionType.FORCE_CHECK,
             ActionType.CHECK_FILMS,
             ActionType.CHECK_SERIALS,
             ActionType.CHECK
         ]:
             return TorrentSearchWorker(job)
-        elif job['type'] in [
+        elif job.action_type in [
             ActionType.DOWNLOAD_TORREN
         ]:
             return DownloadWorker(job)
 
-    def add_thread(self, job):
-        worker = self.get_worker(job)
-        worker.start()
-        self.active_workers.append(worker)
 
-
-class DataBaseHandler:
+class CrawlerMessageHandler:
     """
     Класс обрабатывает сообщения от компонентов и возвращает список данных для обработки
     """
@@ -128,7 +120,7 @@ class DataBaseHandler:
     def __init__(self, db_manager: DbManager):
         self.db_manager = db_manager
 
-    def get_job_list(self, message: MediatorActionMessage)->list:
+    def get_job_list(self, message: MediatorActionMessage) -> list:
         result = []
         db = self.db_manager
         data = message.data
@@ -140,119 +132,44 @@ class DataBaseHandler:
 
         for element in media:
             result.append(
-                {
-                    'type': message.action,
-                    'client_id': data.client_id,
-                    'media_id': data.media_id,
-                    'title': element.label,
-                    'download_url': element.download_url,
-                    'torrent_tracker': element.torrent_tracker,
-                    'theam_id': element.theam_id,
-                 }
+                Job(
+                    **{
+                        'type': message.action,
+                        'client_id': data.client_id,
+                        'media_id': data.media_id,
+                        'title': element.label,
+                        'download_url': element.download_url,
+                        'torrent_tracker': element.torrent_tracker,
+                        'theam_id': element.theam_id,
+                    }
+                )
             )
 
         return result
 
 
-class AbstractCrawlerWorker(metaclass=ABCMeta):
-    """
-    Абстрактный класс описывает worker, который выполняется в отдельном процессе
-    и выполняет необходимые действия
+class Job:
+    def __init__(self,
+                 action_type,
+                 client_id,
+                 media_id,
+                 title,
+                 download_url,
+                 torrent_tracker,
+                 theam_id,
+                 **kwargs
+                 ):
+        self.action_type = action_type
+        self.client_id = client_id
+        self.media_id = media_id
+        self.title = title
+        self.download_url = download_url
+        self.torrent_tracker = torrent_tracker
+        self.theam_id = theam_id
+        self.__dict__.update(**kwargs)
 
-    """
-    def __init__(self, data: dict):
-        self.process = None
-        self.__dict__.update(**data)
-
-    @abstractmethod
-    def start(self):
-        """
-        Запускает исполнение операции
-        :return:
-        """
-        pass
-
-    @abstractmethod
-    def kill(self):
-        """
-        Аварийно останавливает выполнение
-
-        :return:
-        """
-        pass
-
-    @property
-    @abstractmethod
-    def result(self):
-        """
-        Возвращает результат выполнения
-
-        :return:
-        """
-        pass
-
-    @property
-    @abstractmethod
-    def ended(self):
-        """
-        Проверяет закончилось ли выполнение процесса
-
-        :return:
-        """
-        pass
-
-
-class Worker(AbstractCrawlerWorker):
-
-    def start(self):
-        self.process = Process(target=self.get_target())
-        self.process.start()
-
-    def kill(self):
-        if not self.ended:
-            self.process.terminate()
-
-    def get_target(self):
-        def a():
-            print('Start worker')
-        return a
-
-    @property
-    def result(self)->list:
-        return []
-
-    @property
-    def ended(self):
-        return not self.process.is_alive()
-
-
-class TorrentSearchWorker(Worker):
-
-    def get_target(self):
-        return self.work
-
-    def work(self):
-        logger.debug('Start torrent worker.')
-
-    @property
-    def result(self):
-        return []
-
-
-class DownloadWorker(Worker):
-
-    def get_target(self):
-        return self.work
-
-    def work(self):
-        logger.debug('Start torrent worker.')
-
-    @property
-    def result(self):
-        return []
 
 if __name__ == '__main__':
-
     from multiprocessing import Queue
     from app import config
 

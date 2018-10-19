@@ -50,16 +50,18 @@ class DbManager:
         data = self.session.query(data_class).filter_by(data_class.status != LockingStatus.ENDED).all()
         return data
 
-    def find_media(self, kinopoisk_id, type, season=None):
+    def find_media(self, kinopoisk_id, media_type, season=None):
         """
         Ищет фильм по kinopoisk_id
 
         :param kinopoisk_id:
+        :param media_type:
+        :param season:
         :return:
         """
         filter_dict = dict(kinopoisk_id=kinopoisk_id)
         data_class = self.Film
-        if type == MediaType.SERIALS:
+        if media_type == MediaType.SERIALS:
             filter_dict['season'] = season
             data_class = self.Serial
         data = self.session.query(data_class).filter_by(**filter_dict).first()
