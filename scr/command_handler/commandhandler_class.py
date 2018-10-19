@@ -224,7 +224,10 @@ class AddDataHandler(AbstractHandler):
             data.command_data['url']
         )
 
-        message_text = 'Фильм {} добавлен к поску'.format(data.command_data['title'])
+        message_text = 'Фильм {0} добавлен к поску \n {1}'.format(
+            data.command_data['title'],
+            data.command_data['url']
+        )
 
         messages = []
 
@@ -254,7 +257,10 @@ class AddDataHandler(AbstractHandler):
             data.command_data['series']
         )
 
-        message_text = 'Сериал {} добавлен к поску'.format(data.command_data['title'])
+        message_text = 'Сериал {0} добавлен к поску \n {1}'.format(
+            data.command_data['title'],
+            data.command_data['url']
+        )
 
         messages = [
             send_message(
