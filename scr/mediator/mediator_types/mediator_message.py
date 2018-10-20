@@ -65,6 +65,12 @@ class ClientData(MessageData):
         self.message_text = message_text
         self.choices = choices
 
+    def __repr__(self):
+        return '<ClienData сообщение для пользователя {0} с текстом {1}>'.format(
+            self.user_id,
+            self.message_text
+        )
+
 
 class CrawlerData(MessageData):
 
@@ -75,6 +81,13 @@ class CrawlerData(MessageData):
         self.client_id = client_id
         self.season = season
 
+    def __repr__(self):
+        return '<CrawlerData from_user:{0}, kinopoisk_id:{1}, force:{2}>'.format(
+            self.client_id,
+            self.media_id,
+            self.force
+        )
+
 
 class CommandData(MessageData):
 
@@ -82,6 +95,12 @@ class CommandData(MessageData):
         self.command_data = command_data
         self.client_id = client_id
         self.command = command
+
+    def __repr__(self):
+        return '<CommandData Запрос на выаолнение команды {} от {}>'.format(
+            self.command,
+            self.client_id
+        )
 
 
 class ParserData(MessageData):
