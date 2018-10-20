@@ -2,8 +2,6 @@ from abc import ABCMeta, abstractmethod
 
 from multiprocessing import Process
 
-from crawler.crawler_class import Job
-
 
 class AbstractCrawlerWorker(metaclass=ABCMeta):
     """
@@ -12,8 +10,9 @@ class AbstractCrawlerWorker(metaclass=ABCMeta):
 
     """
 
-    def __init__(self, job: Job):
+    def __init__(self, job):
         self.process = None
+        self.returned_data = None
         self.job = job
 
     @abstractmethod
