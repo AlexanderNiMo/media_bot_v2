@@ -184,7 +184,7 @@ class Bot:
     @property
     def cache(self):
         if self.__cache is None:
-            self.__cache = BotCache()
+            self.__cache = BotCache(self.__config.CACHE_DB_PATH)
         return self.__cache
 
     @property
@@ -305,9 +305,9 @@ class BotCache:
     Класс реализует логику работы с кэшом для хранения callback данных
     """
 
-    def __init__(self):
-        self.dump_name = 'cachedb.db'
-        self.base = my_pickledb(self.dump_name, True)
+    def __init__(self, db_path):
+        self.dump_name = db_path
+        self.base = My_Pickledb(self.dump_name, True)
 
     def get(self, key):
         return self.base.get(key)
@@ -318,7 +318,7 @@ class BotCache:
         return key
 
 
-class my_pickledb(pickledb.pickledb):
+class My_Pickledb(pickledb.pickledb):
 
     def set_sigterm_handler(self):
         '''Assigns sigterm_handler for graceful shutdown during dump()'''
