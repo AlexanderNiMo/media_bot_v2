@@ -38,14 +38,14 @@ class DbManager:
         self.session.close()
         self.__session = None
 
-    def find_all_media(self, type):
+    def find_all_media(self, media_type):
         """
         Находит все данные для поиска по тиапу
         :param type:
         :return:
         """
         data_class = self.Film
-        if type == MediaType.SERIALS:
+        if media_type == MediaType.SERIALS:
             data_class = self.Serial
         data = self.session.query(data_class).filter_by(data_class.status != LockingStatus.ENDED).all()
         return data
