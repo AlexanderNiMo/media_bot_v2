@@ -6,8 +6,37 @@ from crawler.Workers import DownloadWorker
 from crawler.Workers import TorrentSearchWorker
 from database import DbManager
 from mediator import AppMediatorClient, MediatorActionMessage, CrawlerData
+from multiprocessing import Queue
 
 logger = logging.getLogger(__name__)
+
+class Job:
+    def __init__(self,
+                 action_type,
+                 client_id,
+                 media_id,
+                 title,
+                 season,
+                 year,
+                 download_url,
+                 torrent_tracker,
+                 theam_id,
+                 **kwargs
+                 ):
+        self.action_type = action_type
+        self.client_id = client_id
+        self.media_id = media_id
+        self.title = title
+        self.download_url = download_url
+        self.torrent_tracker = torrent_tracker
+        self.theam_id = theam_id
+        self.season = season
+        self.year = year
+        self.__dict__.update(**kwargs)
+
+    @property
+    def text_query(self):
+        return '{}'.format(self.title, )
 
 
 class Crawler(AppMediatorClient):
@@ -129,8 +158,16 @@ class CrawlerMessageHandler:
             media = [db.find_media(data.media_id, data.media_type, data.season)]
         elif not data.media_type == MediaType.BASE_MEDIA:
             media = db.find_all_media(data.media_type)
+        if len(media)==0:
+            logger.error('Не удалось найти данные в базе по запросу {}'.format(message.data))
 
         for element in media:
+
+            try:
+                season = element.season
+            except AttributeError:
+                season = ''
+
             result.append(
                 Job(
                     **{
@@ -138,6 +175,8 @@ class CrawlerMessageHandler:
                         'client_id': data.client_id,
                         'media_id': data.media_id,
                         'title': element.label,
+                        'season': season,
+                        'year': element.year,
                         'download_url': element.download_url,
                         'torrent_tracker': element.torrent_tracker,
                         'theam_id': element.theam_id,
@@ -146,27 +185,6 @@ class CrawlerMessageHandler:
             )
 
         return result
-
-
-class Job:
-    def __init__(self,
-                 action_type,
-                 client_id,
-                 media_id,
-                 title,
-                 download_url,
-                 torrent_tracker,
-                 theam_id,
-                 **kwargs
-                 ):
-        self.action_type = action_type
-        self.client_id = client_id
-        self.media_id = media_id
-        self.title = title
-        self.download_url = download_url
-        self.torrent_tracker = torrent_tracker
-        self.theam_id = theam_id
-        self.__dict__.update(**kwargs)
 
 
 if __name__ == '__main__':
