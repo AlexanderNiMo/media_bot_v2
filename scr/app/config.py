@@ -1,7 +1,10 @@
 import configparser
 from os import path
+import os
 
-CONFIG_FILE_NAME = '.config.ini'
+CONFIG_FILE_NAME = path.normpath(
+    '{0}/conf/{1}'.format(path.dirname(__file__), '.config.ini')
+)
 
 
 def create_default_config(parser: configparser.ConfigParser):
@@ -38,6 +41,11 @@ def create_default_config(parser: configparser.ConfigParser):
             'base_name': 'media_data',
         }
 
+    parser['rutracker'] = {
+            'user_name': '',
+            'password': ''
+        }
+
     with open(CONFIG_FILE_NAME, 'w') as configfile:
         parser.write(configfile)
 
@@ -46,6 +54,8 @@ conf_parser = configparser.ConfigParser()
 if path.exists(CONFIG_FILE_NAME):
     conf_parser.read(CONFIG_FILE_NAME)
 else:
+    if not path.exists(path.dirname(CONFIG_FILE_NAME)):
+        os.mkdir(path.dirname(CONFIG_FILE_NAME))
     create_default_config(conf_parser)
 
 
@@ -75,4 +85,22 @@ DATABASE_USER = conf_parser['database']['user']
 DATABASE_PASSWORD = conf_parser['database']['password']
 DATABASE_NAME = conf_parser['database']['base_name']
 
+TORRENTS = {
+    'rutracker': {
+        'user_name': conf_parser['rutracker']['user_name'],
+        'password': conf_parser['rutracker']['password']
+    }
+}
 
+CACHE_DB_PATH = path.normpath(
+    '{0}/data/{1}'.format(path.dirname(__file__), 'cachedb.db')
+)
+TORRENT_TEMP_PATH = path.normpath(
+    '{0}/data'.format(path.dirname(__file__))
+)
+
+if not path.exists(TORRENT_TEMP_PATH):
+    os.mkdir(TORRENT_TEMP_PATH)
+
+if not path.exists(TORRENT_TEMP_PATH):
+    os.mkdir(path.dirname(CACHE_DB_PATH))
