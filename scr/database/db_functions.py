@@ -38,6 +38,13 @@ class DbManager:
         self.session.close()
         self.__session = None
 
+    def get_users_for_notification(self):
+        data = self.session.query(self.UserOptionsT)\
+            .filter_by(option=UserOptions.NOTIFICATION)\
+            .filter_by(value=1)\
+            .all()
+        return [i.user for i in data]
+
     def find_all_media(self, media_type):
         """
         Находит все данные для поиска по тиапу
@@ -97,7 +104,7 @@ class DbManager:
         if client_id == int(self.config.TELEGRAMM_BOT_USER_ADMIN):
             if data is None:
                 data = self.add_user(client_id)
-        self.close_session()
+        # self.close_session()
         return data
 
     def add_film(self, kinopoisk_id, label, year, url):
@@ -135,7 +142,7 @@ class DbManager:
                     filter(self.UserOptionsT.option == option_name).first()
         if result is None:
             opt = self.UserOptionsT(option=option_name, value=value)
-            user = self.find_user(client_id=clien_id)
+            user = self.session.query(self.User).filter_by(client_id=client_id).first()
             user.options.append(opt)
         else:
             user, opt = result
@@ -151,14 +158,5 @@ class DbManager:
 if __name__ == '__main__':
 
     from app import config
-
+    client_id = 123109378
     db = DbManager(config)
-
-    db.add_serial(
-            1,
-            'Игра престолов',
-            2011,
-            1,
-            'http://kp',
-            0
-        )

@@ -55,12 +55,16 @@ class UserOptionsT(Base):
     value = Column(Integer, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
 
-    user = relationship('User', back_populates="options")
+    user = relationship(
+        'User',
+        backref='options',
+        lazy='subquery',
+        cascade="save-update, merge, delete")
 
     def __repr__(self):
         return '<UserOption(user={0}, option={1}, value={2})>'.format(self.user_id, self.option, self.value)
 
-User.options = relationship("UserOptionsT", order_by=UserOptionsT.id, back_populates="user")
+# User.options = relationship("UserOptionsT", order_by=UserOptionsT.id, back_populates="user")
 
 
 class MediaData(Base):
