@@ -11,18 +11,8 @@ from multiprocessing import Queue
 logger = logging.getLogger(__name__)
 
 class Job:
-    def __init__(self,
-                 action_type,
-                 client_id,
-                 media_id,
-                 title,
-                 season,
-                 year,
-                 download_url,
-                 torrent_tracker,
-                 theam_id,
-                 **kwargs
-                 ):
+    def __init__(self, action_type, client_id, media_id, title, season,
+                 year, download_url, torrent_tracker, theam_id, kinopoisk_url, **kwargs):
         self.action_type = action_type
         self.client_id = client_id
         self.media_id = media_id
@@ -32,6 +22,7 @@ class Job:
         self.theam_id = theam_id
         self.season = season
         self.year = year
+        self.kinopoisk_url = kinopoisk_url
         self.__dict__.update(**kwargs)
 
     @property
@@ -126,19 +117,18 @@ class Crawler(AppMediatorClient):
         worker.start()
         self.active_workers.append(worker)
 
-    @staticmethod
-    def get_worker(job: Job):
+    def get_worker(self, job: Job):
         if job.action_type in [
             ActionType.FORCE_CHECK,
             ActionType.CHECK_FILMS,
             ActionType.CHECK_SERIALS,
             ActionType.CHECK
         ]:
-            return TorrentSearchWorker(job)
+            return TorrentSearchWorker(job, self.config)
         elif job.action_type in [
             ActionType.DOWNLOAD_TORREN
         ]:
-            return DownloadWorker(job)
+            return DownloadWorker(job, self.config)
 
 
 class CrawlerMessageHandler:
@@ -180,6 +170,7 @@ class CrawlerMessageHandler:
                         'download_url': element.download_url,
                         'torrent_tracker': element.torrent_tracker,
                         'theam_id': element.theam_id,
+                        'kinopoisk_url': element.kinopoisk_url
                     }
                 )
             )

@@ -10,10 +10,11 @@ class AbstractCrawlerWorker(metaclass=ABCMeta):
 
     """
 
-    def __init__(self, job):
+    def __init__(self, job, config):
         self.process = None
         self.returned_data = None
         self.job = job
+        self.config = config
 
     @abstractmethod
     def start(self):
