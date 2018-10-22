@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class AppMediatorClient(MediatorClient):
+
     def __init__(self, in_queue: Queue, out_queue: Queue, config):
 
         super(AppMediatorClient, self).__init__()
@@ -41,7 +42,7 @@ class AppMediatorClient(MediatorClient):
                 logger.error('Error while listning for new message! {}'.format(ex))
 
     def send_message(self, message: MediatorMessage):
-        logger.debug('Отправка сообщения. {}'.format(message))
+        logger.debug('Отправка сообщения. {}'.format(str(message)))
         self.__out_queue.put(message)
 
     def handle_message(self, message: MediatorMessage):
@@ -135,7 +136,8 @@ def send_message(
 def crawler_message(
         client_from: app_enums.ComponentType,
         client_id,
-        data: dict) -> MediatorMessage:
+        data: dict,
+        action_type=app_enums.ActionType.FORCE_CHECK) -> MediatorMessage:
     """
     Send message to crawler
     :param client_from:
@@ -146,7 +148,7 @@ def crawler_message(
 
     message = mediator_message.MediatorActionMessage(
         app_enums.ComponentType.CRAWLER,
-        app_enums.ActionType.FORCE_CHECK,
+        action_type,
         client_from)
 
     if 'media_id' not in data.keys():

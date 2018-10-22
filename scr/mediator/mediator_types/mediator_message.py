@@ -31,7 +31,7 @@ class MediatorActionMessage(MediatorMessage):
         self.__from = from_component
         self.__data = None
 
-    def __str__(self):
+    def __repr__(self):
         return 'Сообщение от {2} для {0} на выполнение {1}'.format(self.component, self.action, self.from_component)
 
     def __bool__(self):
