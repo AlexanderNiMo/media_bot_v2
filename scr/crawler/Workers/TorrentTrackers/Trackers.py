@@ -9,6 +9,8 @@ import torrent_parser
 import inspect
 import sys
 
+from app_enums import TorrentType
+
 logger = logging.getLogger(__name__)
 
 HEADERS = {
@@ -22,7 +24,9 @@ HEADERS = {
 
 class Torrent:
 
-    def __init__(self, label, url, size, data, file_name, pier, resolution, theam_url, file_amount, kinopoisk_id):
+    def __init__(self, label, url, size, data, file_name,
+                 pier, resolution, theam_url, file_amount,
+                 kinopoisk_id, tracker):
         self.label = label
         self.url = url
         self.size = size
@@ -33,9 +37,12 @@ class Torrent:
         self.resolution = resolution
         self.file_amount = file_amount
         self.kinopoisk_id = kinopoisk_id
+        self.tracker = tracker
 
     def __repr__(self):
-        return '<torrent label:{0}, kinopoisk_id:{1}, files:{2}>'.format(self.label, self.kinopoisk_id, self.file_amount)
+        return '<torrent label:{0}, pier:{3}, kinopoisk_id:{1}, files:{2}>'.format(
+            self.label, self.kinopoisk_id, self.file_amount, self.pier)
+
 
 class AbcTorrentTracker(metaclass=ABCMeta):
 
@@ -97,15 +104,15 @@ class TorrentTracker(AbcTorrentTracker):
         return session
 
     def load_cookie(self):
-        file_name = "{0}{1}.cookies".format(path.dirname(__file__), self.site_name)
+        file_name = "{0}/{1}.cookies".format(self.config.TORRENT_TEMP_PATH, self.site_name)
         if not path.exists(file_name):
             return
         jar = cookiejar.LWPCookieJar(filename=file_name)
-        jar.load(filename="./{}.cookies".format(self.site_name), ignore_discard=True)
+        jar.load(filename=file_name, ignore_discard=True)
         return jar
 
     def save_cookies(self, cookies):
-        file_name = "{0}{1}.cookies".format(path.dirname(__file__), self.site_name)
+        file_name = "{0}/{1}.cookies".format(self.config.TORRENT_TEMP_PATH, self.site_name)
         jar = cookiejar.LWPCookieJar(filename=file_name)
         for c in cookies:
             jar.set_cookie(c)
@@ -134,7 +141,15 @@ class TorrentTracker(AbcTorrentTracker):
         req = self.connection.get(url)
         if not req.status_code == 200:
             return None
-        return req.content
+        torr_id = re.search(r'\d+', url)
+        if torr_id is None:
+            torr_id = ''
+        else:
+            torr_id = torr_id.group()
+        return {
+            'data': req.content,
+            'id': torr_id
+            }
 
     def get_resolution(self, url, title):
         result = None
@@ -177,12 +192,6 @@ class TorrentTracker(AbcTorrentTracker):
         return self._serial_forums
 
     @property
-    def is_logining_in(self):
-        if self._is_loggining_in is None or not self._is_loggining_in:
-            self._is_loggining_in = self.test_login_status()
-        return self._is_loggining_in
-
-    @property
     def connection(self):
         if self._connection is None:
             self._connection = self.get_connection()
@@ -196,11 +205,15 @@ class TorrentTracker(AbcTorrentTracker):
 
     @property
     def site_name(cls):
-        return 'test'
+        return TorrentType.NONE_TYPE
 
     @property
     def site_domain(cls):
         return 'https://exsample.com'
+
+    @property
+    def site_download(self):
+        return ''
 
 
 class Rutracker(TorrentTracker):
@@ -268,7 +281,7 @@ class Rutracker(TorrentTracker):
     def create_torrent(self, search_line)->Torrent or None:
         tor_dict = dict(
             label='', url='', size=0, data='', file_name='',
-            pier=0, resolution=None, theam_url='', file_amount=0, kinopoisk_id=''
+            pier=0, resolution=None, theam_url='', file_amount=0, kinopoisk_id='', tracker=''
         )
         for row in search_line.find_all('td'):
             try:
@@ -295,7 +308,7 @@ class Rutracker(TorrentTracker):
 
         tor_dict['data'] = self.get_torrent_data(tor_dict['url'])
 
-        torrent_ditails = get_torrent_details(tor_dict['data'])
+        torrent_ditails = get_torrent_details(tor_dict['data']['data'])
         if torrent_ditails is None:
             return None
         if 'files' in torrent_ditails['info'].keys():
@@ -305,6 +318,8 @@ class Rutracker(TorrentTracker):
         else:
             return None
         tor_dict['kinopoisk_id'] = self.get_kinopoisk_id(tor_dict['theam_url'])
+
+        tor_dict['tracker'] = self.site_type
 
         return Torrent(**tor_dict)
 
@@ -377,6 +392,10 @@ class Rutracker(TorrentTracker):
         return u','.join(self._get_sub_forum(forum_list))
 
     @property
+    def site_type(self):
+        return TorrentType.RUTRACKER
+
+    @property
     def site_name(self):
         return 'rutracker'
 
@@ -412,7 +431,7 @@ class Rutor(TorrentTracker):
     def create_torrent(self, search_line)->Torrent or None:
         tor_dict = dict(
             label='', url='', size=0, data='', file_name='', pier=0,
-            resolution=None, theam_url='', file_amount=0, kinopoisk_id=''
+            resolution=None, theam_url='', file_amount=0, kinopoisk_id='', tracker=''
         )
         rows = search_line.find_all('td')
         if len(rows) == 4:
@@ -458,7 +477,7 @@ class Rutor(TorrentTracker):
 
         tor_dict['data'] = self.get_torrent_data(tor_dict['url'])
 
-        torrent_ditails = get_torrent_details(tor_dict['data'])
+        torrent_ditails = get_torrent_details(tor_dict['data']['data'])
         if torrent_ditails is None:
             return None
         elif 'files' in torrent_ditails['info'].keys():
@@ -469,6 +488,7 @@ class Rutor(TorrentTracker):
             return None
 
         tor_dict['kinopoisk_id'] = self.get_kinopoisk_id(tor_dict['theam_url'])
+        tor_dict['tracker'] = self.site_type
 
         return Torrent(**tor_dict)
 
@@ -488,6 +508,10 @@ class Rutor(TorrentTracker):
         return result
 
     @property
+    def site_type(self):
+        return TorrentType.RUTOR
+
+    @property
     def site_name(self):
         return 'rutor'
 
@@ -495,6 +519,10 @@ class Rutor(TorrentTracker):
     def site_domain(self):
         # http://rutor.org/search/0/0/100/0/
         return 'http://rutor.info'
+
+    @property
+    def site_download(self):
+        return 'http://d.rutor.info'
 
 
 def search(conf, text):
@@ -508,7 +536,8 @@ def search(conf, text):
     result = []
     for tracker in trackers:
         result += tracker.search(text)
-        return result
+
+    return result
 
 
 def download(conf, url):
@@ -522,7 +551,7 @@ def download(conf, url):
 
     trackers = get_trackers(conf)
     for tracker in trackers:
-        if tracker.site_domain in url:
+        if tracker.site_domain in url or tracker.site_download   in url:
             return tracker.get_torrent_data(url)
 
 
@@ -546,6 +575,8 @@ def get_torrent_details(data):
     try:
         return torrent_parser.decode(data)
     except torrent_parser.InvalidTorrentDataException:
+        return None
+    except TypeError:
         return None
 
 
