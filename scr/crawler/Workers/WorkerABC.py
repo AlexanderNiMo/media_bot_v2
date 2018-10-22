@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
-from multiprocessing import Process
+from multiprocessing import Process, Queue
+from threading import Thread
 
 
 class AbstractCrawlerWorker(metaclass=ABCMeta):
@@ -12,7 +13,7 @@ class AbstractCrawlerWorker(metaclass=ABCMeta):
 
     def __init__(self, job, config):
         self.process = None
-        self.returned_data = None
+        self.returned_data = Queue()
         self.job = job
         self.config = config
 
@@ -56,17 +57,16 @@ class AbstractCrawlerWorker(metaclass=ABCMeta):
 
 class Worker(AbstractCrawlerWorker):
     def start(self):
-        self.process = Process(target=self.get_target())
+        self.process = Thread(target=self.get_target())
         self.process.start()
 
     def kill(self):
         if not self.ended:
-            self.process.terminate()
+            self.process.join()
 
     def get_target(self):
         def a():
             print('Start worker')
-
         return a
 
     @property
