@@ -1,9 +1,10 @@
 import logging
-from .WorkerABC import Worker
-from .TorrentTrackers import download
+from crawler.Workers.WorkerABC import Worker
+from crawler.Workers.TorrentTrackers import download
 from mediator import send_message
 from app_enums import ComponentType
 from database import DbManager
+from os import path
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +14,12 @@ class DownloadWorker(Worker):
         return self.work
 
     def work(self):
-        logger.debug('Start torrent worker.')
-        download(self.config, self.job.download_url)
+        logger.debug('Start download worker.')
+        data = download(self.config, self.job.download_url)
+        download_path = path.join(self.config.TORRENT_TEMP_PATH, '{}.torrent'.format(data['id']))
+        with open(download_path, 'wb') as file:
+            file.write(data['data'])
+        logger.debug('End download worker.')
 
     @property
     def result(self):
@@ -41,7 +46,7 @@ class DownloadWorker(Worker):
     def get_clients_for_notification(self):
         db_manager = DbManager(self.config)
         result = []
-        if self.job.client_id == '':
+        if not self.job.client_id == '':
             result.append(self.job.client_id)
 
         for user in db_manager.get_users_for_notification():
@@ -49,3 +54,24 @@ class DownloadWorker(Worker):
 
         return result
 
+
+if __name__ == '__main__':
+
+    from app import config
+    from crawler.crawler_class import Job
+
+    d = DownloadWorker(Job(**{
+        'action_type': None,
+        'client_id': 123109378,
+        'media_id': 571884,
+        'title': 'Гарри Поттер и философский камень',
+        'year': 2001,
+        'torrent_tracker': '',
+        'theam_id': '',
+        'kinopoisk_url': 'https://www.kinopoisk.ru/film/689/',
+        'download_url': 'http://d.rutor.info/download/659488',
+        'season': '',
+        'text_query': 'Гарри Поттер и Орден Феникса',
+    }), config)
+
+    d.work()
