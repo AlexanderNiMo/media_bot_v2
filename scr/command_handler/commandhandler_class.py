@@ -7,7 +7,7 @@ from mediator import (
     AppMediatorClient,
     MediatorActionMessage,
     CommandData,
-    parser_message, send_message, crawler_message
+    parser_message, send_message, crawler_message, command_message
 )
 
 from app_enums import ClientCommands, ComponentType, ActionType, MediaType
@@ -189,8 +189,32 @@ class UserHandler(AbstractHandler):
         :param db_manager:
         :return:
         """
-        # TODO add command logic
-        pass
+        messages = []
+        if db_manager.is_admin(data.client_id):
+            messages.append(
+                command_message(
+                    ComponentType.COMMAND_HANDLER,
+                    ClientCommands.ADD_DATA_USER,
+                    {
+                        'client_id': data.command_data['client_id'],
+                        'name': data.command_data['client_id'],
+                        'last_name': data.command_data['client_id'],
+                        'nick': data.command_data['client_id']
+                    }
+                )
+            )
+        else:
+            message_text = 'У тебя нет прав на добавление пользователей. ' \
+                           'Но вот твой id: {} отправь его морозу, он разберется.'.format(data.client_id)
+            messages.append(
+                send_message(
+                    ComponentType.COMMAND_HANDLER,
+                    {
+                        'user_id': data.client_id, 'message_text': message_text, 'choices': []
+                    }
+                )
+            )
+        return messages
 
 
 class AddDataHandler(AbstractHandler):
@@ -211,11 +235,52 @@ class AddDataHandler(AbstractHandler):
         Add user to base
         :return:
         """
+        messages = []
         user = db_manager.find_user(data.client_id)
         if user is not None:
-            pass
-        # TODO add command logic
-        pass
+            message_text = 'Пользователь с id:{} уже есть в базе.'.format(data.command_data['client_id'])
+            messages.append(
+                send_message(
+                    ComponentType.COMMAND_HANDLER,
+                    {
+                        'user_id': data.client_id,
+                        'message_text': message_text,
+                        'choices': []
+                    }
+                )
+            )
+            return messages
+
+        db_manager.add_user(
+            data.command_data['client_id'],
+            data.command_data['name'],
+            data.command_data['last_name'],
+            data.command_data['nick']
+        )
+
+        message_text = 'Пользователь с id:{} добавлен.'.format(data.command_data['client_id'])
+        messages.append(
+            send_message(
+                ComponentType.COMMAND_HANDLER,
+                {
+                    'user_id': data.client_id,
+                    'message_text': message_text,
+                    'choices': []
+                }
+            )
+        )
+        messages.append(
+            send_message(
+                ComponentType.COMMAND_HANDLER,
+                {
+                    'user_id': data.command_data['client_id'],
+                    'message_text': 'Теперь ты авторизован.',
+                    'choices': []
+                }
+            )
+        )
+
+        return messages
 
     @classmethod
     def add_film(cls, data: CommandData, db_manager: DbManager):

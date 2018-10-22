@@ -3,6 +3,7 @@ import logging
 import telegram
 from telegram.ext import Updater
 import json
+import re
 
 import app.config as conf
 from scr.mediator import AppMediatorClient, MediatorActionMessage, parser_message
@@ -244,8 +245,7 @@ class Bot:
         call_back_handler  = CallbackQueryHandler(callback=self.call_back_handler)
         dispatcher.add_handler(call_back_handler)
 
-    @staticmethod
-    def auth_handler(bot, update):
+    def auth_handler(self, bot, update):
         """
 
         Handle autorise command for new user
@@ -254,7 +254,18 @@ class Bot:
         :param update:
         :return:
         """
-        print('New user {0}'.format(update.message.text))
+        logger.info('New user {0}'.format(update.message.text))
+        client_d = re.findall(r'\d{2,}', update.message.text)
+        client_id = 0 if len(client_d) == 0 else client_d.pop(0)
+        client_data = bot.get_chat(client_id)
+        data = {
+                'client_id': client_id,
+                'name': client_data.first_name,
+                'last_name': client_data.last_name,
+                'nick': client_data.username
+        }
+
+        BotCommandParser.start_command('/auth', data, self.protocol, update.message.chat_id)
 
     def serial_handler(self, bot, update):
         """
@@ -270,7 +281,7 @@ class Bot:
         # bot.send_chat_action(chat_id=update.message.chat_id, action=TorrentBotChatAction.CHECKING_SERIAL)
         # time.sleep(7)
         logger.info('New serial {0}'.format(update.message.text))
-        BotCommandParser.start_command('/serial', update.message.text, self.protocol, update.message.chat_id)
+        BotCommandParser.start_command('/serial', {'text': update.message.text}, self.protocol, update.message.chat_id)
 
     def film_handler(self, bot, update):
         """
@@ -281,7 +292,7 @@ class Bot:
         :return:
         """
         logger.info('New film {0}'.format(update.message.text))
-        BotCommandParser.start_command('/film', update.message.text, self.protocol, update.message.chat_id)
+        BotCommandParser.start_command('/film', {'text': update.message.text}, self.protocol, update.message.chat_id)
 
     @staticmethod
     def text_handler(bot, update):
@@ -341,7 +352,7 @@ class BotCommandParser:
         return [command['command_text'] for command in cls.message_commands()]
 
     @classmethod
-    def start_command(cls, command: str, text: str, protocol: AppMediatorClient, chat_id: int):
+    def start_command(cls, command: str, data: dict, protocol: AppMediatorClient, chat_id: int):
         """
         Send message to command exsecuter
         :param command:
@@ -358,13 +369,19 @@ class BotCommandParser:
             logging.error('Wrong command for execution {0}'.format(command))
             return
 
-        protocol.send_message(command_message(ComponentType.CLIENT, client_command, {'text': text}, chat_id))
+        protocol.send_message(command_message(
+            ComponentType.CLIENT,
+            client_command,
+            data,
+            chat_id)
+        )
 
     @classmethod
     def message_commands(cls)->list:
         return [
             {'command_text': '/film', 'command': ClientCommands.ADD_FILM},
             {'command_text': '/serial', 'command': ClientCommands.ADD_SERIAL},
+            {'command_text': '/auth', 'command': ClientCommands.AUTHENTICATION},
         ]
 
 if __name__ == '__main__':

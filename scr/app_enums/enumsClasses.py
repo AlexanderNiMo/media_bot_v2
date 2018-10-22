@@ -51,7 +51,6 @@ class ClientCommands(MyEnum):
     ADD_FILM = 1
     ADD_SERIAL = 2
     ADD_SERIAL_BY_THEAN = 3
-    ADD_USER = 4
     AUTHENTICATION = 5
     SEND_MESSAGES_ALL_USERS = 6
     EDIT_SETTINGS = 7

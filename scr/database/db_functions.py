@@ -110,6 +110,9 @@ class DbManager:
         # self.close_session()
         return data
 
+    def is_admin(self, client_id):
+        return client_id == int(self.config.TELEGRAMM_BOT_USER_ADMIN)
+
     def update_media_params(self, media_id: int, params: dict, media_type):
 
         find_dict = {
