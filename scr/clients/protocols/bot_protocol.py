@@ -1,6 +1,7 @@
 
 import logging
 import telegram
+from telegram import error as teleg_error
 from telegram.ext import Updater
 import json
 import re
@@ -258,7 +259,11 @@ class Bot:
         if client_id == 0:
             update.message.reply_text("Не верный id {}".format(client_id))
             return
-        client_data = bot.get_chat(client_id)
+        try:
+            client_data = bot.get_chat(client_id)
+        except teleg_error.BadRequest:
+            update.message.reply_text("Не верный id {}".format(client_id))
+
         if client_data is None:
             update.message.reply_text("Не верный id {}".format(client_id))
             return
