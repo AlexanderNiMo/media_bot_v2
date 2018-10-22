@@ -10,7 +10,7 @@ from mediator import (
     parser_message, send_message, crawler_message
 )
 
-from app_enums import ClientCommands, ComponentType, ActionType
+from app_enums import ClientCommands, ComponentType, ActionType, MediaType
 from database import DbManager
 
 logger = logging.getLogger(__name__)
@@ -198,9 +198,11 @@ class AddDataHandler(AbstractHandler):
     @classmethod
     def get_command_list(cls):
         return {
-            ClientCommands.ADD_DATA_FILM.value: cls.add_user,
+            ClientCommands.ADD_DATA_FILM.value: cls.add_film,
             ClientCommands.ADD_DATA_SERIAL.value: cls.add_serial,
-            ClientCommands.ADD_DATA_USER.value: cls.add_film,
+            ClientCommands.ADD_DATA_USER.value: cls.add_user,
+            ClientCommands.UPDATE_MEDIA.value: cls.update_media_data,
+            ClientCommands.ADD_MEDIA_TO_USER_LIST: cls.add_media_to_user_list,
         }
 
     @classmethod
@@ -218,13 +220,14 @@ class AddDataHandler(AbstractHandler):
     @classmethod
     def add_film(cls, data: CommandData, db_manager: DbManager):
         film = db_manager.add_film(
+            data.client_id,
             data.command_data['kinopoisk_id'],
             data.command_data['title'],
             data.command_data['year'],
             data.command_data['url']
         )
 
-        message_text = 'Фильм {0} добавлен к поску \n {1}'.format(
+        message_text = 'Фильм {0} добавлен к поиску \n {1}'.format(
             data.command_data['title'],
             data.command_data['url']
         )
@@ -241,7 +244,14 @@ class AddDataHandler(AbstractHandler):
         )
 
         messages.append(
-            crawler_message(ComponentType.COMMAND_HANDLER, data.client_id, {'media_id': film.id})
+            crawler_message(
+                ComponentType.COMMAND_HANDLER,
+                data.client_id,
+                {
+                    'media_id': film.kinopoisk_id,
+                    'media_type': MediaType.FILMS
+                }
+            )
         )
 
         return messages
@@ -249,6 +259,7 @@ class AddDataHandler(AbstractHandler):
     @classmethod
     def add_serial(self, data: CommandData, db_manager: DbManager):
         serial = db_manager.add_serial(
+            data.client_id,
             data.command_data['kinopoisk_id'],
             data.command_data['title'],
             data.command_data['year'],
@@ -257,8 +268,9 @@ class AddDataHandler(AbstractHandler):
             data.command_data['series']
         )
 
-        message_text = 'Сериал {0} добавлен к поску \n {1}'.format(
+        message_text = 'Сериал {0} сезон {1} добавлен к поиску \n {2}'.format(
             data.command_data['title'],
+            data.command_data['season'],
             data.command_data['url']
         )
 
@@ -267,11 +279,52 @@ class AddDataHandler(AbstractHandler):
                 ComponentType.COMMAND_HANDLER,
                 {'user_id': data.client_id, 'message_text': message_text, 'choices': []}
             ),
-            crawler_message(ComponentType.COMMAND_HANDLER, data.client_id, {'media_id': serial.id})
+            crawler_message(
+                ComponentType.COMMAND_HANDLER,
+                data.client_id,
+                {
+                    'media_id': serial.kinopoisk_id,
+                    'media_type': MediaType.SERIALS,
+                    'season': data.command_data['season']
+                }
+            )
         ]
 
         return messages
 
+    @classmethod
+    def update_media_data(cls, data: CommandData, db_manager: DbManager):
+        com_data = data.command_data
+        if 'media_id' not in com_data.keys():
+            raise AttributeError('Для обновлвения данных необходимо передать kinopoisk_id')
+
+        messages = []
+        com_data = data.command_data
+
+        db_manager.update_media_params(
+            com_data['media_id'],
+            com_data['upd_data'],
+            com_data['media_type']
+        )
+
+        if 'start_download' in com_data.keys() and com_data['start_download']:
+            messages.append(crawler_message(
+                ComponentType.COMMAND_HANDLER,
+                data.client_id,
+                {'media_id': data.command_data['media_id']},
+                ActionType.DOWNLOAD_TORRENT
+            ))
+
+        return messages
+
+    @classmethod
+    def add_media_to_user_list(self, data: CommandData, db_manager: DbManager):
+        db_manager.add_media_to_user_list(
+            data.client_id,
+            data.command_data['kinopoisk_id'],
+            data.command_data['media_type'],
+            data.command_data['season']
+        )
 
 def get_command_handlers():
     mods = inspect.getmembers(
@@ -280,6 +333,7 @@ def get_command_handlers():
     )
     for mod in mods:
         yield mod[1]
+
 
 if __name__ == '__main__':
     pass

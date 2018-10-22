@@ -59,6 +59,9 @@ class ClientCommands(MyEnum):
     ADD_DATA_FILM = 8
     ADD_DATA_SERIAL = 9
     ADD_DATA_USER = 10
+    ADD_MEDIA_TO_USER_LIST = 11
+
+    UPDATE_MEDIA = 12
 
 
 class MediaType(MyEnum):
