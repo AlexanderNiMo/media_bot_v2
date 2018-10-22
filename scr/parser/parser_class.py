@@ -271,7 +271,7 @@ class KinopoiskParser(BaseParser):
 
     def end_chain(self, data: ParserData)-> list:
 
-        if len(self.next_data) == 0:
+        if len(self.next_data['choices']) == 0:
             message_text = 'В кинопоиске, по запросу {0}, ' \
                        'ничего не найдено, уточни свой запрос.'.format(data.data['query'])
         else:
