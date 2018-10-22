@@ -83,8 +83,8 @@ class MediaData(Base):
 
     type = Column(Enum(MediaType))
 
-    download_url = Column(Unicode(400))
-    theam_id = Column(Unicode(15))
+    download_url = Column(Unicode(500))
+    theam_id = Column(Unicode(500))
 
     torrent_tracker = Enum(TorrentType)
     exsists_in_plex = Column(Boolean)
@@ -260,7 +260,10 @@ def get_session(enj):
 
 def create_db(connection_str, db_name):
     from sqlalchemy import create_engine
-    enj = create_engine(connection_str, encoding='utf-8')
+    enj = create_engine(
+        '{0}'.format(connection_str),
+        encoding='utf-8'
+    )
     enj.execute('CREATE DATABASE {} CHARACTER SET utf8 COLLATE utf8_general_ci'.format(db_name))
     enj.execute('USE {}'.format(db_name))
     Base.metadata.create_all(enj)
