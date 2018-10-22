@@ -197,10 +197,11 @@ class UserHandler(AbstractHandler):
                     ClientCommands.ADD_DATA_USER,
                     {
                         'client_id': data.command_data['client_id'],
-                        'name': data.command_data['client_id'],
-                        'last_name': data.command_data['client_id'],
-                        'nick': data.command_data['client_id']
-                    }
+                        'name': data.command_data['name'],
+                        'last_name': data.command_data['last_name'],
+                        'nick': data.command_data['nick']
+                    },
+                    data.client_id
                 )
             )
         else:

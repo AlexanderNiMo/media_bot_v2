@@ -281,7 +281,12 @@ class Bot:
         # bot.send_chat_action(chat_id=update.message.chat_id, action=TorrentBotChatAction.CHECKING_SERIAL)
         # time.sleep(7)
         logger.info('New serial {0}'.format(update.message.text))
-        BotCommandParser.start_command('/serial', {'text': update.message.text}, self.protocol, update.message.chat_id)
+        BotCommandParser.start_command(
+            '/serial',
+            {'text': update.message.text.replace('/serial', '')},
+            self.protocol,
+            update.message.chat_id
+        )
 
     def film_handler(self, bot, update):
         """
@@ -292,7 +297,11 @@ class Bot:
         :return:
         """
         logger.info('New film {0}'.format(update.message.text))
-        BotCommandParser.start_command('/film', {'text': update.message.text}, self.protocol, update.message.chat_id)
+        BotCommandParser.start_command(
+            '/film',
+            {'text': update.message.text.replace('/film', '')},
+            self.protocol,
+            update.message.chat_id)
 
     @staticmethod
     def text_handler(bot, update):
@@ -361,7 +370,7 @@ class BotCommandParser:
         :param chat_id:
         :return:
         """
-        text = text.replace(command, '')
+
         client_command = [x['command'] for x in cls.message_commands() if x['command_text'] == command]
         client_command = client_command[0] if len(client_command) else None
 
@@ -383,6 +392,7 @@ class BotCommandParser:
             {'command_text': '/serial', 'command': ClientCommands.ADD_SERIAL},
             {'command_text': '/auth', 'command': ClientCommands.AUTHENTICATION},
         ]
+
 
 if __name__ == '__main__':
 
