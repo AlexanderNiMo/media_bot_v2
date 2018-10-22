@@ -5,3 +5,5 @@ kinopoiskpy
 plexapi
 beautifulsoup4
 torrent_parser
+mysql
+pysocks

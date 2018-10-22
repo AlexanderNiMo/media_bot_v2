@@ -1,19 +1,20 @@
+from multiprocessing import Queue
+from threading import Thread
+
+from scr.mediator import AppMediator, MediatorActionMessage, crawler_message
+from scr.app_enums import ComponentType, ActionType
+
+from scr.clients.protocols.bot_protocol import BotProtocol
+from scr.parser.parser_class import Parser
+from scr.crawler import Crawler
+from scr.command_handler import CommandMessageHandler
+import app.config as config
+
+import logging
+import time
 
 
 def create_app_test():
-    from multiprocessing import Queue
-
-    from scr.mediator import AppMediator, MediatorActionMessage
-    from scr.app_enums import ComponentType, ActionType
-
-    from scr.clients.protocols.bot_protocol import BotProtocol
-    from scr.parser.parser_class import Parser
-    from scr.crawler import Crawler
-    from scr.command_handler import CommandMessageHandler
-    import app.config as config
-
-    import logging
-    import time
 
     LOG_FILE_NAME = 'main.log'
 
@@ -22,7 +23,7 @@ def create_app_test():
     consol_hndl = logging.StreamHandler()
     file_hndl = logging.FileHandler(LOG_FILE_NAME)
 
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
 
     file_hndl.setFormatter(formatter)
     consol_hndl.setFormatter(formatter)
@@ -45,7 +46,8 @@ def create_app_test():
 
     for client in clients:
         client.start()
-
+    reglament_thread = Thread(target=reglament_work, args=[mediator])
+    reglament_thread.start()
     try:
         while True:
             time.sleep(30)
@@ -53,10 +55,28 @@ def create_app_test():
             if not mediator.is_alive():
                 logger.error('Медиатор умер, пеерзапускаю...')
                 mediator = AppMediator(mediator_q, mediator.clients)
+                reglament_thread = Thread(target=reglament_work, args=[mediator])
+                reglament_thread.start()
                 mediator.start()
             mediator.check_clients()
     finally:
         file_hndl.close()
+
+
+def reglament_work(mediator: AppMediator):
+
+    while True:
+        if not mediator.is_alive():
+            return
+        mediator.send_message(crawler_message(
+            ComponentType.MAIN_APP,
+            config.TELEGRAMM_BOT_USER_ADMIN,
+            {},
+            ActionType.CHECK
+        ))
+        # time.sleep(60*60*3)
+        time.sleep(60*3)
+
 
 if __name__ == '__main__':
 
