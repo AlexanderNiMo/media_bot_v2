@@ -8,7 +8,8 @@ import app.config as conf
 from scr.mediator import AppMediatorClient, MediatorActionMessage, parser_message
 from scr.app_enums import ActionType, ComponentType, ClientCommands
 from mediator import command_message
-from multiprocessing import Process
+from multiprocessing import Process, Queue
+import threading
 import pickledb
 import time
 import uuid
@@ -27,12 +28,12 @@ class BotProtocol(AppMediatorClient):
         super(self.__class__, self).__init__(in_queue, out_queue, config)
         self.__bot = None
         self.bot_process = None
+        self.t_bot_checker = None
 
     def main_actions(self):
         logger.debug('Запуск основного потока работы {}'.format(self))
 
         self.create_bot()
-
         self.listen()
 
     def send_bot_message(self, text, user_id, choices=[]):
@@ -49,6 +50,10 @@ class BotProtocol(AppMediatorClient):
         self.__bot = Bot(self.config, self.config.BOT_MODE, self)
         if self.bot_process is None:
             self.start_bot_process()
+        if self.t_bot_checker is None:
+            logger.debug('Запуск процесса проверки состояния бота')
+            self.t_bot_checker = threading.Thread(target=self.check_bot_instanse)
+            self.t_bot_checker.start()
 
     def start_bot_process(self):
         logger.debug('Запуск процесса прослушивания бота.')
