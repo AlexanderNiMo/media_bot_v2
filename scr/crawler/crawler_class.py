@@ -10,6 +10,7 @@ from multiprocessing import Queue
 
 logger = logging.getLogger(__name__)
 
+
 class Job:
     def __init__(self, action_type, client_id, media_id, title, season,
                  year, download_url, torrent_tracker, theam_id, kinopoisk_url, **kwargs):
@@ -27,7 +28,11 @@ class Job:
 
     @property
     def text_query(self):
-        return '{}'.format(self.title, )
+        return '{0} {1} {2}'.format(
+            self.title,
+            self.year,
+            'сезон {}'.format(self.season) if not self.season == '' else ''
+        )
 
 
 class Crawler(AppMediatorClient):
@@ -37,7 +42,7 @@ class Crawler(AppMediatorClient):
         ActionType.CHECK_FILMS,
         ActionType.CHECK_SERIALS,
         ActionType.CHECK,
-        ActionType.DOWNLOAD_TORREN
+        ActionType.DOWNLOAD_TORRENT
     ]
 
     def __init__(self, in_queue: Queue, out_queue: Queue, config, threads):
@@ -62,16 +67,16 @@ class Crawler(AppMediatorClient):
 
     def handle_message(self, message: MediatorActionMessage):
         logger.info(
-            'Полученно новое сообщение. для Crawler от {0} с данными {}'.format(
+            'Полученно новое сообщение. для Crawler от {0} с данными {1}'.format(
                 message.from_component,
-                message
+                message.data
             )
         )
 
         self.add_jobs(message)
 
     def add_jobs(self, message: MediatorActionMessage):
-
+        logger.debug('Добавление задач, для выполнения на основании сообщения {}'.format(message))
         jobs = self.db_handler.get_job_list(message)
         for job in jobs:
             self.jobs.append(job)
@@ -102,8 +107,17 @@ class Crawler(AppMediatorClient):
         self.active_workers = list((i for i in self.active_workers if not i.ended))
 
     def handle_worker_results(self):
-        map(self.send_message, self.messages)
-        self.messages = []
+        logger.info('Обработка результатов работы.')
+        ex = None
+        try:
+            for elem in self.messages:
+                self.send_message(elem)
+        except Exception as ex:
+            ex = ex
+        finally:
+            self.messages = []
+            if ex is not None:
+                raise ex
 
     def add_workers(self):
 
@@ -126,7 +140,7 @@ class Crawler(AppMediatorClient):
         ]:
             return TorrentSearchWorker(job, self.config)
         elif job.action_type in [
-            ActionType.DOWNLOAD_TORREN
+            ActionType.DOWNLOAD_TORRENT
         ]:
             return DownloadWorker(job, self.config)
 
@@ -145,11 +159,16 @@ class CrawlerMessageHandler:
         data = message.data
         media = []
         if not data.media_id == 0:
-            media = [db.find_media(data.media_id, data.media_type, data.season)]
+            media = db.find_media(data.media_id, data.media_type, data.season)
+            if media is None:
+                media = []
+            else:
+                media = [media]
         elif not data.media_type == MediaType.BASE_MEDIA:
             media = db.find_all_media(data.media_type)
-        if len(media)==0:
+        if len(media) == 0:
             logger.error('Не удалось найти данные в базе по запросу {}'.format(message.data))
+            return []
 
         for element in media:
 
@@ -161,7 +180,7 @@ class CrawlerMessageHandler:
             result.append(
                 Job(
                     **{
-                        'type': message.action,
+                        'action_type': message.action,
                         'client_id': data.client_id,
                         'media_id': data.media_id,
                         'title': element.label,
@@ -190,7 +209,8 @@ if __name__ == '__main__':
     c = Crawler(Queue(), Queue(), config, 10)
 
     message = MediatorActionMessage(ComponentType.CRAWLER, ActionType.CHECK, ComponentType.CRAWLER)
-    message.data = CrawlerData(1, 1)
+    message.data = CrawlerData(123109378, 577266)
 
     c.add_jobs(message)
     c.update_jobs()
+    c.start()
