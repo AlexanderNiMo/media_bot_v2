@@ -233,7 +233,7 @@ class KinopoiskParser(BaseParser):
             exact_match = self.check_title_match_query_data(element, data)
 
             series = 0
-            if len(element.seasons) <= data['season']-1:
+            if len(element.seasons) >= data['season']:
                 season = element.seasons[data['season']-1]
                 series = len(season.episodes)
 
@@ -410,6 +410,20 @@ class DataBaseParser(BaseParser):
                              'choices': []
                          }
                          )
+        )
+
+        self.messages.append(
+            command_message(
+                ComponentType.PARSER,
+                ClientCommands.ADD_MEDIA_TO_USER_LIST,
+                {
+                    'kinopoisk_id': data.data['kinopoisk_id'],
+                    'media_type': MediaType.FILMS if 'serial' in data.data.keys()
+                                    and not data.data['serial'] else MediaType.SERIALS,
+                    'season': data.data['season'] if 'season' in data.data.keys() else 0,
+                },
+                data.client_id,
+            )
         )
 
         return self.messages
