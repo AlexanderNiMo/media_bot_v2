@@ -1,8 +1,11 @@
 import logging
 from typing import List
 
-from .WorkerABC import Worker
-from .TorrentTrackers import search, download, Torrent
+from mediator import send_message, command_message
+from app_enums import ComponentType, ClientCommands, LockingStatus, MediaType, ActionType
+from crawler.Workers.WorkerABC import Worker
+from crawler.Workers.TorrentTrackers import search, download, Torrent
+from queue import Empty
 
 logger = logging.getLogger(__name__)
 
@@ -13,22 +16,97 @@ class TorrentSearchWorker(Worker):
         return self.work
 
     def work(self):
-
-        data = search(self.job.text_query)
-        self.returned_data = self.get_best_match(data)
+        logger.debug('Start torrent worker.')
+        data = search(self.config, self.job.text_query)
+        self.returned_data.put(self.get_best_match(data))
+        logger.debug('Torrent worker ended.')
 
     def get_best_match(self, data: List[Torrent]):
-        sorted(data, key=lambda x: x.pier)
-        filter(lambda x: not x.kinopoisk_id == '', data)
-        filter(lambda x: not x.files_amount < 4, data)
-        return data[0]
+
+        loc_data = filter(lambda x: not x.kinopoisk_id == '', data)
+
+        if len(list(loc_data)) > 5 or len(list(loc_data)) >= len(data)/2:
+            if not self.job.media_id == -1:
+                loc_data = filter(lambda x: not x.kinopoisk_id == self.job.media_id, data)
+        else:
+            loc_data = data
+
+        if self.job.season == '':
+            loc_data = filter(lambda x: x.file_amount < 4, loc_data)
+
+        loc_data = sorted(loc_data, key=lambda x: x.pier)
+        res = list(loc_data)
+        if len(res) == 0:
+            return None
+        return res[0]
 
     @property
     def result(self):
+        try:
+            data = self.returned_data.get(False, timeout=2)
+        except Empty:
+            data = None
+        if data is None:
+            if not self.job.action_type == ActionType.FORCE_CHECK:
+                return []
+            message_text = '{0} по запросу {1} не найден, ' \
+                           'но я буду искать его непрестанно.'.format(
+                'Фильм' if self.job.season == '' else 'Сериал',
+                self.job.text_query)
+            return [send_message(
+                ComponentType.CRAWLER,
+                {
+                    'user_id': self.job.client_id,
+                    'message_text': message_text,
+                    'choices': []
+                }
+
+            )]
         messages = []
+        cmd_message = command_message(
+            ComponentType.CRAWLER,
+            ClientCommands.UPDATE_MEDIA,
+            {
+                'media_id': self.job.media_id,
+                'media_type': MediaType.FILMS if self.job.season == '' else MediaType.SERIALS,
+                'start_download': True,
+                'upd_data': {
+                    'status': LockingStatus.ENDED if self.job.season == '' else LockingStatus.FIND_TORRENT,
+                    'download_url': data.url,
+                    'theam_id': data.theam_url,
+                    'torrent_tracker': data.tracker,
+                    'exsists_in_plex': True,
+                    'current_series': 0 if self.job.season == '' else data.file_amount
+                },
+            },
+            self.job.client_id
+        )
+        messages.append(cmd_message)
         return messages
 
 
 if __name__ == '__main__':
+    import time
+    from app import config
+    from crawler.crawler_class import Job
+    import logging
 
-    t = TorrentSearchWorker({'text_query': 'Гарри поттер'})
+    t = TorrentSearchWorker(
+    Job(**{
+        'action_type': None,
+        'client_id': 123109378,
+        'media_id': 571884,
+        'title': 'Гарри Поттер и философский камень',
+        'season': '',
+        'year': 2001,
+        'download_url': '',
+        'torrent_tracker': '',
+        'theam_id': '',
+        'kinopoisk_url': 'https://www.kinopoisk.ru/film/571884/'
+    }), config)
+
+    t.start()
+    while not t.ended:
+        time.sleep(5)
+    print(t.result)
+

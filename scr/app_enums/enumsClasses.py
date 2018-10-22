@@ -19,7 +19,7 @@ class ComponentType(MyEnum):
     Описывает словарь видов компонентов, взаимодействующих друг с другом
 
     """
-
+    MAIN_APP = 0
     CLIENT = 1
     PARSER = 2
     CRAWLER = 3
@@ -40,7 +40,7 @@ class ActionType(MyEnum):
     CHECK_FILMS = 5
     CHECK_SERIALS = 6
     CHECK = 7
-    DOWNLOAD_TORREN = 8
+    DOWNLOAD_TORRENT = 8
 
 class ClientCommands(MyEnum):
     """
@@ -92,6 +92,7 @@ class LockingStatus(MyEnum):
 
     IN_PROGRESS = 0
     ENDED = 1
+    FIND_TORRENT = 2
 
 
 class TorrentType(MyEnum):
@@ -100,7 +101,9 @@ class TorrentType(MyEnum):
 
     """
 
-    RUTRACKER = 0
+    NONE_TYPE = 0
+    RUTRACKER = 1
+    RUTOR = 2
 
 
 class UserRule(MyEnum):
