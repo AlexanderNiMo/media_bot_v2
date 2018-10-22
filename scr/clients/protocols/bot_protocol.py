@@ -17,8 +17,6 @@ import uuid
 
 logger = logging.getLogger(__name__)
 
-# TODO refactor inline arguments
-
 
 class BotProtocol(AppMediatorClient):
 
@@ -107,7 +105,7 @@ class Bot:
 
         url_path = 'TOKEN'
 
-        upd_q = self.updater.start_webhook(
+        self.updater.start_webhook(
             listen=self.WEBHOOK_HOST,
             port=self.WEBHOOK_PORT,
             url_path=url_path
@@ -137,10 +135,10 @@ class Bot:
         if len(choices) == 0:
             return
 
-        self.send_choise_messages(chat_id, choices)
+        self.send_choice_messages(chat_id, choices)
 
         message_text = 'Выбери номер ссылки на фильм.'
-        keyboard_markup = self.constract_keyboard(choices)
+        keyboard_markup = self.construct_keyboard(choices)
 
         self.bot.send_message(
             chat_id=chat_id,
@@ -148,22 +146,22 @@ class Bot:
             reply_markup=keyboard_markup
         )
 
-    def send_choise_messages(self, chat_id, choices):
+    def send_choice_messages(self, chat_id, choices):
         for i, choise in enumerate(choices):
             self.bot.send_message(
                     chat_id=chat_id,
                     text='{1} {0}'.format(choise['message_text'], i)
                 )
 
-    def constract_keyboard(self, choices)-> telegram.InlineKeyboardMarkup:
+    def construct_keyboard(self, choices)-> telegram.InlineKeyboardMarkup:
 
         buttons_in_row = 3
-        KeyBoard = []
+        key_board = []
         row_buttons = []
         a = 1
         for i, choise in enumerate(choices):
             if a > buttons_in_row:
-                KeyBoard.append(row_buttons.copy())
+                key_board.append(row_buttons.copy())
                 a = 1
                 row_buttons = []
             row_buttons.append(
@@ -175,9 +173,9 @@ class Bot:
 
             a += 1
         if a <= buttons_in_row:
-            KeyBoard.append(row_buttons.copy())
+            key_board.append(row_buttons.copy())
 
-        return telegram.InlineKeyboardMarkup(KeyBoard)
+        return telegram.InlineKeyboardMarkup(key_board)
 
     def save_callback_data(self, data):
 
@@ -242,7 +240,7 @@ class Bot:
         )
         dispatcher.add_handler(cmd_handler)
 
-        call_back_handler  = CallbackQueryHandler(callback=self.call_back_handler)
+        call_back_handler = CallbackQueryHandler(callback=self.call_back_handler)
         dispatcher.add_handler(call_back_handler)
 
     def auth_handler(self, bot, update):
@@ -257,7 +255,14 @@ class Bot:
         logger.info('New user {0}'.format(update.message.text))
         client_d = re.findall(r'\d{2,}', update.message.text)
         client_id = 0 if len(client_d) == 0 else client_d.pop(0)
+        if client_id == 0:
+            update.message.reply_text("Не верный id {}".format(client_id))
+            return
         client_data = bot.get_chat(client_id)
+        if client_data is None:
+            update.message.reply_text("Не верный id {}".format(client_id))
+            return
+
         data = {
                 'client_id': client_id,
                 'name': client_data.first_name,
@@ -277,9 +282,6 @@ class Bot:
         :return:
 
         """
-        import time
-        # bot.send_chat_action(chat_id=update.message.chat_id, action=TorrentBotChatAction.CHECKING_SERIAL)
-        # time.sleep(7)
         logger.info('New serial {0}'.format(update.message.text))
         BotCommandParser.start_command(
             '/serial',
@@ -332,7 +334,7 @@ class BotCache:
 
     def __init__(self, db_path):
         self.dump_name = db_path
-        self.base = My_Pickledb(self.dump_name, True)
+        self.base = MyPickledb(self.dump_name, True)
 
     def get(self, key):
         return self.base.get(key)
@@ -343,7 +345,7 @@ class BotCache:
         return key
 
 
-class My_Pickledb(pickledb.pickledb):
+class MyPickledb(pickledb.pickledb):
 
     def set_sigterm_handler(self):
         '''Assigns sigterm_handler for graceful shutdown during dump()'''
@@ -403,5 +405,5 @@ if __name__ == '__main__':
 
     b = Bot(conf, conf.BOT_MODE, BotProtocol(Queue(), Queue(), conf))
 
-    a = b.get_start_bot_action()
-    a()
+    act = b.get_start_bot_action()
+    act()
