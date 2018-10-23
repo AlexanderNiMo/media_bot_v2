@@ -49,16 +49,16 @@ class DownloadWorker(Worker):
             )
         return messages
 
-    def get_clients_for_notification(self):
+    def get_clients_for_notification(self)->list:
         db_manager = DbManager(self.config)
         result = []
         if not self.job.client_id == '':
             result.append(self.job.client_id)
 
-        for user in db_manager.get_users_for_notification():
+        for user in db_manager.get_users_for_notification(self.job.media_id):
             result.append(user.client_id)
 
-        return result
+        return list(set(result))
 
 
 if __name__ == '__main__':

@@ -41,12 +41,18 @@ class DbManager:
         self.__session.close()
         self.__session = None
 
-    def get_users_for_notification(self):
+    def get_users_for_notification(self, media_id):
+        users = []
+        media_users = self.session.query(self.User).join(self.User.media).filter(self.MediaData.kinopoisk_id==media_id).all()
+        for i in media_users:
+            users.append(i)
+
         data = self.session.query(self.UserOptionsT)\
             .filter_by(option=UserOptions.NOTIFICATION)\
             .filter_by(value=1)\
             .all()
-        return [i.user for i in data]
+        users += [i.user for i in data]
+        return users
 
     def find_all_media(self, media_type):
         """
