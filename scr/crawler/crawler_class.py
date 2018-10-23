@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class Job:
     def __init__(self, action_type, client_id, media_id, title, season,
-                 year, download_url, torrent_tracker, theam_id, kinopoisk_url, **kwargs):
+                 year, download_url, torrent_tracker, theam_id, kinopoisk_url, max_series, **kwargs):
         self.action_type = action_type
         self.client_id = client_id
         self.media_id = media_id
@@ -24,6 +24,7 @@ class Job:
         self.season = season
         self.year = year
         self.kinopoisk_url = kinopoisk_url
+        self.max_series = max_series
         self.__dict__.update(**kwargs)
 
     @property
@@ -99,7 +100,7 @@ class Crawler(AppMediatorClient):
 
         :return:
         """
-        logger.info('Проверка статуса заданий.')
+        logger.debug('Проверка статуса заданий.')
 
         for worker in self.active_workers:
             if worker.ended:
@@ -107,7 +108,7 @@ class Crawler(AppMediatorClient):
         self.active_workers = list((i for i in self.active_workers if not i.ended))
 
     def handle_worker_results(self):
-        logger.info('Обработка результатов работы.')
+        logger.debug('Обработка результатов работы.')
         ex = None
         try:
             for elem in self.messages:
@@ -164,7 +165,7 @@ class CrawlerMessageHandler:
                 media = []
             else:
                 media = [media]
-        elif not data.media_type == MediaType.BASE_MEDIA:
+        else:
             media = db.find_all_media(data.media_type)
         if len(media) == 0:
             logger.error('Не удалось найти данные в базе по запросу {}'.format(message.data))
@@ -176,6 +177,11 @@ class CrawlerMessageHandler:
                 season = element.season
             except AttributeError:
                 season = ''
+
+            try:
+                max_series = element.series
+            except AttributeError:
+                max_series = 0
 
             result.append(
                 Job(
@@ -189,7 +195,8 @@ class CrawlerMessageHandler:
                         'download_url': element.download_url,
                         'torrent_tracker': element.torrent_tracker,
                         'theam_id': element.theam_id,
-                        'kinopoisk_url': element.kinopoisk_url
+                        'kinopoisk_url': element.kinopoisk_url,
+                        'max_series': max_series
                     }
                 )
             )

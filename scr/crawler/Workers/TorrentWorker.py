@@ -62,6 +62,14 @@ class TorrentSearchWorker(Worker):
                 }
 
             )]
+
+        if self.job.season == '':
+            status = LockingStatus.ENDED
+        elif not self.job.max_series == 0 and data.file_amount == self.job.max_series:
+            status = LockingStatus.ENDED
+        else:
+            status = LockingStatus.FIND_TORRENT
+
         messages = []
         cmd_message = command_message(
             ComponentType.CRAWLER,
@@ -71,7 +79,7 @@ class TorrentSearchWorker(Worker):
                 'media_type': MediaType.FILMS if self.job.season == '' else MediaType.SERIALS,
                 'start_download': True,
                 'upd_data': {
-                    'status': LockingStatus.ENDED if self.job.season == '' else LockingStatus.FIND_TORRENT,
+                    'status': status,
                     'download_url': data.url,
                     'theam_id': data.theam_url,
                     'torrent_tracker': data.tracker,
@@ -102,7 +110,8 @@ if __name__ == '__main__':
         'download_url': '',
         'torrent_tracker': '',
         'theam_id': '',
-        'kinopoisk_url': 'https://www.kinopoisk.ru/film/571884/'
+        'kinopoisk_url': 'https://www.kinopoisk.ru/film/571884/',
+        'max_series':0
     }), config)
 
     t.start()

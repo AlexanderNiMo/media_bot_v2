@@ -63,6 +63,8 @@ class DbManager:
         data_class = self.Film
         if media_type == MediaType.SERIALS:
             data_class = self.Serial
+        elif media_type == MediaType.BASE_MEDIA:
+            data_class = self.MediaData
         data = self.session.query(data_class).filter_by(data_class.status != LockingStatus.ENDED).all()
         return data
 

@@ -31,11 +31,17 @@ class DownloadWorker(Worker):
     def result(self):
         messages = []
         clients = self.get_clients_for_notification()
-        message_text = '{0} {1} будет скачан, через несколько минут. \n {2}'.format(
-            'Фильм' if self.job.season == '' else 'Сериал',
-            self.job.text_query,
-            self.job.kinopoisk_url
-        )
+        if self.job.season == '':
+            message_text = 'Фильм {0} будет скачан, через несколько минут. \n {1}'.format(
+                self.job.text_query,
+                self.job.kinopoisk_url
+            )
+        else:
+            message_text = 'Новая серия {0} () будет скачана, через несколько минут. \n {1}'.format(
+                self.job.text_query,
+                self.job.kinopoisk_url
+            )
+
         for clien in clients:
             messages.append(
                 send_message(
@@ -78,6 +84,7 @@ if __name__ == '__main__':
         'download_url': 'http://d.rutor.info/download/659488',
         'season': '',
         'text_query': 'Гарри Поттер и Орден Феникса',
+        'max_series': 0,
     }), config)
 
     d.work()
