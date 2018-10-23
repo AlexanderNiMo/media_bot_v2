@@ -386,8 +386,9 @@ class Rutracker(TorrentTracker):
             '189',
             '2366',
             '911',
-            '2366',
-            '921'
+            '2100',
+            '921',
+            '9'
         ]
         return u','.join(self._get_sub_forum(forum_list))
 
