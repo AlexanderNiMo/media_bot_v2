@@ -185,7 +185,7 @@ class DbManager:
         self.session.add(user)
         self.session.commit()
 
-    def change_user_option(self, clien_id, option_name: UserOptions, value):
+    def change_user_option(self, clien_id, option_name: UserOptions, value=0):
 
         session = self.session
 
@@ -199,14 +199,15 @@ class DbManager:
             user.options.append(opt)
         else:
             user, opt = result
-            opt.value = value
+            opt.value = value if value != 0 else not opt.value
         if user is None:
             raise ValueError('No user with client id {0}'.format(clien_id))
-
+        new_value = opt.value
         session.add(opt)
         session.add(user)
         session.commit()
         self.close_session()
+        return new_value
 
 if __name__ == '__main__':
 

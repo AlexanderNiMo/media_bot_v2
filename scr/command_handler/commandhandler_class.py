@@ -178,8 +178,20 @@ class UserHandler(AbstractHandler):
         Change some user option
         :return:
         """
-        # TODO add command logic
-        pass
+        messages = []
+        new_value = db_manager.change_user_option(data.client_id, data.command_data['option'])
+        message_text = 'Статус оповещения установлен. Новое значение "{}"'.format(
+            'оповещать' if new_value == 1 else 'не оповещать'
+        )
+        messages.append(
+                send_message(
+                    ComponentType.COMMAND_HANDLER,
+                    {
+                        'user_id': data.client_id, 'message_text': message_text, 'choices': []
+                    }
+                )
+            )
+        return messages
 
     @classmethod
     def auth_query(cls, data: CommandData, db_manager: DbManager):
