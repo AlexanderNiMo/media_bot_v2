@@ -30,7 +30,12 @@ def create_app_test():
 
     logger.addHandler(file_hndl)
     logger.addHandler(consol_hndl)
-    logger.setLevel(logging.DEBUG)
+    if config.LOGGER_LEVEL == 'info':
+        logger.setLevel(logging.DEBUG)
+    elif config.LOGGER_LEVEL == 'error':
+        logger.setLevel(logging.DEBUG)
+    elif config.LOGGER_LEVEL == 'debug':
+        logger.setLevel(logging.DEBUG)
 
     mediator_q = Queue()
 

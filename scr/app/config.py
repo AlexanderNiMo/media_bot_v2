@@ -51,6 +51,8 @@ def create_default_config(parser: configparser.ConfigParser):
             'serial_folder': ''
         }
 
+    parser['logger'] = {'logger_level':'info'}
+
     with open(CONFIG_FILE_NAME, 'w') as configfile:
         parser.write(configfile)
 
@@ -116,3 +118,5 @@ if not path.exists(TORRENT_FILM_PATH):
 TORRENT_SERIAL_PATH = path.normpath(conf_parser['Torrents_folders']['serial_folder'])
 if not path.exists(TORRENT_SERIAL_PATH):
     os.mkdir(TORRENT_SERIAL_PATH)
+
+LOGGER_LEVEL = conf_parser['logger']['logger_level']

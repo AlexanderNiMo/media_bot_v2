@@ -133,15 +133,15 @@ class Crawler(AppMediatorClient):
         self.active_workers.append(worker)
 
     def get_worker(self, job: Job):
-        if job.action_type in [
-            ActionType.FORCE_CHECK,
-            ActionType.CHECK_FILMS,
-            ActionType.CHECK_SERIALS,
-            ActionType.CHECK
+        if job.action_type.value in [
+            ActionType.FORCE_CHECK.value,
+            ActionType.CHECK_FILMS.value,
+            ActionType.CHECK_SERIALS.value,
+            ActionType.CHECK.value
         ]:
             return TorrentSearchWorker(job, self.config)
-        elif job.action_type in [
-            ActionType.DOWNLOAD_TORRENT
+        elif job.action_type.value in [
+            ActionType.DOWNLOAD_TORRENT.value
         ]:
             return DownloadWorker(job, self.config)
 
@@ -188,7 +188,7 @@ class CrawlerMessageHandler:
                     **{
                         'action_type': message.action,
                         'client_id': data.client_id,
-                        'media_id': data.media_id,
+                        'media_id': element.kinopoisk_id,
                         'title': element.label,
                         'season': season,
                         'year': element.year,

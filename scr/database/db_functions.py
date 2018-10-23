@@ -65,7 +65,7 @@ class DbManager:
             data_class = self.Serial
         elif media_type == MediaType.BASE_MEDIA:
             data_class = self.MediaData
-        data = self.session.query(data_class).filter_by(data_class.status != LockingStatus.ENDED).all()
+        data = self.session.query(data_class).filter(data_class.status != LockingStatus.ENDED).all()
         return data
 
     def find_media(self, kinopoisk_id, media_type, season=None):

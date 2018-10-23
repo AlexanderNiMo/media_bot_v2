@@ -27,7 +27,7 @@ class TorrentSearchWorker(Worker):
 
         if len(list(loc_data)) > 5 or len(list(loc_data)) >= len(data)/2:
             if not self.job.media_id == -1:
-                loc_data = filter(lambda x: not x.kinopoisk_id == self.job.media_id, data)
+                loc_data = filter(lambda x: x.kinopoisk_id == self.job.media_id, data)
         else:
             loc_data = data
 
@@ -47,7 +47,7 @@ class TorrentSearchWorker(Worker):
         except Empty:
             data = None
         if data is None:
-            if not self.job.action_type == ActionType.FORCE_CHECK:
+            if not self.job.action_type.value == ActionType.FORCE_CHECK.value:
                 return []
             message_text = '{0} по запросу {1} не найден, ' \
                            'но я буду искать его непрестанно.'.format(

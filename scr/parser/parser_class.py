@@ -228,8 +228,11 @@ class KinopoiskParser(BaseParser):
 
             if 'year' in data.keys() and not element.year == data['year']:
                 continue
+            try:
+                element.get_content('series')
+            except UnboundLocalError:
+                pass
 
-            element.get_content('series')
             exact_match = self.check_title_match_query_data(element, data)
 
             series = 0
