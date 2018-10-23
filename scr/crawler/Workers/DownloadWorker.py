@@ -16,7 +16,13 @@ class DownloadWorker(Worker):
     def work(self):
         logger.debug('Start download worker.')
         data = download(self.config, self.job.download_url)
-        download_path = path.join(self.config.TORRENT_TEMP_PATH, '{}.torrent'.format(data['id']))
+
+        if self.job.season == '':
+            dir_path = self.config.TORRENT_SERIAL_PATH
+        else:
+            dir_path = self.config.TORRENT_FILM_PATH
+
+        download_path = path.join(dir_path, '{}.torrent'.format(data['id']))
         with open(download_path, 'wb') as file:
             file.write(data['data'])
         logger.debug('End download worker.')
