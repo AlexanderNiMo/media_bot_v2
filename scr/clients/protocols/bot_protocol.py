@@ -6,7 +6,6 @@ from telegram.ext import Updater
 import json
 import re
 
-import app.config as conf
 from scr.mediator import AppMediatorClient, MediatorActionMessage, parser_message
 from scr.app_enums import ActionType, ComponentType, ClientCommands
 from mediator import command_message
@@ -404,6 +403,7 @@ class BotCommandParser:
 if __name__ == '__main__':
 
     from multiprocessing import Queue
+    import app.config as conf
 
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                         level=logging.DEBUG)

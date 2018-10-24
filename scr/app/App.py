@@ -4,8 +4,8 @@ from threading import Thread
 from scr.mediator import AppMediator, MediatorActionMessage, crawler_message
 from scr.app_enums import ComponentType, ActionType
 
-from scr.clients.protocols.bot_protocol import BotProtocol
-from scr.parser.parser_class import Parser
+from scr.clients import BotProtocol
+from scr.parser import Parser
 from scr.crawler import Crawler
 from scr.command_handler import CommandMessageHandler
 import app.config as config

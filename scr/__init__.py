@@ -1,7 +1,7 @@
-import app
-import parser
-import clients
-import app_enums
-import crawler
-import database
-import mediator
+from . import app
+from . import parser
+from . import clients
+from . import app_enums
+from . import crawler
+from . import database
+from . import mediator
