@@ -80,7 +80,7 @@ def reglament_work(mediator: AppMediator):
             ActionType.CHECK
         ))
         # time.sleep(60*60*3)
-        time.sleep(60*3)
+        time.sleep(60*60*3)
 
 
 if __name__ == '__main__':
