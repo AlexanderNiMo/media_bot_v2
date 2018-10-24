@@ -1,6 +1,6 @@
 import sys
 from os import path
-sys.path.append(path.path.join(path.dirname(__file__), '/src')
+sys.path.append(path.path.join(path.dirname(__file__), '/src'))
 
 from scr.app import create_app_test
 
