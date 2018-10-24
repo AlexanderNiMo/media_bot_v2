@@ -8,7 +8,7 @@ from scr.clients import BotProtocol
 from scr.parser import Parser
 from scr.crawler import Crawler
 from scr.command_handler import CommandMessageHandler
-import app.config as config
+from scr.app import config
 
 import logging
 import time

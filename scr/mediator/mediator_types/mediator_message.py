@@ -6,8 +6,8 @@
 
 """
 
-from app_enums import ActionType, ComponentType, ClientCommands, MediaType
-from mediator.abc_mediator_classes import MediatorMessage, MessageData
+from scr.app_enums import ActionType, ComponentType, ClientCommands, MediaType
+from scr.mediator.abc_mediator_classes import MediatorMessage, MessageData
 
 
 class MediatorActionMessage(MediatorMessage):

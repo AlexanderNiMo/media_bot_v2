@@ -2,9 +2,9 @@ from multiprocessing import Queue
 from queue import Empty
 import logging
 
-import app_enums
-from mediator.abc_mediator_classes import MediatorClient, MediatorMessage
-from mediator.mediator_types import mediator_message
+import scr.app_enums as app_enums
+from scr.mediator.abc_mediator_classes import MediatorClient, MediatorMessage
+from scr.mediator.mediator_types import mediator_message
 
 logger = logging.getLogger(__name__)
 

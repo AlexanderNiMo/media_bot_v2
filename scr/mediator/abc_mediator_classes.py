@@ -9,7 +9,7 @@ from abc import ABCMeta, abstractmethod
 from multiprocessing import Process, Queue
 
 
-from app_enums import ComponentType, ActionType
+from scr.app_enums import ComponentType, ActionType
 
 
 class MediatorMessage(metaclass=ABCMeta):

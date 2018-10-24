@@ -1,11 +1,11 @@
 import logging
 from typing import List
-
-from mediator import send_message, command_message
-from app_enums import ComponentType, ClientCommands, LockingStatus, MediaType, ActionType
-from crawler.Workers.WorkerABC import Worker
-from crawler.Workers.TorrentTrackers import search, download, Torrent
 from queue import Empty
+
+from scr.mediator import send_message, command_message
+from scr.app_enums import ComponentType, ClientCommands, LockingStatus, MediaType, ActionType
+from scr.crawler.Workers.WorkerABC import Worker
+from scr.crawler.Workers.TorrentTrackers import search, download, Torrent
 
 logger = logging.getLogger(__name__)
 

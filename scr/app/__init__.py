@@ -7,4 +7,4 @@
 
 """
 
-from .App import create_app_test
+from .App import create_app_test, config

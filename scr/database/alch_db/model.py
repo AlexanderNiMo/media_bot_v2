@@ -4,7 +4,7 @@ from sqlalchemy import Enum
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.exc import OperationalError
 
-from app_enums import UserOptions, MediaType, LockingStatus, TorrentType
+from scr.app_enums import UserOptions, MediaType, LockingStatus, TorrentType
 
 Base = declarative_base()
 

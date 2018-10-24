@@ -8,7 +8,8 @@ import re
 
 from scr.mediator import AppMediatorClient, MediatorActionMessage, parser_message
 from scr.app_enums import ActionType, ComponentType, ClientCommands
-from mediator import command_message
+from scr.mediator import command_message
+
 from multiprocessing import Process, Queue
 import threading
 import pickledb

@@ -3,15 +3,15 @@ import inspect
 import sys
 import logging
 
-from mediator import (
+from scr.mediator import (
     AppMediatorClient,
     MediatorActionMessage,
     CommandData,
     parser_message, send_message, crawler_message, command_message
 )
 
-from app_enums import ClientCommands, ComponentType, ActionType, MediaType
-from database import DbManager
+from scr.app_enums import ClientCommands, ComponentType, ActionType, MediaType
+from scr.database import DbManager
 
 logger = logging.getLogger(__name__)
 

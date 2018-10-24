@@ -9,7 +9,7 @@ import torrent_parser
 import inspect
 import sys
 
-from app_enums import TorrentType
+from scr.app_enums import TorrentType
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,9 @@
-from database.alch_db import get_session, init_db, OperationalError, create_db
-from app_enums import UserRule, UserOptions, MediaType, LockingStatus
+from scr.database.alch_db import get_session, init_db, OperationalError, create_db
+from scr.app_enums import UserRule, UserOptions, MediaType, LockingStatus
 
 
 class DbManager:
-    from database.alch_db.model import User, MediaData, Serial, Film, UserOptionsT
+    from scr.database.alch_db.model import User, MediaData, Serial, Film, UserOptionsT
 
     def __init__(self, config):
 

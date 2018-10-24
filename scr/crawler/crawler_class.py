@@ -1,11 +1,11 @@
 import logging
 import time
 
-from app_enums import ComponentType, ActionType, MediaType
-from crawler.Workers import DownloadWorker
-from crawler.Workers import TorrentSearchWorker
-from database import DbManager
-from mediator import AppMediatorClient, MediatorActionMessage, CrawlerData
+from scr.app_enums import ComponentType, ActionType, MediaType
+from scr.crawler.Workers import DownloadWorker
+from scr.crawler.Workers import TorrentSearchWorker
+from scr.database import DbManager
+from scr.mediator import AppMediatorClient, MediatorActionMessage, CrawlerData
 from multiprocessing import Queue
 
 logger = logging.getLogger(__name__)

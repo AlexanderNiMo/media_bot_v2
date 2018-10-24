@@ -5,12 +5,13 @@ import re
 from multiprocessing import Queue
 from abc import ABC, abstractmethod
 from plexapi.server import PlexServer
-
-from database import DbManager
-from app_enums import ActionType, ComponentType, ClientCommands, MediaType, LockingStatus
-from mediator import AppMediatorClient, MediatorActionMessage, send_message, parser_message, command_message
-from mediator.mediator_types.mediator_message import ParserData
 from kinopoisk import movie, utils
+
+from scr.database import DbManager
+from scr.app_enums import ActionType, ComponentType, ClientCommands, MediaType, LockingStatus
+from scr.mediator import AppMediatorClient, MediatorActionMessage, send_message, parser_message, command_message
+from scr.mediator import ParserData
+
 
 
 logger = logging.getLogger(__name__)

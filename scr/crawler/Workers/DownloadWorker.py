@@ -1,9 +1,9 @@
 import logging
-from crawler.Workers.WorkerABC import Worker
-from crawler.Workers.TorrentTrackers import download
-from mediator import send_message
-from app_enums import ComponentType
-from database import DbManager
+from scr.crawler.Workers.WorkerABC import Worker
+from scr.crawler.Workers.TorrentTrackers import download
+from scr.mediator import send_message
+from scr.app_enums import ComponentType
+from scr.database import DbManager
 from os import path
 
 logger = logging.getLogger(__name__)
