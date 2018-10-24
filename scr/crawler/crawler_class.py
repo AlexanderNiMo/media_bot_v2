@@ -167,7 +167,7 @@ class CrawlerMessageHandler:
                 media = [media]
         else:
             media = db.find_all_media(data.media_type)
-        if len(media) == 0:
+        if len(media) == 0 and not data.media_id == 0:
             logger.error('Не удалось найти данные в базе по запросу {}'.format(message.data))
             return []
 
