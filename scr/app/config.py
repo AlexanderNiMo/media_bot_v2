@@ -99,17 +99,15 @@ TORRENTS = {
     }
 }
 
-CACHE_DB_PATH = path.normpath(
-    '{0}/data/{1}'.format(path.dirname(__file__), 'cachedb.db')
-)
-if not path.exists(CACHE_DB_PATH):
-    os.mkdir(path.dirname(CACHE_DB_PATH))
-
 TORRENT_TEMP_PATH = path.normpath(
     '{0}/data'.format(path.dirname(__file__))
 )
 if not path.exists(TORRENT_TEMP_PATH):
     os.mkdir(TORRENT_TEMP_PATH)
+
+CACHE_DB_PATH = path.normpath(
+    '{0}/data/{1}'.format(path.abspath(path.dirname(__file__)), 'cachedb.db')
+)
 
 TORRENT_FILM_PATH = path.normpath(conf_parser['Torrents_folders']['film_folder'])
 if not path.exists(TORRENT_FILM_PATH):
