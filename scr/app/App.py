@@ -31,9 +31,9 @@ def create_app_test():
     logger.addHandler(file_hndl)
     logger.addHandler(consol_hndl)
     if config.LOGGER_LEVEL == 'info':
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(logging.INFO)
     elif config.LOGGER_LEVEL == 'error':
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(logging.ERROR)
     elif config.LOGGER_LEVEL == 'debug':
         logger.setLevel(logging.DEBUG)
 
