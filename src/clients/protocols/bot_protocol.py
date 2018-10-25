@@ -296,7 +296,7 @@ class Bot:
         try:
             client_data = bot.get_chat(client_id)
         except teleg_error.BadRequest:
-            client_data = None
+            client_data = {'first_name': '', 'last_name': '', 'username': ''}
 
         data = {
                 'client_id': client_id,
