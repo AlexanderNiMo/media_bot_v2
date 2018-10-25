@@ -290,20 +290,13 @@ class Bot:
         :return:
         """
         logger.info('New user {0}'.format(update.message.text))
+
         client_d = re.findall(r'\d{2,}', update.message.text)
         client_id = 0 if len(client_d) == 0 else client_d.pop(0)
-        if client_id == 0:
-            update.message.reply_text("Не верный id {}".format(client_id))
-            return
         try:
             client_data = bot.get_chat(client_id)
         except teleg_error.BadRequest:
-            update.message.reply_text("Не верный id {}".format(client_id))
             client_data = None
-
-        if client_data is None:
-            update.message.reply_text("Не верный id {}".format(client_id))
-            return
 
         data = {
                 'client_id': client_id,
