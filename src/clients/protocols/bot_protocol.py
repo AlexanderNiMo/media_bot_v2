@@ -302,7 +302,7 @@ class Bot:
                 'nick': client_data.username
             }
         except teleg_error.BadRequest:
-            data = {'client_id': client_id, 'first_name': '', 'last_name': '', 'username': ''}
+            data = {'client_id': client_id, 'name': '', 'last_name': '', 'nick': ''}
 
         BotCommandParser.start_command('/auth', data, self.protocol, update.message.chat_id)
 
