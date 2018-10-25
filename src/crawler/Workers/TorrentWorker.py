@@ -80,12 +80,12 @@ class TorrentSearchWorker(Worker):
             {
                 'media_id': self.job.media_id,
                 'media_type': MediaType.FILMS if self.job.season == '' else MediaType.SERIALS,
-                'next_message': crawler_message(
+                'next_messages': [crawler_message(
                     ComponentType.COMMAND_HANDLER,
                     self.job.client_id,
                     {'media_id': self.job.media_id},
                     ActionType.DOWNLOAD_TORRENT
-                ),
+                )],
                 'upd_data': {
                     'status': status,
                     'download_url': data.url,

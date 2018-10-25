@@ -398,8 +398,8 @@ class AddDataHandler(AbstractHandler):
             session=session
         )
 
-        if 'next_message' in com_data.keys() and isinstance(com_data['next_message'], MediatorActionMessage):
-            messages.append(com_data['next_message'])
+        if 'next_messages' in com_data.keys() and isinstance(com_data['next_messages'], list):
+            messages += com_data['next_messages']
         session.close()
         return messages
 

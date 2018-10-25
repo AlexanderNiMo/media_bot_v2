@@ -88,6 +88,10 @@ class CrawlerData(MessageData):
             self.torrent_data = kwargs['torrent_data']
         if 'torrent_id' in kwargs.keys():
             self.torrent_id = kwargs['torrent_id']
+        if len(kwargs.keys()) == 0:
+            self.data = {}
+        else:
+            self.data = kwargs
 
     def __repr__(self):
         return '<CrawlerData from_user:{0}, kinopoisk_id:{1}, force:{2}>'.format(

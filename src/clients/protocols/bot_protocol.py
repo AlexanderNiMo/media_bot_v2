@@ -136,7 +136,7 @@ class Bot:
             elif choices['action'] == 'download_callback':
                 row_buttons = [telegram.InlineKeyboardButton(
                     text='Прогресс скачивания.',
-                    callback_data=json.dumps(self.save_callback_data(choices['data']))
+                    callback_data=self.save_callback_data(choices['data'])
                 )]
                 keyboard = telegram.InlineKeyboardMarkup([row_buttons])
                 self.bot.send_message(
@@ -353,10 +353,11 @@ class Bot:
 
     def call_back_handler(self, bot, update):
         logger.debug('Пришел inline callback с данными {}'.format(update.callback_query.data))
-        cache_data = self.cache.get(json.loads(update.callback_query.data))
+        cache_data = self.cache.get(update.callback_query.data)
         if cache_data is None:
             return
-        if 'forse' in cache_data.keys():
+        if 'force' in cache_data.keys():
+            cache_data['key_board'] = False
             message = crawler_message(ComponentType.CLIENT,
                                       update.callback_query.from_user.id,
                                       cache_data,
@@ -379,6 +380,7 @@ class BotCache:
         self.base = MyPickledb(self.dump_name, True)
 
     def get(self, key):
+        self.base.load(self.dump_name, True)
         return self.base.get(key)
 
     def set(self, value):

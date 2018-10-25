@@ -59,8 +59,11 @@ class DelugeWorker(Worker):
         start_time = time.time()
         while do:
             data = deluge.call('core.get_torrents_status', {'id': self.job.torrent_id}, ['progress'])
-            self.returned_data.put({'progress': int(data[bytes(self.job.torrent_id, 'utf-8')][b'progress'])})
             if self.job.force:
+                self.returned_data.put({'progress': int(data[bytes(self.job.torrent_id, 'utf-8')][b'progress'])})
+                break
+            if int(data[bytes(self.job.torrent_id, 'utf-8')][b'progress']) == 100:
+                self.returned_data.put({'progress': int(data[bytes(self.job.torrent_id, 'utf-8')][b'progress'])})
                 break
             if time.time() - start_time == 60*60:
                 break
@@ -83,12 +86,18 @@ class DelugeWorker(Worker):
                 {
                     'media_id': self.job.media_id,
                     'media_type': MediaType.FILMS if self.job.season == '' else MediaType.SERIALS,
-                    'next_message': crawler_message(
+                    'next_messages': [crawler_message(
                         ComponentType.COMMAND_HANDLER,
                         self.job.client_id,
                         {'media_id': self.job.media_id},
                         ActionType.ADD_TORRENT_WATCHER
                     ),
+                    crawler_message(
+                        ComponentType.COMMAND_HANDLER,
+                        self.job.client_id,
+                        {'media_id': self.job.media_id, 'force': True},
+                        ActionType.ADD_TORRENT_WATCHER
+                    )],
                     'upd_data': {
                         'torrent_id': data['torrent_id'],
                     },
@@ -102,13 +111,16 @@ class DelugeWorker(Worker):
                 choices = []
             else:
                 message_text = 'Прогресс скачивания {0}: {1}%'.format(self.job.text_query, data['progress'])
-                choices = {
-                    'action': 'download_callback',
-                    'data': {
-                        'forse': True,
-                        'media_id': self.job.media_id
+                if 'key_board' in self.job.crawler_data.data.keys() and not self.job.crawler_data.data['key_board']:
+                    choices = []
+                else:
+                    choices = {
+                        'action': 'download_callback',
+                        'data': {
+                            'force': True,
+                            'media_id': self.job.media_id
+                        }
                     }
-                }
             messages.append(
                 send_message(
                     ComponentType.CRAWLER,
