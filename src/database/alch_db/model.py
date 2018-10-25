@@ -24,7 +24,7 @@ class User(Base):
 
     name = Column(Unicode(200))
     last_name = Column(Unicode(200))
-    nick_name = Column(Unicode(200), nullable=False)
+    nick_name = Column(Unicode(200))
 
     client_id = Column(Integer, nullable=False)
 

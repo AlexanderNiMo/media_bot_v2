@@ -255,7 +255,7 @@ class AddDataHandler(AbstractHandler):
         """
         messages = []
         session = db_manager.get_session()
-        user = db_manager.find_user(data.client_id, session)
+        user = db_manager.find_user(data.command_data['client_id'], session)
         if user is not None:
             message_text = 'Пользователь с id:{} уже есть в базе.'.format(data.command_data['client_id'])
             messages.append(
@@ -295,7 +295,7 @@ class AddDataHandler(AbstractHandler):
                 ComponentType.COMMAND_HANDLER,
                 {
                     'user_id': data.command_data['client_id'],
-                    'message_text': 'Теперь ты авторизован.',
+                    'message_text': 'Теперь ты в теме.',
                     'choices': []
                 }
             )
