@@ -159,18 +159,19 @@ class CrawlerMessageHandler:
         db = self.db_manager
         data = message.data
         media = []
+        session = db.get_session()
         if not data.media_id == 0:
-            media = db.find_media(data.media_id, data.media_type, data.season)
+            media = db.find_media(data.media_id, data.media_type, data.season, session)
             if media is None:
                 media = []
             else:
                 media = [media]
         else:
-            media = db.find_all_media(data.media_type)
+            media = db.find_all_media(data.media_type, session)
         if len(media) == 0 and not data.media_id == 0:
             logger.error('Не удалось найти данные в базе по запросу {}'.format(message.data))
             return []
-
+        session.close()
         for element in media:
 
             try:

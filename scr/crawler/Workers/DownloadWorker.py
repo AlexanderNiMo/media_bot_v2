@@ -60,10 +60,10 @@ class DownloadWorker(Worker):
         result = []
         if not self.job.client_id == '':
             result.append(self.job.client_id)
-
-        for user in db_manager.get_users_for_notification(self.job.media_id):
+        session = db_manager.session
+        for user in db_manager.get_users_for_notification(self.job.media_id, session):
             result.append(user.client_id)
-
+        session.close()
         return list(set(result))
 
 

@@ -23,11 +23,11 @@ class DbManager:
     def engine(self):
         if self.__enj is None:
             try:
-                self.__enj = init_db(self.__get_connection_str(), self.config.DATABASE_NAME)
+                enj = init_db(self.__get_connection_str(), self.config.DATABASE_NAME)
             except OperationalError:
                 create_db(self.__get_connection_str(), self.config.DATABASE_NAME)
-                self.__enj = init_db(self.__get_connection_str(), self.config.DATABASE_NAME)
-        return self.__enj
+                enj = init_db(self.__get_connection_str(), self.config.DATABASE_NAME)
+        return enj
 
     @property
     def session(self):
@@ -35,40 +35,47 @@ class DbManager:
             self.__session = get_session(self.engine)
         return self.__session
 
+    def get_session(self):
+        return get_session(self.engine)
+
     def close_session(self):
         if self.__session is None:
             return
         self.__session.close()
         self.__session = None
 
-    def get_users_for_notification(self, media_id):
+    def get_users_for_notification(self, media_id, session=None):
+        if session is None:
+            session = self.session
         users = []
-        media_users = self.session.query(self.User).join(self.User.media).filter(self.MediaData.kinopoisk_id==media_id).all()
+        media_users = session.query(self.User).join(self.User.media).filter(self.MediaData.kinopoisk_id==media_id).all()
         for i in media_users:
             users.append(i)
 
-        data = self.session.query(self.UserOptionsT)\
+        data = session.query(self.UserOptionsT)\
             .filter_by(option=UserOptions.NOTIFICATION)\
             .filter_by(value=1)\
             .all()
         users += [i.user for i in data]
         return users
 
-    def find_all_media(self, media_type):
+    def find_all_media(self, media_type, session=None):
         """
         Находит все данные для поиска по тиапу
         :param type:
         :return:
         """
+        if session is None:
+            session = self.session
         data_class = self.Film
         if media_type == MediaType.SERIALS:
             data_class = self.Serial
         elif media_type == MediaType.BASE_MEDIA:
             data_class = self.MediaData
-        data = self.session.query(data_class).filter(data_class.status != LockingStatus.ENDED).all()
+        data = session.query(data_class).filter(data_class.status != LockingStatus.ENDED).all()
         return data
 
-    def find_media(self, kinopoisk_id, media_type, season=None):
+    def find_media(self, kinopoisk_id, media_type, season=None, session=None):
         """
         Ищет фильм по kinopoisk_id
 
@@ -77,16 +84,18 @@ class DbManager:
         :param season:
         :return:
         """
+        if session is None:
+            session = self.session
         filter_dict = dict(kinopoisk_id=kinopoisk_id)
         data_class = self.Film
         if media_type == MediaType.SERIALS:
             filter_dict['season'] = season
             data_class = self.Serial
-        data = self.session.query(data_class).filter_by(**filter_dict).first()
+        data = session.query(data_class).filter_by(**filter_dict).first()
         self.close_session()
         return data
 
-    def find_media_by_label(self, label, year, media_type, season=None):
+    def find_media_by_label(self, label, year, media_type, season=None, session=None):
         """
         Ищет фильм по стандартным реквизитам
 
@@ -96,37 +105,42 @@ class DbManager:
         :param season:
         :return:
         """
+        if session is None:
+            session = self.session
         filter_dict = dict(label=label, year=year)
         data_class = self.Film
         if media_type == MediaType.SERIALS:
             filter_dict['season'] = season
             data_class = self.Serial
-        data = self.session.query(data_class).filter_by(**filter_dict).first()
+        data = session.query(data_class).filter_by(**filter_dict).first()
         self.close_session()
         return data
 
-    def find_user(self, client_id):
+    def find_user(self, client_id, session=None):
         """
 
         :param client_id:
         :return:
         """
-        data = self.session.query(self.User).filter_by(client_id=client_id).first()
+        if session is None:
+            session = self.session
+        data = session.query(self.User).filter_by(client_id=client_id).first()
         if client_id == int(self.config.TELEGRAMM_BOT_USER_ADMIN):
             if data is None:
-                data = self.add_user(client_id)
+                data = self.add_user(client_id, session)
         # self.close_session()
         return data
 
     def is_admin(self, client_id):
         return client_id == int(self.config.TELEGRAMM_BOT_USER_ADMIN)
 
-    def update_media_params(self, media_id: int, params: dict, media_type):
-
+    def update_media_params(self, media_id: int, params: dict, media_type, session=None):
+        if session is None:
+            session = self.session
         find_dict = {
             'kinopoisk_id': media_id,
             'media_type': media_type,
-
+            'session': session,
         }
 
         if 'season' in params.keys():
@@ -142,20 +156,24 @@ class DbManager:
         for key in params.keys():
             setattr(media, key, params[key])
 
-        self.session.add(media)
-        self.session.commit()
+        session.add(media)
+        session.commit()
         self.close_session()
 
-    def add_film(self, client_id, kinopoisk_id, label, year, url):
+    def add_film(self, client_id, kinopoisk_id, label, year, url, session=None):
+        if session is None:
+            session = self.session
         film = self.Film(kinopoisk_id=kinopoisk_id, label=label, year=year, kinopoisk_url=url)
-        user = self.find_user(client_id)
+        user = self.find_user(client_id, session=session)
         user.media.append(film)
-        self.session.add(film)
-        self.session.add(user)
-        self.session.commit()
+        session.add(film)
+        session.add(user)
+        session.commit()
         return film
 
-    def add_serial(self, client_id, kinopoisk_id, label, year, season, url, max_series=0):
+    def add_serial(self, client_id, kinopoisk_id, label, year, season, url, max_series=0, session=None):
+        if session is None:
+            session = self.session
         serial = self.Serial(
             kinopoisk_id=kinopoisk_id,
             label=label,
@@ -163,39 +181,42 @@ class DbManager:
             season=season,
             series=max_series,
             kinopoisk_url=url)
-        user = self.find_user(client_id)
+        user = self.find_user(client_id, session=session)
         user.media.append(serial)
-        self.session.add(serial)
-        self.session.add(user)
-        self.session.commit()
+        session.add(serial)
+        session.add(user)
+        session.commit()
         return serial
 
-    def add_user(self, clien_id, name='', last_name='', nick_name='', rule=UserRule.USER):
+    def add_user(self, clien_id, name='', last_name='', nick_name='', rule=UserRule.USER, session=None):
+        if session is None:
+            session = self.session
         user = self.User(name=name, last_name=last_name, nick_name=nick_name, client_id=clien_id)
-        self.session.add(user)
-        self.session.commit()
+        session.add(user)
+        session.commit()
         return user
 
-    def add_media_to_user_list(self, client_id, kinopoisk_id, media_type, season):
-        media = self.find_media(kinopoisk_id, media_type, season)
-        user = self.find_user(client_id)
+    def add_media_to_user_list(self, client_id, kinopoisk_id, media_type, season, session=None):
+        if session is None:
+            session = self.session
+        media = self.find_media(kinopoisk_id, media_type, season, session=session)
+        user = self.find_user(client_id, session=session)
         if media not in user.media:
             user.media.append(media)
-        self.session.add(media)
-        self.session.add(user)
-        self.session.commit()
+        session.add(media)
+        session.add(user)
+        session.commit()
 
-    def change_user_option(self, clien_id, option_name: UserOptions, value=0):
-
-        session = self.session
-
+    def change_user_option(self, clien_id, option_name: UserOptions, value=0, session=None):
+        if session is None:
+            session = self.session
         result = session.query(self.User, self.UserOptionsT).\
                     filter(self.User.id == self.UserOptionsT.user_id).\
                     filter(self.User.client_id == clien_id).\
                     filter(self.UserOptionsT.option == option_name).first()
         if result is None:
             opt = self.UserOptionsT(option=option_name, value=value)
-            user = self.session.query(self.User).filter_by(client_id=client_id).first()
+            user = self.find_user(client_id, session)
             user.options.append(opt)
         else:
             user, opt = result
@@ -206,7 +227,6 @@ class DbManager:
         session.add(opt)
         session.add(user)
         session.commit()
-        self.close_session()
         return new_value
 
 if __name__ == '__main__':

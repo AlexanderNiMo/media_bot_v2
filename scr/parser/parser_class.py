@@ -104,6 +104,7 @@ class BaseParser(AbstractParser):
         self.next_data = {}
         self.messages = []
         self.config = conf
+        self.cache_data = None
 
     def parse(self, data: ParserData):
 
@@ -386,13 +387,14 @@ class DataBaseParser(BaseParser):
 
         db = DbManager(self.config)
         media_type = MediaType.FILMS if not data['serial'] else MediaType.SERIALS
+        session = db.get_session()
         if 'kinopoisk_id' in data.keys():
-            media = db.find_media(data['kinopoisk_id'], media_type)
+            media = db.find_media(data['kinopoisk_id'], media_type, session=session)
         elif all(key in data.keys() for key in ('label', 'year')):
-            media = db.find_media_by_label(data['label'], data['year'], media_type)
-        if media is not None and media.status == LockingStatus.ENDED:
+            media = db.find_media_by_label(data['label'], data['year'], media_type, session=session)
+        if media is not None or media.status == LockingStatus.ENDED:
             result = False
-
+        session.close()
         self.next_data = data.copy()
 
         return result

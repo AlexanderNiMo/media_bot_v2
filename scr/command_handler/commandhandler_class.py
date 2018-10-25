@@ -93,7 +93,9 @@ class AbstractHandler(ABC):
 
     @classmethod
     def check_rule(cls, client_id: int, db_manager: DbManager):
-        user = db_manager.find_user(client_id)
+        session = db_manager.get_session()
+        user = db_manager.find_user(client_id, session)
+        session.close()
         return user is not None
 
 
@@ -179,7 +181,8 @@ class UserHandler(AbstractHandler):
         :return:
         """
         messages = []
-        new_value = db_manager.change_user_option(data.client_id, data.command_data['option'])
+        session = db_manager.get_session()
+        new_value = db_manager.change_user_option(data.client_id, data.command_data['option'], session=session)
         message_text = 'Статус оповещения установлен. Новое значение "{}"'.format(
             'оповещать' if new_value == 1 else 'не оповещать'
         )
@@ -191,6 +194,7 @@ class UserHandler(AbstractHandler):
                     }
                 )
             )
+        session.close()
         return messages
 
     @classmethod
@@ -202,6 +206,7 @@ class UserHandler(AbstractHandler):
         :return:
         """
         messages = []
+        session = db_manager.get_session()
         if db_manager.is_admin(data.client_id):
             messages.append(
                 command_message(
@@ -227,6 +232,7 @@ class UserHandler(AbstractHandler):
                     }
                 )
             )
+        session.close()
         return messages
 
 
@@ -249,7 +255,8 @@ class AddDataHandler(AbstractHandler):
         :return:
         """
         messages = []
-        user = db_manager.find_user(data.client_id)
+        session = db_manager.get_session()
+        user = db_manager.find_user(data.client_id, session)
         if user is not None:
             message_text = 'Пользователь с id:{} уже есть в базе.'.format(data.command_data['client_id'])
             messages.append(
@@ -262,15 +269,17 @@ class AddDataHandler(AbstractHandler):
                     }
                 )
             )
+            session.close()
             return messages
 
         db_manager.add_user(
             data.command_data['client_id'],
             data.command_data['name'],
             data.command_data['last_name'],
-            data.command_data['nick']
+            data.command_data['nick'],
+            session=session,
         )
-
+        session.close()
         message_text = 'Пользователь с id:{} добавлен.'.format(data.command_data['client_id'])
         messages.append(
             send_message(
@@ -297,12 +306,14 @@ class AddDataHandler(AbstractHandler):
 
     @classmethod
     def add_film(cls, data: CommandData, db_manager: DbManager):
+        session = db_manager.get_session()
         film = db_manager.add_film(
             data.client_id,
             data.command_data['kinopoisk_id'],
             data.command_data['title'],
             data.command_data['year'],
-            data.command_data['url']
+            data.command_data['url'],
+            session=session,
         )
 
         message_text = 'Фильм {0} добавлен к поиску \n {1}'.format(
@@ -331,11 +342,12 @@ class AddDataHandler(AbstractHandler):
                 }
             )
         )
-
+        session.close()
         return messages
 
     @classmethod
     def add_serial(self, data: CommandData, db_manager: DbManager):
+        session = db_manager.get_session()
         serial = db_manager.add_serial(
             data.client_id,
             data.command_data['kinopoisk_id'],
@@ -343,7 +355,8 @@ class AddDataHandler(AbstractHandler):
             data.command_data['year'],
             data.command_data['season'],
             data.command_data['url'],
-            data.command_data['series']
+            data.command_data['series'],
+            session=session,
         )
 
         message_text = 'Сериал {0} сезон {1} добавлен к поиску \n {2}'.format(
@@ -367,7 +380,7 @@ class AddDataHandler(AbstractHandler):
                 }
             )
         ]
-
+        session.close()
         return messages
 
     @classmethod
@@ -378,11 +391,12 @@ class AddDataHandler(AbstractHandler):
 
         messages = []
         com_data = data.command_data
-
+        session = db_manager.get_session()
         db_manager.update_media_params(
             com_data['media_id'],
             com_data['upd_data'],
-            com_data['media_type']
+            com_data['media_type'],
+            session=session
         )
 
         if 'start_download' in com_data.keys() and com_data['start_download']:
@@ -392,17 +406,21 @@ class AddDataHandler(AbstractHandler):
                 {'media_id': data.command_data['media_id']},
                 ActionType.DOWNLOAD_TORRENT
             ))
-
+        session.close()
         return messages
 
     @classmethod
     def add_media_to_user_list(self, data: CommandData, db_manager: DbManager):
+        session = db_manager.get_session()
         db_manager.add_media_to_user_list(
             data.client_id,
             data.command_data['kinopoisk_id'],
             data.command_data['media_type'],
-            data.command_data['season']
+            data.command_data['season'],
+            session=session,
         )
+        session.close()
+
 
 def get_command_handlers():
     mods = inspect.getmembers(

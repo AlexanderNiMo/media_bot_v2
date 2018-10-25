@@ -319,6 +319,7 @@ class Bot:
         :param update:
         :return:
         """
+        logger.info('New message {0} from {1}'.format(update.message.text, update.message.chat_id))
         update.message.reply_text("Эээээ, чето ты хотел этим сказать?")
 
     def call_back_handler(self, bot, update):
