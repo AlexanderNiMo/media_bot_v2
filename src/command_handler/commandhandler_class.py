@@ -74,14 +74,14 @@ class AbstractHandler(ABC):
     @classmethod
     def exsecute_command(cls, message_data: CommandData, db_manager):
         if not cls.check_rule(message_data.client_id, db_manager):
-            return send_message(
+            return [send_message(
                 ComponentType.COMMAND_HANDLER,
                 {
                     'user_id': message_data.client_id,
                     'message_text': 'Для авторизации скинь свой id Морозу. Вот он: {}'.format(message_data.client_id),
                     'choices': []
                 }
-            )
+            )]
         command_dict = cls.get_command_list()
         message = command_dict[message_data.command.value](message_data, db_manager)
         result = []
@@ -222,8 +222,7 @@ class UserHandler(AbstractHandler):
                 )
             )
         else:
-            message_text = 'У тебя нет прав на добавление пользователей. ' \
-                           'Но вот твой id: {} отправь его морозу, он разберется.'.format(data.client_id)
+            message_text = 'У тебя нет прав на добавление пользователей.'
             messages.append(
                 send_message(
                     ComponentType.COMMAND_HANDLER,
