@@ -31,9 +31,9 @@ class DownloadWorker(Worker):
         else:
             dir_path = self.config.TORRENT_FILM_PATH
 
-        download_path = path.join(dir_path, '{}.torrent'.format(data['id']))
-        with open(download_path, 'wb') as file:
-            file.write(data['data'])
+        # download_path = path.join(dir_path, '{}.torrent'.format(data['id']))
+        # with open(download_path, 'wb') as file:
+        #     file.write(data['data'])
 
         self.returned_data.put(data)
 

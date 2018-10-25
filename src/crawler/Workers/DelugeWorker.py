@@ -16,9 +16,9 @@ logger = logging.getLogger(__name__)
 class DelugeWorker(Worker):
 
     def get_target(self):
-        if self.job.action_type.value == ActionType.ADD_TORRENT_TO_TORRENT_CLIENT:
+        if self.job.action_type.value == ActionType.ADD_TORRENT_TO_TORRENT_CLIENT.value:
             return self.add_torrent
-        elif self.job.action_type.value == ActionType.ADD_TORRENT_WATCHER:
+        elif self.job.action_type.value == ActionType.ADD_TORRENT_WATCHER.value:
             return self.work
 
     def get_deluge_client(self)->deluge_client.DelugeRPCClient:
@@ -46,7 +46,7 @@ class DelugeWorker(Worker):
             dir_path = self.config.TORRENT_FILM_PATH
         torrent_options = {'download_location': dir_path}
 
-        torrend_data = base64.b64decode(self.job.torren_data)
+        torrend_data = base64.encodebytes(self.job.torren_data)
         torrent_file_name = '{}.torrent'.format(self.job.torrent_id)
         torrent_id = deluge.call('core.add_torrent_file', torrent_file_name, torrend_data, torrent_options)
         self.returned_data.put({'torrent_id': torrent_id})
@@ -59,8 +59,8 @@ class DelugeWorker(Worker):
         start_time = time.time()
         while do:
             data = deluge.call('core.get_torrents_status', {'id': self.job.torrent_id}, ['progress'])
-            self.returned_data.put({'progress': data})
-            if self.job.forse:
+            self.returned_data.put({'progress': int(data[bytes(self.job.torrent_id, 'utf-8')][b'progress'])})
+            if self.job.force:
                 break
             if time.time() - start_time == 60*60:
                 break

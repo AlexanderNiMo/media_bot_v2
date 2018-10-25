@@ -138,7 +138,7 @@ class Bot:
                     text='Прогресс скачивания.',
                     callback_data=json.dumps(self.save_callback_data(choices['data']))
                 )]
-                keyboard = telegram.InlineKeyboardMarkup(row_buttons)
+                keyboard = telegram.InlineKeyboardMarkup([row_buttons])
                 self.bot.send_message(
                     chat_id=chat_id,
                     text=text,
@@ -362,12 +362,12 @@ class Bot:
         cache_data = self.cache.get(json.loads(update.callback_query.data))
         if cache_data is None:
             return
-        if '' in cache_data.keys():
+        if 'forse' in cache_data.keys():
             message = crawler_message(ComponentType.CLIENT,
                                       update.callback_query.from_user.id,
                                       cache_data,
                                       ActionType.ADD_TORRENT_WATCHER)
-        elif 'kinopoisk_id':
+        elif 'kinopoisk_id' in cache_data.keys():
             message = parser_message(ComponentType.CLIENT, cache_data, update.callback_query.from_user.id)
 
         self.protocol.send_message(

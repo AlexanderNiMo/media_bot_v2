@@ -11,6 +11,6 @@ if __name__ == '__main__':
     """
     Осуществляет тестовую сборку приложения
     """
-    from scr.app import create_app_test
+    from src.app import create_app_test
 
     create_app_test()

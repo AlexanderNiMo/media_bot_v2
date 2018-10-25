@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class Job:
     def __init__(self, action_type, client_id, media_id, title, season,
                  year, download_url, torrent_tracker, theam_id, kinopoisk_url,
-                 max_series, torrent_id, torren_data, forse, **kwargs):
+                 max_series, torrent_id, torren_data, force, **kwargs):
         self.action_type = action_type
         self.client_id = client_id
         self.media_id = media_id
@@ -28,7 +28,7 @@ class Job:
         self.max_series = max_series
         self.torrent_id = torrent_id
         self.torren_data = torren_data
-        self.forse = forse
+        self.force = force
         self.__dict__.update(**kwargs)
 
     @property
@@ -150,8 +150,8 @@ class Crawler(AppMediatorClient):
         ]:
             return DownloadWorker(job, self.config)
         elif job.action_type.value in [
-            ActionType.ADD_TORRENT_WATCHER,
-            ActionType.ADD_TORRENT_TO_TORRENT_CLIENT
+            ActionType.ADD_TORRENT_WATCHER.value,
+            ActionType.ADD_TORRENT_TO_TORRENT_CLIENT.value
         ]:
             return DelugeWorker(job, self.config)
 
@@ -209,8 +209,8 @@ class CrawlerMessageHandler:
                         'kinopoisk_url': element.kinopoisk_url,
                         'max_series': max_series,
                         'torrent_id': element.torrent_id if data.torrent_id is None else data.torrent_id,
-                        'torren_data': data.torren_data,
-                        'forse': data.forse
+                        'torren_data': data.torrent_data,
+                        'force': data.force
                     }
                 )
             )

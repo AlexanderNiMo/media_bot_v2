@@ -55,7 +55,7 @@ def create_default_config(parser: configparser.ConfigParser):
 
     parser['deluge'] = {
         'host': '',
-        'port': '',
+        'port': 0,
         'user': '',
         'password': '',
     }
@@ -117,16 +117,16 @@ CACHE_DB_PATH = path.normpath(
 )
 
 TORRENT_FILM_PATH = path.normpath(conf_parser['Torrents_folders']['film_folder'])
-if not path.exists(TORRENT_FILM_PATH):
-    os.mkdir(TORRENT_FILM_PATH)
+# if not path.exists(TORRENT_FILM_PATH):
+#     os.mkdir(TORRENT_FILM_PATH)
 
 TORRENT_SERIAL_PATH = path.normpath(conf_parser['Torrents_folders']['serial_folder'])
-if not path.exists(TORRENT_SERIAL_PATH):
-    os.mkdir(TORRENT_SERIAL_PATH)
+# if not path.exists(TORRENT_SERIAL_PATH):
+#     os.mkdir(TORRENT_SERIAL_PATH)
 
 LOGGER_LEVEL = conf_parser['logger']['logger_level']
 
 DELUGE_HOST = conf_parser['deluge']['host']
-DELUGE_PORT = conf_parser['deluge']['port']
+DELUGE_PORT = int(conf_parser['deluge']['port'])
 DELUGE_USER = conf_parser['deluge']['user']
 DELUGE_PASS = conf_parser['deluge']['password']
