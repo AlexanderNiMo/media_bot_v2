@@ -59,8 +59,8 @@ class CommandMessageHandler(AppMediatorClient):
 
             if message_data.command.value in command_dict.keys():
                 messages = handler.exsecute_command(message_data, self.db_manager)
-                for message in messages:
-                    self.send_message(message)
+                for msg in messages:
+                    self.send_message(msg)
                 break
 
 
