@@ -8,7 +8,7 @@ import re
 
 from src.mediator import AppMediatorClient, MediatorActionMessage, parser_message
 from src.app_enums import ActionType, ComponentType, ClientCommands
-from src.mediator import command_message
+from src.mediator import command_message, crawler_message
 
 from multiprocessing import Process, Queue
 import threading
@@ -125,11 +125,25 @@ class Bot:
         """
         self.updater.start_polling()
 
-    def send_message(self, chat_id, text, choices=[]):
-
-        self.handle_choice(chat_id, choices)
-
-        self.bot.send_message(chat_id=chat_id, text=text)
+    def send_message(self, chat_id, text, choices):
+        if isinstance(choices, list):
+            self.handle_choice(chat_id, choices)
+            self.bot.send_message(chat_id=chat_id, text=text)
+        if isinstance(choices, dict):
+            if choices['action'] == 'kinopoisk':
+                self.handle_choice(chat_id, choices['data'])
+                self.bot.send_message(chat_id=chat_id, text=text)
+            elif choices['action'] == 'download_callback':
+                row_buttons = [telegram.InlineKeyboardButton(
+                    text='Прогресс скачивания.',
+                    callback_data=json.dumps(self.save_callback_data(choices['data']))
+                )]
+                keyboard = telegram.InlineKeyboardMarkup(row_buttons)
+                self.bot.send_message(
+                    chat_id=chat_id,
+                    text=text,
+                    reply_markup=keyboard
+                )
 
     def handle_choice(self, chat_id, choices):
 
@@ -239,10 +253,30 @@ class Bot:
             command='auth',
             callback=self.auth_handler
         )
+        cmd_handler = CommandHandler(
+            command='notify',
+            callback=self.notify_handler
+        )
         dispatcher.add_handler(cmd_handler)
 
         call_back_handler = CallbackQueryHandler(callback=self.call_back_handler)
         dispatcher.add_handler(call_back_handler)
+
+    def notify_handler(self, bot, update):
+        """
+        Обрабатывает команду на изменение оповещений
+
+        :param bot:
+        :param update:
+        :return:
+        """
+        logger.info('Change notification status for user {}'.format(update.message.chat_id))
+        BotCommandParser.start_command(
+            '/notify',
+            {'option': 0},
+            self.protocol,
+            update.message.chat_id
+        )
 
     def auth_handler(self, bot, update):
         """
@@ -263,6 +297,7 @@ class Bot:
             client_data = bot.get_chat(client_id)
         except teleg_error.BadRequest:
             update.message.reply_text("Не верный id {}".format(client_id))
+            client_data = None
 
         if client_data is None:
             update.message.reply_text("Не верный id {}".format(client_id))
@@ -327,10 +362,17 @@ class Bot:
         cache_data = self.cache.get(json.loads(update.callback_query.data))
         if cache_data is None:
             return
-        message = parser_message(ComponentType.CLIENT, cache_data, update.callback_query.from_user.id)
+        if '' in cache_data.keys():
+            message = crawler_message(ComponentType.CLIENT,
+                                      update.callback_query.from_user.id,
+                                      cache_data,
+                                      ActionType.ADD_TORRENT_WATCHER)
+        elif 'kinopoisk_id':
+            message = parser_message(ComponentType.CLIENT, cache_data, update.callback_query.from_user.id)
+
         self.protocol.send_message(
-            message
-        )
+                message
+            )
 
 
 class BotCache:
@@ -373,7 +415,7 @@ class BotCommandParser:
         """
         Send message to command exsecuter
         :param command:
-        :param text:
+        :param data:
         :param protocol:
         :param chat_id:
         :return:

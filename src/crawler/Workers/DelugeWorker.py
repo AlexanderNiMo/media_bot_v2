@@ -99,15 +99,23 @@ class DelugeWorker(Worker):
         if 'progress' in data.keys():
             if data['progress'] == 100:
                 message_text = 'Скачивание {} завершено, беги скорей на плекс.'.format(self.job.text_query)
+                choices = []
             else:
                 message_text = 'Прогресс скачивания {0}: {1}%'.format(self.job.text_query, data['progress'])
+                choices = {
+                    'action': 'download_callback',
+                    'data': {
+                        'forse': True,
+                        'media_id': self.job.media_id
+                    }
+                }
             messages.append(
                 send_message(
                     ComponentType.CRAWLER,
                     {
                         'user_id': self.job.client_id,
                         'message_text': message_text,
-                        'choices': []
+                        'choices': choices
                     }
                 )
             )
