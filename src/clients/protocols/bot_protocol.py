@@ -295,15 +295,14 @@ class Bot:
         client_id = 0 if len(client_d) == 0 else client_d.pop(0)
         try:
             client_data = bot.get_chat(client_id)
-        except teleg_error.BadRequest:
-            client_data = {'first_name': '', 'last_name': '', 'username': ''}
-
-        data = {
+            data = {
                 'client_id': client_id,
                 'name': client_data.first_name,
                 'last_name': client_data.last_name,
                 'nick': client_data.username
-        }
+            }
+        except teleg_error.BadRequest:
+            data = {'client_id': client_id, 'first_name': '', 'last_name': '', 'username': ''}
 
         BotCommandParser.start_command('/auth', data, self.protocol, update.message.chat_id)
 
