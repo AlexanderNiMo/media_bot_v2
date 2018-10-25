@@ -20,22 +20,23 @@ def create_app_test():
 
     logger = logging.getLogger()
 
-    consol_hndl = logging.StreamHandler()
-    file_hndl = logging.FileHandler(LOG_FILE_NAME)
-
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
 
-    file_hndl.setFormatter(formatter)
+    consol_hndl = logging.StreamHandler()
     consol_hndl.setFormatter(formatter)
 
+    file_hndl = logging.FileHandler(LOG_FILE_NAME)
+    file_hndl.setFormatter(formatter)
+
     logger.addHandler(file_hndl)
-    logger.addHandler(consol_hndl)
+
     if config.LOGGER_LEVEL == 'info':
         logger.setLevel(logging.INFO)
     elif config.LOGGER_LEVEL == 'error':
         logger.setLevel(logging.ERROR)
     elif config.LOGGER_LEVEL == 'debug':
         logger.setLevel(logging.DEBUG)
+        logger.addHandler(consol_hndl)
 
     mediator_q = Queue()
 
