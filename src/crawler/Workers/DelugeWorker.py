@@ -58,11 +58,13 @@ class DelugeWorker(Worker):
         do = True
         start_time = time.time()
         while do:
+            data = deluge.call('core.get_torrents_status', {'id': self.job.torrent_id}, ['progress'])
+            self.returned_data.put({'progress': data})
+            if self.job.forse:
+                break
             if time.time() - start_time == 60*60:
                 break
             time.sleep(60*5)
-            data = deluge.call('core.get_torrents_status', {'id': self.job.torrent_id}, ['progress'])
-            self.returned_data.put({'progress': data})
 
     @property
     def result(self):

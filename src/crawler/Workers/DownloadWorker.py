@@ -5,7 +5,7 @@ from queue import Empty
 from src.crawler.Workers.WorkerABC import Worker
 from src.crawler.Workers.TorrentTrackers import download
 from src.mediator import send_message, crawler_message
-from src.app_enums import ComponentType
+from src.app_enums import ComponentType, ActionType
 from src.database import DbManager
 
 
@@ -78,7 +78,8 @@ class DownloadWorker(Worker):
                     'torrent_id': data['id'],
                     'torrent_data': data['data'],
                     'media_id': self.job.media_id
-                }
+                },
+                ActionType.ADD_TORRENT_TO_TORRENT_CLIENT
             )
         )
 
