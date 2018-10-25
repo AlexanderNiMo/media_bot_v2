@@ -253,6 +253,8 @@ class Bot:
             command='auth',
             callback=self.auth_handler
         )
+        dispatcher.add_handler(cmd_handler)
+
         cmd_handler = CommandHandler(
             command='notify',
             callback=self.notify_handler
