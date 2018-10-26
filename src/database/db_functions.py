@@ -21,12 +21,11 @@ class DbManager:
 
     @property
     def engine(self):
-        if self.__enj is None:
-            try:
-                enj = init_db(self.__get_connection_str(), self.config.DATABASE_NAME)
-            except OperationalError:
-                create_db(self.__get_connection_str(), self.config.DATABASE_NAME)
-                enj = init_db(self.__get_connection_str(), self.config.DATABASE_NAME)
+        try:
+            enj = init_db(self.__get_connection_str(), self.config.DATABASE_NAME)
+        except OperationalError:
+            create_db(self.__get_connection_str(), self.config.DATABASE_NAME)
+            enj = init_db(self.__get_connection_str(), self.config.DATABASE_NAME)
         return enj
 
     @property
@@ -48,21 +47,61 @@ class DbManager:
         if session is None:
             session = self.session
         users = []
-        media_users = session.query(self.User).join(self.User.media).filter(self.MediaData.kinopoisk_id==media_id).all()
+        media_users = session.query(self.User).join(self.User.media). \
+            filter(self.MediaData.kinopoisk_id == media_id).all()
         for i in media_users:
             users.append(i)
 
-        data = session.query(self.UserOptionsT)\
-            .filter_by(option=UserOptions.NOTIFICATION)\
-            .filter_by(value=1)\
+        data = session.query(self.UserOptionsT) \
+            .filter_by(option=UserOptions.NOTIFICATION) \
+            .filter_by(value=1) \
             .all()
         users += [i.user for i in data]
         return users
 
+    @staticmethod
+    def construct_media_by_ohm_object(elem):
+        if elem is None:
+            return None
+        media_type = MediaType.FILMS
+        try:
+            season = elem.season
+            media_type = MediaType.SERIALS
+        except AttributeError:
+            season = ''
+
+        try:
+            max_series = elem.series
+        except AttributeError:
+            max_series = 0
+
+        data_dict = {
+            'media_id': elem.kinopoisk_id,
+            'title': elem.label,
+            'year': elem.year,
+            'download_url': elem.download_url,
+            'torrent_tracker': elem.torrent_tracker,
+            'torrent_id': elem.torrent_id,
+            'theam_id': elem.theam_id,
+            'kinopoisk_url': elem.kinopoisk_url,
+            'media_type': media_type,
+            'max_series': max_series,
+            'season': season,
+        }
+        return MediaData(**data_dict)
+
     def find_all_media(self, media_type, session=None):
+        result = []
+        data = self._find_all_media(media_type, session)
+        for elem in data:
+            result.append(self.construct_media_by_ohm_object(elem))
+        return result
+
+    def _find_all_media(self, media_type, session=None):
         """
         Находит все данные для поиска по тиапу
-        :param type:
+        :param media_type:
+        :param session:
         :return:
         """
         if session is None:
@@ -76,6 +115,10 @@ class DbManager:
         return data
 
     def find_media(self, kinopoisk_id, media_type, season=None, session=None):
+        data = self._find_media(kinopoisk_id, media_type, season, session)
+        return self.construct_media_by_ohm_object(data)
+
+    def _find_media(self, kinopoisk_id, media_type, season=None, session=None):
         """
         Ищет фильм по kinopoisk_id
 
@@ -96,6 +139,10 @@ class DbManager:
         return data
 
     def find_media_by_label(self, label, year, media_type, season=None, session=None):
+        data = self._find_media_by_label(label, year, media_type, season, session)
+        return self.construct_media_by_ohm_object(data)
+
+    def _find_media_by_label(self, label, year, media_type, season=None, session=None):
         """
         Ищет фильм по стандартным реквизитам
 
@@ -120,6 +167,7 @@ class DbManager:
         """
 
         :param client_id:
+        :param session:
         :return:
         """
         if session is None:
@@ -128,7 +176,6 @@ class DbManager:
         if client_id == int(self.config.TELEGRAMM_BOT_USER_ADMIN):
             if data is None:
                 data = self.add_user(client_id, session)
-        # self.close_session()
         return data
 
     def is_admin(self, client_id):
@@ -148,7 +195,7 @@ class DbManager:
                 'season': params['season']
             })
 
-        media = self.find_media(**find_dict)
+        media = self._find_media(**find_dict)
 
         if media is None:
             raise AttributeError('По kinopoisk_id {} не существует фильма для обновления.'.format(media_id))
@@ -199,7 +246,7 @@ class DbManager:
     def add_media_to_user_list(self, client_id, kinopoisk_id, media_type, season, session=None):
         if session is None:
             session = self.session
-        media = self.find_media(kinopoisk_id, media_type, season, session=session)
+        media = self._find_media(kinopoisk_id, media_type, season, session=session)
         user = self.find_user(client_id, session=session)
         if media not in user.media:
             user.media.append(media)
@@ -207,13 +254,13 @@ class DbManager:
         session.add(user)
         session.commit()
 
-    def change_user_option(self, clien_id, option_name: UserOptions, value=0, session=None):
+    def change_user_option(self, client_id, option_name: UserOptions, value=0, session=None):
         if session is None:
             session = self.session
-        result = session.query(self.User, self.UserOptionsT).\
-                    filter(self.User.id == self.UserOptionsT.user_id).\
-                    filter(self.User.client_id == clien_id).\
-                    filter(self.UserOptionsT.option == option_name).first()
+        result = session.query(self.User, self.UserOptionsT). \
+            filter(self.User.id == self.UserOptionsT.user_id). \
+            filter(self.User.client_id == client_id). \
+            filter(self.UserOptionsT.option == option_name).first()
         if result is None:
             opt = self.UserOptionsT(option=option_name, value=value)
             user = self.find_user(client_id, session)
@@ -222,15 +269,38 @@ class DbManager:
             user, opt = result
             opt.value = value if value != 0 else not opt.value
         if user is None:
-            raise ValueError('No user with client id {0}'.format(clien_id))
+            raise ValueError('No user with client id {0}'.format(client_id))
         new_value = opt.value
         session.add(opt)
         session.add(user)
         session.commit()
         return new_value
 
-if __name__ == '__main__':
 
-    from app import config
-    client_id = 123109378
-    db = DbManager(config)
+class MediaData:
+    """
+    Store media data for return from db adapter
+
+    """
+
+    def __init__(self, media_id, title, season,
+                 year, download_url, torrent_tracker,
+                 theam_id, kinopoisk_url, torrent_id,
+                 max_series=0):
+        self.media_id = media_id
+        self.title = title
+        self.download_url = download_url
+        self.torrent_tracker = torrent_tracker
+        self.theam_id = theam_id
+        self.season = season
+        self.year = year
+        self.kinopoisk_url = kinopoisk_url
+        self.max_series = max_series
+        self.torrent_id = torrent_id
+
+
+if __name__ == '__main__':
+    from app import config as _conf
+
+    _client_id = 123109378
+    db = DbManager(_client_id)

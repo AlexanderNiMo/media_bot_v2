@@ -1,10 +1,10 @@
 import logging
 import time
 
-from src.app_enums import ComponentType, ActionType, MediaType
+from src.app_enums import ComponentType, ActionType
 from src.crawler.Workers import DownloadWorker
 from src.crawler.Workers import TorrentSearchWorker, DelugeWorker
-from src.database import DbManager
+from src.database import DbManager, MediaData
 from src.mediator import AppMediatorClient, MediatorActionMessage, CrawlerData
 from multiprocessing import Queue
 
@@ -12,23 +12,52 @@ logger = logging.getLogger(__name__)
 
 
 class Job:
-    def __init__(self, action_type, client_id, media_id, title, season,
-                 year, download_url, torrent_tracker, theam_id, kinopoisk_url,
-                 max_series, torrent_id, crawler_data, **kwargs):
+    def __init__(self, action_type, client_id, media: MediaData, crawler_data, **kwargs):
         self.action_type = action_type
         self.client_id = client_id
-        self.media_id = media_id
-        self.title = title
-        self.download_url = download_url
-        self.torrent_tracker = torrent_tracker
-        self.theam_id = theam_id
-        self.season = season
-        self.year = year
-        self.kinopoisk_url = kinopoisk_url
-        self.max_series = max_series
-        self.torrent_id = torrent_id
+        self.media = media
         self.crawler_data = crawler_data
         self.__dict__.update(**kwargs)
+
+    @property
+    def media_id(self):
+        return self.media.media_id
+
+    @property
+    def title(self):
+        return self.media.title
+
+    @property
+    def download_url(self):
+        return self.media.download_url
+
+    @property
+    def torrent_tracker(self):
+        return self.media.torrent_tracker
+
+    @property
+    def theam_id(self):
+        return self.media.theam_id
+
+    @property
+    def season(self):
+        return self.media.season
+
+    @property
+    def year(self):
+        return self.media.year
+
+    @property
+    def kinopoisk_url(self):
+        return self.media.kinopoisk_url
+
+    @property
+    def max_series(self):
+        return self.media.max_series
+
+    @property
+    def torrent_id(self):
+        return self.media.torrent_id
 
     @property
     def text_query(self):
@@ -167,7 +196,7 @@ class CrawlerMessageHandler:
         result = []
         db = self.db_manager
         data = message.data
-        media = []
+
         session = db.get_session()
         if not data.media_id == 0:
             media = db.find_media(data.media_id, data.media_type, data.season, session)
@@ -183,31 +212,14 @@ class CrawlerMessageHandler:
         session.close()
         for element in media:
 
-            try:
-                season = element.season
-            except AttributeError:
-                season = ''
-
-            try:
-                max_series = element.series
-            except AttributeError:
-                max_series = 0
+            element.torrent_id = element.torrent_id if data.torrent_id is None else data.torrent_id
 
             result.append(
                 Job(
                     **{
                         'action_type': message.action,
                         'client_id': data.client_id,
-                        'media_id': element.kinopoisk_id,
-                        'title': element.label,
-                        'season': season,
-                        'year': element.year,
-                        'download_url': element.download_url,
-                        'torrent_tracker': element.torrent_tracker,
-                        'theam_id': element.theam_id,
-                        'kinopoisk_url': element.kinopoisk_url,
-                        'max_series': max_series,
-                        'torrent_id': element.torrent_id if data.torrent_id is None else data.torrent_id,
+                        'media': element,
                         'crawler_data': data,
                     }
                 )
@@ -218,18 +230,18 @@ class CrawlerMessageHandler:
 
 if __name__ == '__main__':
     from multiprocessing import Queue
-    from app import config
+    from app import config as conf
 
     logger = logging.getLogger()
     consol_hndl = logging.StreamHandler()
     logger.addHandler(consol_hndl)
     logger.setLevel(logging.DEBUG)
 
-    c = Crawler(Queue(), Queue(), config, 10)
+    c = Crawler(Queue(), Queue(), conf, 10)
 
-    message = MediatorActionMessage(ComponentType.CRAWLER, ActionType.CHECK, ComponentType.CRAWLER)
-    message.data = CrawlerData(123109378, 577266)
+    msg = MediatorActionMessage(ComponentType.CRAWLER, ActionType.CHECK, ComponentType.CRAWLER)
+    msg.data = CrawlerData(123109378, 577266)
 
-    c.add_jobs(message)
+    c.add_jobs(msg)
     c.update_jobs()
     c.start()
