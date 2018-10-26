@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class Job:
     def __init__(self, action_type, client_id, media_id, title, season,
                  year, download_url, torrent_tracker, theam_id, kinopoisk_url,
-                 max_series, torrent_id, torren_data, force, crawler_data, **kwargs):
+                 max_series, torrent_id, crawler_data, **kwargs):
         self.action_type = action_type
         self.client_id = client_id
         self.media_id = media_id
@@ -27,8 +27,6 @@ class Job:
         self.kinopoisk_url = kinopoisk_url
         self.max_series = max_series
         self.torrent_id = torrent_id
-        self.torren_data = torren_data
-        self.force = force
         self.crawler_data = crawler_data
         self.__dict__.update(**kwargs)
 
@@ -210,8 +208,6 @@ class CrawlerMessageHandler:
                         'kinopoisk_url': element.kinopoisk_url,
                         'max_series': max_series,
                         'torrent_id': element.torrent_id if data.torrent_id is None else data.torrent_id,
-                        'torren_data': data.torrent_data,
-                        'force': data.force,
                         'crawler_data': data,
                     }
                 )

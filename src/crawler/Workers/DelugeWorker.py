@@ -46,7 +46,7 @@ class DelugeWorker(Worker):
             dir_path = self.config.TORRENT_SERIAL_PATH
         torrent_options = {'download_location': dir_path}
 
-        torrend_data = base64.encodebytes(self.job.torren_data)
+        torrend_data = base64.encodebytes(self.job.crawler_data.torren_data)
         torrent_file_name = '{}.torrent'.format(self.job.torrent_id)
         torrent_id = deluge.call('core.add_torrent_file', torrent_file_name, torrend_data, torrent_options)
         self.returned_data.put({'torrent_id': torrent_id})
@@ -59,7 +59,7 @@ class DelugeWorker(Worker):
         start_time = time.time()
         while do:
             data = deluge.call('core.get_torrents_status', {'id': self.job.torrent_id}, ['progress'])
-            if self.job.force:
+            if self.job.crawler_data.forse:
                 self.returned_data.put({'progress': int(data[bytes(self.job.torrent_id, 'utf-8')][b'progress'])})
                 break
             if int(data[bytes(self.job.torrent_id, 'utf-8')][b'progress']) == 100:
@@ -86,18 +86,20 @@ class DelugeWorker(Worker):
                 {
                     'media_id': self.job.media_id,
                     'media_type': MediaType.FILMS if self.job.season == '' else MediaType.SERIALS,
-                    'next_messages': [crawler_message(
-                        ComponentType.COMMAND_HANDLER,
-                        self.job.client_id,
-                        {'media_id': self.job.media_id},
-                        ActionType.ADD_TORRENT_WATCHER
-                    ),
-                    crawler_message(
-                        ComponentType.COMMAND_HANDLER,
-                        self.job.client_id,
-                        {'media_id': self.job.media_id, 'force': True},
-                        ActionType.ADD_TORRENT_WATCHER
-                    )],
+                    'next_messages': [
+                        crawler_message(
+                            ComponentType.COMMAND_HANDLER,
+                            self.job.client_id,
+                            {'media_id': self.job.media_id},
+                            ActionType.ADD_TORRENT_WATCHER
+                        ),
+                        crawler_message(
+                            ComponentType.COMMAND_HANDLER,
+                            self.job.client_id,
+                            {'media_id': self.job.media_id, 'force': True},
+                            ActionType.ADD_TORRENT_WATCHER
+                        )
+                    ],
                     'upd_data': {
                         'torrent_id': data['torrent_id'],
                     },
