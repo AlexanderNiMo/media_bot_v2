@@ -41,9 +41,9 @@ class DelugeWorker(Worker):
         if deluge is None:
             return
         if self.job.season == '':
-            dir_path = self.config.TORRENT_SERIAL_PATH
-        else:
             dir_path = self.config.TORRENT_FILM_PATH
+        else:
+            dir_path = self.config.TORRENT_SERIAL_PATH
         torrent_options = {'download_location': dir_path}
 
         torrend_data = base64.encodebytes(self.job.torren_data)
