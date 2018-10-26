@@ -57,11 +57,15 @@ class DelugeWorker(Worker):
             return
         do = True
         start_time = time.time()
+        first_time = True
         while do:
             data = deluge.call('core.get_torrents_status', {'id': self.job.torrent_id}, ['progress'])
             if self.job.crawler_data.forse:
                 self.returned_data.put({'progress': int(data[bytes(self.job.torrent_id, 'utf-8')][b'progress'])})
                 break
+            if first_time:
+                self.returned_data.put({'progress': int(data[bytes(self.job.torrent_id, 'utf-8')][b'progress'])})
+                first_time = False
             if int(data[bytes(self.job.torrent_id, 'utf-8')][b'progress']) == 100:
                 self.returned_data.put({'progress': int(data[bytes(self.job.torrent_id, 'utf-8')][b'progress'])})
                 break
@@ -91,12 +95,6 @@ class DelugeWorker(Worker):
                             ComponentType.COMMAND_HANDLER,
                             self.job.client_id,
                             {'media_id': self.job.media_id},
-                            ActionType.ADD_TORRENT_WATCHER
-                        ),
-                        crawler_message(
-                            ComponentType.COMMAND_HANDLER,
-                            self.job.client_id,
-                            {'media_id': self.job.media_id, 'force': True},
                             ActionType.ADD_TORRENT_WATCHER
                         )
                     ],
