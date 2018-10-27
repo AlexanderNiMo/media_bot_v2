@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import inspect
 import sys
 import logging
+from plexapi.server import PlexServer
 
 from src.mediator import (
     AppMediatorClient,
@@ -28,6 +29,7 @@ class CommandMessageHandler(AppMediatorClient):
     def __init__(self, in_queue, out_queue, config):
         super(self.__class__, self).__init__(in_queue, out_queue, config)
         self.db_manager = DbManager(self.config)
+
 
     def run(self):
         """
@@ -58,7 +60,7 @@ class CommandMessageHandler(AppMediatorClient):
             command_dict = handler.get_command_list()
 
             if message_data.command.value in command_dict.keys():
-                messages = handler.exsecute_command(message_data, self.db_manager)
+                messages = handler.exsecute_command(message_data, self.db_manager, self.config)
                 for msg in messages:
                     self.send_message(msg)
                 break
@@ -72,7 +74,7 @@ class AbstractHandler(ABC):
         return {}
 
     @classmethod
-    def exsecute_command(cls, message_data: CommandData, db_manager):
+    def exsecute_command(cls, message_data: CommandData, db_manager, config):
         if not cls.check_rule(message_data.client_id, db_manager):
             return [send_message(
                 ComponentType.COMMAND_HANDLER,
@@ -83,7 +85,7 @@ class AbstractHandler(ABC):
                 }
             )]
         command_dict = cls.get_command_list()
-        message = command_dict[message_data.command.value](message_data, db_manager)
+        message = command_dict[message_data.command.value](message_data, db_manager, config)
         result = []
         if isinstance(message, MediatorActionMessage):
             result.append(message)
@@ -107,7 +109,7 @@ class FilmHandler(AbstractHandler):
         return {ClientCommands.ADD_FILM.value: cls.add_film}
 
     @classmethod
-    def add_film(cls, data: CommandData, db_manager: DbManager):
+    def add_film(cls, data: CommandData, db_manager: DbManager, config):
         """
         Command add film to base
 
@@ -135,7 +137,7 @@ class SerialHandler(AbstractHandler):
         }
 
     @classmethod
-    def add_serial(cls, data: CommandData, db_manager: DbManager):
+    def add_serial(cls, data: CommandData, db_manager: DbManager, config):
         """
         Command add serial to base
 
@@ -153,7 +155,7 @@ class SerialHandler(AbstractHandler):
         return message
 
     @classmethod
-    def add_serial_by_them(cls, data: CommandData, db_manager: DbManager):
+    def add_serial_by_them(cls, data: CommandData, db_manager: DbManager, config):
         """
         Command add serial to base
 
@@ -175,7 +177,7 @@ class UserHandler(AbstractHandler):
         }
 
     @classmethod
-    def set_user_option(cls, data: CommandData, db_manager: DbManager):
+    def set_user_option(cls, data: CommandData, db_manager: DbManager, config):
         """
         Change some user option
         :return:
@@ -198,7 +200,7 @@ class UserHandler(AbstractHandler):
         return messages
 
     @classmethod
-    def auth_query(cls, data: CommandData, db_manager: DbManager):
+    def auth_query(cls, data: CommandData, db_manager: DbManager, config):
         """
         Query for authentication from new user/
         :param data:
@@ -248,7 +250,7 @@ class AddDataHandler(AbstractHandler):
         }
 
     @classmethod
-    def add_user(cls, data: CommandData, db_manager: DbManager):
+    def add_user(cls, data: CommandData, db_manager: DbManager, config):
         """
         Add user to base
         :return:
@@ -304,7 +306,7 @@ class AddDataHandler(AbstractHandler):
         return messages
 
     @classmethod
-    def add_film(cls, data: CommandData, db_manager: DbManager):
+    def add_film(cls, data: CommandData, db_manager: DbManager, config):
         session = db_manager.get_session()
         film = db_manager.add_film(
             data.client_id,
@@ -338,7 +340,7 @@ class AddDataHandler(AbstractHandler):
         return messages
 
     @classmethod
-    def add_serial(cls, data: CommandData, db_manager: DbManager):
+    def add_serial(cls, data: CommandData, db_manager: DbManager, config):
         session = db_manager.get_session()
         serial = db_manager.add_serial(
             data.client_id,
@@ -376,7 +378,7 @@ class AddDataHandler(AbstractHandler):
         return messages
 
     @classmethod
-    def update_media_data(cls, data: CommandData, db_manager: DbManager):
+    def update_media_data(cls, data: CommandData, db_manager: DbManager, config):
         com_data = data.command_data
         if 'media_id' not in com_data.keys():
             raise AttributeError('Для обновлвения данных необходимо передать kinopoisk_id')
@@ -397,7 +399,7 @@ class AddDataHandler(AbstractHandler):
         return messages
 
     @classmethod
-    def add_media_to_user_list(cls, data: CommandData, db_manager: DbManager):
+    def add_media_to_user_list(cls, data: CommandData, db_manager: DbManager, config):
         session = db_manager.get_session()
         db_manager.add_media_to_user_list(
             data.client_id,
@@ -407,6 +409,23 @@ class AddDataHandler(AbstractHandler):
             session=session,
         )
         session.close()
+
+
+class PlexServerHandler(AbstractHandler):
+
+    @classmethod
+    def get_command_list(cls):
+        return {
+            ClientCommands.UPDATE_PLEX_LIB.value: cls.update_plex_libraries(),
+        }
+
+    @classmethod
+    def update_plex_libraries(cls, data: CommandData, db_manager: DbManager, config):
+        server = PlexServer(
+            'http://{0}:{1}'.format(config.PLEX_HOST, config.PLEX_PORT),
+            config.PLEX_TOKEN
+        )
+        server.library.update()
 
 
 def get_command_handlers():

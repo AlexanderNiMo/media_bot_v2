@@ -64,6 +64,8 @@ class ClientCommands(MyEnum):
 
     UPDATE_MEDIA = 12
 
+    UPDATE_PLEX_LIB = 13
+
 
 class MediaType(MyEnum):
     """

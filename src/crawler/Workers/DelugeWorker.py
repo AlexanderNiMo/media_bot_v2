@@ -121,6 +121,13 @@ class DelugeWorker(Worker):
             if torrent_inform['progress'] == 100:
                 message_text = 'Скачивание {} завершено, беги скорей на плекс.'.format(self.job.text_query)
                 choices = []
+                messages.append(
+                    command_message(
+                        ComponentType.CRAWLER,
+                        ClientCommands.UPDATE_PLEX_LIB,
+                        {}
+                    )
+                )
             else:
                 message_text = 'Прогресс скачивания {0}: {1}% {2}/{3}'.format(
                     self.job.text_query,
