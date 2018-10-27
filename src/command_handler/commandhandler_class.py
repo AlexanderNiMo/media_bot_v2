@@ -332,18 +332,6 @@ class AddDataHandler(AbstractHandler):
                 'media_id': film.kinopoisk_id,
                 'media_type': MediaType.FILMS
             }
-        ), send_message(
-            ComponentType.COMMAND_HANDLER,
-            {
-                'user_id': data.client_id, 'message_text': message_text, 'choices': []
-            }
-        ), crawler_message(
-            ComponentType.COMMAND_HANDLER,
-            data.client_id,
-            {
-                'media_id': film.kinopoisk_id,
-                'media_type': MediaType.FILMS
-            }
         )]
 
         session.close()

@@ -2,7 +2,7 @@ from deluge_client import DelugeRPCClient, FailedToReconnectException
 import logging
 import time
 import base64
-from typing import List
+import math
 from queue import Empty
 
 from src.app import config
@@ -47,7 +47,7 @@ class DelugeWorker(Worker):
             dir_path = self.config.TORRENT_SERIAL_PATH
         torrent_options = {'download_location': dir_path}
 
-        torrend_data = base64.encodebytes(self.job.crawler_data.torren_data)
+        torrend_data = base64.encodebytes(self.job.crawler_data.torrent_data)
         torrent_file_name = '{}.torrent'.format(self.job.torrent_id)
         torrent_id = deluge.call('core.add_torrent_file', torrent_file_name, torrend_data, torrent_options)
         self.returned_data.put({'torrent_id': torrent_id})
@@ -71,7 +71,7 @@ class DelugeWorker(Worker):
                 'total_done': torr_dict[b'total_done'],
                 'total_size': torr_dict[b'total_size'],
             }
-            if self.job.crawler_data.forse:
+            if self.job.crawler_data.force:
                 self.returned_data.put({'torrent_information': torrent_information})
                 break
             if first_time:
@@ -80,9 +80,9 @@ class DelugeWorker(Worker):
             if torrent_information['progress'] == 100:
                 self.returned_data.put({'torrent_information': torrent_information})
                 break
-            if time.time() - start_time == 60*60:
+            if time.time() - start_time == 60 * 60:
                 break
-            time.sleep(60*5)
+            time.sleep(60 * 5)
 
     @property
     def result(self):
@@ -125,8 +125,8 @@ class DelugeWorker(Worker):
                 message_text = 'Прогресс скачивания {0}: {1}% {2}/{3}'.format(
                     self.job.text_query,
                     torrent_inform['progress'],
-                    torrent_inform['total_done'],
-                    torrent_inform['total_size'],
+                    convert_size(torrent_inform['total_done']),
+                    convert_size(torrent_inform['total_size']),
                 )
                 if 'key_board' in self.job.crawler_data.data.keys() and not self.job.crawler_data.data['key_board']:
                     choices = []
@@ -150,3 +150,13 @@ class DelugeWorker(Worker):
             )
 
         return messages
+
+
+def convert_size(size_bytes):
+    if size_bytes == 0:
+        return "0B"
+    size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+    i = int(math.floor(math.log(size_bytes, 1024)))
+    p = math.pow(1024, i)
+    s = round(size_bytes / p, 2)
+    return "%s %s" % (s, size_name[i])
