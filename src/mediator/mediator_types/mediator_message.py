@@ -22,8 +22,9 @@ class MediatorActionMessage(MediatorMessage):
 
         Создает объект сообщение для отправки в медиатор
 
-        :param component_type: Компонент назначения
+        :param component: Компонент назначения
         :param action: Выполняемое действие
+        :param from_component: От кого сообщение
 
         """
         self.__component_type = component

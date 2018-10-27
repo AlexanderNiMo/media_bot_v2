@@ -36,7 +36,9 @@ class BotProtocol(AppMediatorClient):
         self.create_bot()
         self.listen()
 
-    def send_bot_message(self, text, user_id, choices=[]):
+    def send_bot_message(self, text, user_id, choices=None):
+        if choices is None:
+            choices = []
         logger.debug('Отправка сообщение {1} для пользователя {0}'.format(user_id, text))
 
         self.__bot.send_message(user_id, text, choices)
@@ -182,7 +184,7 @@ class Bot:
             row_buttons.append(
                 telegram.InlineKeyboardButton(
                     text=choise['button_text'],
-                    callback_data=json.dumps(self.save_callback_data(choise['call_back_data']))
+                    callback_data=self.save_callback_data(choise['call_back_data'])
                 )
             )
 
@@ -324,6 +326,20 @@ class Bot:
             update.message.chat_id
         )
 
+    def start_handler(self, bot, update):
+        """
+        Handle add film command
+
+        :param bot:
+        :param update:
+        :return:
+        """
+        logger.info('New message /start from {0}'.format(update.message.chat_id))
+        update.message.reply_text("Привет! Для начала авторизации набери /auth."
+                                  "Для добавления фильма набери /film Название фильма год"
+                                  "Для добавления сериала /serial Название сериала сезон N год"
+                                  "Для включения уведомлений о новых фильмах и сериалах набери /notyfi")
+
     def film_handler(self, bot, update):
         """
         Handle add film command
@@ -365,9 +381,7 @@ class Bot:
         elif 'kinopoisk_id' in cache_data.keys():
             message = parser_message(ComponentType.CLIENT, cache_data, update.callback_query.from_user.id)
 
-        self.protocol.send_message(
-                message
-            )
+        self.protocol.send_message(message)
 
 
 class BotCache:
@@ -392,7 +406,9 @@ class BotCache:
 class MyPickledb(pickledb.pickledb):
 
     def set_sigterm_handler(self):
-        '''Assigns sigterm_handler for graceful shutdown during dump()'''
+        """
+        Assigns sigterm_handler for graceful shutdown during dump()
+        """
         pass
 
 

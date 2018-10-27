@@ -11,8 +11,13 @@ logger = logging.getLogger(__name__)
 
 
 class TorrentSearchWorker(Worker):
+    """
+    Класс реализует логику поиска торрентов в трекерах
+
+    """
 
     def get_target(self):
+
         return self.work
 
     def work(self):
@@ -25,7 +30,7 @@ class TorrentSearchWorker(Worker):
 
         loc_data = filter(lambda x: not x.kinopoisk_id == '', data)
 
-        if len(list(loc_data)) > 5 or len(list(loc_data)) >= len(data)/2:
+        if len(list(loc_data)) > 5 or len(list(loc_data)) >= len(data) / 2:
             if not self.job.media_id == -1:
                 loc_data = filter(lambda x: x.kinopoisk_id == self.job.media_id, data)
         else:
@@ -43,7 +48,7 @@ class TorrentSearchWorker(Worker):
     @property
     def result(self):
         try:
-            data = self.returned_data.get(False, timeout=2)
+            data = self.returned_data.get(block=False)
         except Empty:
             data = None
         if data is None:
@@ -51,9 +56,9 @@ class TorrentSearchWorker(Worker):
                 if not self.job.action_type.value == ActionType.FORCE_CHECK.value:
                     return []
                 message_text = '{0} по запросу {1} не найден, ' \
-                               'но я буду искать его непрестанно.'.format(
-                    'Фильм' if self.job.season == '' else 'Сериал',
-                    self.job.text_query)
+                               'но я буду искать его непрестанно.'\
+                    .format('Фильм' if self.job.season == '' else 'Сериал',
+                            self.job.text_query)
                 return [send_message(
                     ComponentType.CRAWLER,
                     {
@@ -108,22 +113,21 @@ if __name__ == '__main__':
     import logging
 
     t = TorrentSearchWorker(
-    Job(**{
-        'action_type': None,
-        'client_id': 123109378,
-        'media_id': 571884,
-        'title': 'Гарри Поттер и философский камень',
-        'season': '',
-        'year': 2001,
-        'download_url': '',
-        'torrent_tracker': '',
-        'theam_id': '',
-        'kinopoisk_url': 'https://www.kinopoisk.ru/film/571884/',
-        'max_series':0
-    }), config)
+        Job(**{
+            'action_type': None,
+            'client_id': 123109378,
+            'media_id': 571884,
+            'title': 'Гарри Поттер и философский камень',
+            'season': '',
+            'year': 2001,
+            'download_url': '',
+            'torrent_tracker': '',
+            'theam_id': '',
+            'kinopoisk_url': 'https://www.kinopoisk.ru/film/571884/',
+            'max_series': 0
+        }), config)
 
     t.start()
     while not t.ended:
         time.sleep(5)
     print(t.result)
-

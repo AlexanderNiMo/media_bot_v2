@@ -57,6 +57,10 @@ class AbstractCrawlerWorker(metaclass=ABCMeta):
 
 class Worker(AbstractCrawlerWorker):
     def start(self):
+        """
+        Точка запуска процесса исполнения
+        :return:
+        """
         self.process = Thread(target=self.get_target())
         self.process.start()
 
@@ -65,14 +69,26 @@ class Worker(AbstractCrawlerWorker):
             self.process.join()
 
     def get_target(self):
+        """
+        Описывает процесс выбора исполняемой процедуры
+        :return:
+        """
         def a():
             print('Start worker')
         return a
 
     @property
     def result(self) -> list:
+        """
+        Вощвращает результат исполнения процесса
+        :return:
+        """
         return []
 
     @property
     def ended(self):
+        """
+        Проверяет закончено ли выполнение процесса
+        :return:
+        """
         return not self.process.is_alive()

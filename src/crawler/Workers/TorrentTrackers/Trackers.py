@@ -49,7 +49,7 @@ class AbcTorrentTracker(metaclass=ABCMeta):
     @classmethod
     @property
     @abstractmethod
-    def site_name(self):
+    def site_name(cls):
         return ''
 
     @abstractmethod
@@ -122,9 +122,9 @@ class TorrentTracker(AbcTorrentTracker):
         self._connection.close()
         self._connection = None
 
-    def normalize_size(self, size: str)-> float:
+    @staticmethod
+    def normalize_size(size: str) -> float:
         coef = 1
-        new_size = 0
         if 'MB' in size.upper():
             coef = 0.001
 
@@ -149,10 +149,9 @@ class TorrentTracker(AbcTorrentTracker):
         return {
             'data': req.content,
             'id': torr_id
-            }
+        }
 
     def get_resolution(self, url, title):
-        result = None
         resolutions = ['720', '1080']
         for res in resolutions:
             if res in title:
@@ -204,11 +203,11 @@ class TorrentTracker(AbcTorrentTracker):
         return self._cookie
 
     @property
-    def site_name(cls):
+    def site_name(self):
         return TorrentType.NONE_TYPE
 
     @property
-    def site_domain(cls):
+    def site_domain(self):
         return 'https://exsample.com'
 
     @property
@@ -259,9 +258,9 @@ class Rutracker(TorrentTracker):
         search_url = '{}/tracker.php'.format(self.site_domain)
 
         params = {
-                'nm': text,
-                'f': self.film_forums
-            }
+            'nm': text,
+            'f': self.film_forums
+        }
 
         req = self.connection.get(
             search_url,
@@ -278,7 +277,7 @@ class Rutracker(TorrentTracker):
                 torrents.append(torrent)
         return torrents
 
-    def create_torrent(self, search_line)->Torrent or None:
+    def create_torrent(self, search_line) -> Torrent or None:
         tor_dict = dict(
             label='', url='', size=0, data='', file_name='',
             pier=0, resolution=None, theam_url='', file_amount=0, kinopoisk_id='', tracker=''
@@ -342,8 +341,6 @@ class Rutracker(TorrentTracker):
         if 'Видео:' not in resp.text:
             return None
         soup = BeautifulSoup(resp.text, features='lxml')
-        data = soup.find_all('div', {'class', 'post_body'})
-        a=1
 
     def _get_sub_forum(self, forum_list):
         res = []
@@ -429,7 +426,7 @@ class Rutor(TorrentTracker):
                 torrents.append(torrent)
         return torrents
 
-    def create_torrent(self, search_line)->Torrent or None:
+    def create_torrent(self, search_line) -> Torrent or None:
         tor_dict = dict(
             label='', url='', size=0, data='', file_name='', pier=0,
             resolution=None, theam_url='', file_amount=0, kinopoisk_id='', tracker=''
@@ -468,9 +465,9 @@ class Rutor(TorrentTracker):
                 tor_dict['pier'] = int(elem.text)
 
         except AttributeError:
-                return None
+            return None
         except NameError:
-                return None
+            return None
 
         tor_dict['resolution'] = self.get_resolution(tor_dict['theam_url'], tor_dict['label'])
         if tor_dict['resolution'] is None:
@@ -518,7 +515,6 @@ class Rutor(TorrentTracker):
 
     @property
     def site_domain(self):
-        # http://rutor.org/search/0/0/100/0/
         return 'http://rutor.info'
 
     @property
@@ -552,11 +548,11 @@ def download(conf, url):
 
     trackers = get_trackers(conf)
     for tracker in trackers:
-        if tracker.site_domain in url or tracker.site_download   in url:
+        if tracker.site_domain in url or tracker.site_download in url:
             return tracker.get_torrent_data(url)
 
 
-def get_trackers(conf)->list:
+def get_trackers(conf) -> list:
     """
     Получает список классов трекеров для обработки
     :param conf:
@@ -585,8 +581,9 @@ if __name__ == '__main__':
 
     logger.setLevel(logging.DEBUG)
 
-    from app import config
-    t = Rutracker(config)
-    torrents = t.search('Гарри поттер')
-    for torr in torrents:
+    from app import config as _conf
+
+    t = Rutracker(_conf)
+    _torrents = t.search('Гарри поттер')
+    for torr in _torrents:
         print(torr)

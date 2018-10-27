@@ -12,52 +12,23 @@ logger = logging.getLogger(__name__)
 
 
 class Job:
-    def __init__(self, action_type, client_id, media: MediaData, crawler_data, **kwargs):
+    """
+    Описывает класс даных со всеми необходимыми
+    данными для передачи в процессы воркеров
+
+    """
+    def __init__(self, action_type, client_id, media: MediaData, crawler_data: CrawlerData, **kwargs):
         self.action_type = action_type
         self.client_id = client_id
         self.media = media
         self.crawler_data = crawler_data
         self.__dict__.update(**kwargs)
 
-    @property
-    def media_id(self):
-        return self.media.media_id
-
-    @property
-    def title(self):
-        return self.media.title
-
-    @property
-    def download_url(self):
-        return self.media.download_url
-
-    @property
-    def torrent_tracker(self):
-        return self.media.torrent_tracker
-
-    @property
-    def theam_id(self):
-        return self.media.theam_id
-
-    @property
-    def season(self):
-        return self.media.season
-
-    @property
-    def year(self):
-        return self.media.year
-
-    @property
-    def kinopoisk_url(self):
-        return self.media.kinopoisk_url
-
-    @property
-    def max_series(self):
-        return self.media.max_series
-
-    @property
-    def torrent_id(self):
-        return self.media.torrent_id
+    def __getattr__(self, item):
+        if item in self.__dict__:
+            return super(Job, self).__getattribute__(item)
+        else:
+            return getattr(self.media, item)
 
     @property
     def text_query(self):

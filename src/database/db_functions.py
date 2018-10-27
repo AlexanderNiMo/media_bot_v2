@@ -283,10 +283,10 @@ class MediaData:
 
     """
 
-    def __init__(self, media_id, title, season,
-                 year, download_url, torrent_tracker,
+    def __init__(self, media_id, title, year,
+                 download_url, torrent_tracker,
                  theam_id, kinopoisk_url, torrent_id,
-                 max_series=0):
+                 season='', max_series=0):
         self.media_id = media_id
         self.title = title
         self.download_url = download_url
@@ -300,7 +300,4 @@ class MediaData:
 
 
 if __name__ == '__main__':
-    from app import config as _conf
-
-    _client_id = 123109378
-    db = DbManager(_client_id)
+    pass

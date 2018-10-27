@@ -1,4 +1,3 @@
-
 """
 
 Словари для работы медиатора
@@ -43,6 +42,7 @@ class ActionType(MyEnum):
     DOWNLOAD_TORRENT = 8
     ADD_TORRENT_TO_TORRENT_CLIENT = 9
     ADD_TORRENT_WATCHER = 10
+
 
 class ClientCommands(MyEnum):
     """
@@ -115,8 +115,3 @@ class UserRule(MyEnum):
 
     ADMIN = 0
     USER = 1
-
-
-
-
-

@@ -5,20 +5,17 @@ import re
 from multiprocessing import Queue
 from abc import ABC, abstractmethod
 from plexapi.server import PlexServer
-from kinopoisk import movie, utils
+from kinopoisk import movie
 
 from src.database import DbManager
 from src.app_enums import ActionType, ComponentType, ClientCommands, MediaType, LockingStatus
 from src.mediator import AppMediatorClient, MediatorActionMessage, send_message, parser_message, command_message
 from src.mediator import ParserData
 
-
-
 logger = logging.getLogger(__name__)
 
 
 class Parser(AppMediatorClient):
-
     CLIENT_TYPE = ComponentType.PARSER
     CLIENT_ACTIONS = [ActionType.PARSE, ]
 
@@ -122,16 +119,16 @@ class BaseParser(AbstractParser):
         else:
             return self.end_chain(data)
 
-    def parse_data(self, data: dict)->bool:
+    def parse_data(self, data: dict) -> bool:
         return False
 
-    def can_parse(self, data: dict)->bool:
+    def can_parse(self, data: dict) -> bool:
         return True
 
-    def end_chain(self, data: ParserData)-> list:
+    def end_chain(self, data: ParserData) -> list:
 
         command = ClientCommands.ADD_DATA_FILM if 'serial' in data.data.keys() and \
-                                                 not data.data['serial'] else ClientCommands.ADD_DATA_SERIAL
+                                                  not data.data['serial'] else ClientCommands.ADD_DATA_SERIAL
 
         self.messages.append(
             command_message(ComponentType.PARSER, command, data.data, data.client_id)
@@ -139,7 +136,7 @@ class BaseParser(AbstractParser):
         return self.messages
 
     @staticmethod
-    def _get_words(text: str)->list:
+    def _get_words(text: str) -> list:
         """
         Получает список слов из текста
 
@@ -149,7 +146,7 @@ class BaseParser(AbstractParser):
         data = re.findall(r'\S+', text)
         return data
 
-    def _normalize_query_text(self, query: str)-> str:
+    def _normalize_query_text(self, query: str) -> str:
         """
         Нормализует текст запроса
 
@@ -166,7 +163,7 @@ class KinopoiskParser(BaseParser):
 
     """
 
-    def parse_data(self, data: dict)->bool:
+    def parse_data(self, data: dict) -> bool:
 
         film = True
 
@@ -182,7 +179,7 @@ class KinopoiskParser(BaseParser):
 
         return sucsess
 
-    def find_film(self, data: dict)-> [bool, list]:
+    def find_film(self, data: dict) -> [bool, list]:
         result = movie.Movie.objects.search(data['query'])
 
         if len(result) == 0:
@@ -218,7 +215,7 @@ class KinopoiskParser(BaseParser):
 
         return 'choices' not in self.next_data.keys()
 
-    def find_serial(self, data: dict)-> [bool, list]:
+    def find_serial(self, data: dict) -> [bool, list]:
         result = movie.Movie.objects.search(data['query'])
 
         if len(result) == 0:
@@ -239,7 +236,7 @@ class KinopoiskParser(BaseParser):
 
             series = 0
             if len(element.seasons) >= data['season']:
-                season = element.seasons[data['season']-1]
+                season = element.seasons[data['season'] - 1]
                 series = len(season.episodes)
 
             if exact_match:
@@ -274,14 +271,14 @@ class KinopoiskParser(BaseParser):
     def can_parse(self, data: dict):
         return 'query' in data.keys()
 
-    def end_chain(self, data: ParserData)-> list:
+    def end_chain(self, data: ParserData) -> list:
 
         if len(self.next_data['choices']) == 0:
             message_text = 'В кинопоиске, по запросу {0}, ' \
-                       'ничего не найдено, уточни свой запрос.'.format(data.data['query'])
+                           'ничего не найдено, уточни свой запрос.'.format(data.data['query'])
         else:
             message_text = 'В кинопоиске, по запросу {0}, ' \
-                       'найдено более одного совпадения, выбери, что скачать.'.format(data.data['query'])
+                           'найдено более одного совпадения, выбери, что скачать.'.format(data.data['query'])
 
         choice_list = []
         a = 0
@@ -315,18 +312,11 @@ class PlexParser(BaseParser):
     """
 
     def parse_data(self, data: dict):
-        result = []
         server = PlexServer(
-                'http://{0}:{1}'.format(self.config.PLEX_HOST, self.config.PLEX_PORT),
-                self.config.PLEX_TOKEN
-            )
-        film = True
-        if 'season' in data.keys():
-            film = False
-        if film:
-            section = 'Movies'
-        else:
-            section = 'TV Shows'
+            'http://{0}:{1}'.format(self.config.PLEX_HOST, self.config.PLEX_PORT),
+            self.config.PLEX_TOKEN
+        )
+
         plex_data = server.search(data['title'])
         self.next_data = data.copy()
 
@@ -358,7 +348,7 @@ class PlexParser(BaseParser):
 
         return self.messages
 
-    def check_serials(self, plex_data: list, data: dict)->list:
+    def check_serials(self, plex_data: list, data: dict) -> list:
         result = []
         for element in plex_data:
             if not element.TYPE == 'show':
@@ -392,6 +382,8 @@ class DataBaseParser(BaseParser):
             media = db.find_media(data['kinopoisk_id'], media_type, session=session)
         elif all(key in data.keys() for key in ('label', 'year')):
             media = db.find_media_by_label(data['label'], data['year'], media_type, session=session)
+        else:
+            media = None
         if media is not None and media.status == LockingStatus.ENDED:
             result = False
         session.close()
@@ -404,8 +396,8 @@ class DataBaseParser(BaseParser):
 
     def end_chain(self, data):
         message_text = '{1} {0} уже ищется.'.format(data.data['title'],
-                                                          'Фильм' if 'serial' in data.data.keys()
-                                                                     and not data.data['serial'] else 'Сериал'
+                                                    'Фильм' if 'serial' in data.data.keys()
+                                                               and not data.data['serial'] else 'Сериал'
                                                     )
 
         self.messages.append(
@@ -425,7 +417,7 @@ class DataBaseParser(BaseParser):
                 {
                     'kinopoisk_id': data.data['kinopoisk_id'],
                     'media_type': MediaType.FILMS if 'serial' in data.data.keys()
-                                    and not data.data['serial'] else MediaType.SERIALS,
+                                                     and not data.data['serial'] else MediaType.SERIALS,
                     'season': data.data['season'] if 'season' in data.data.keys() else 0,
                 },
                 data.client_id,
@@ -448,7 +440,7 @@ class TextQueryParser(BaseParser):
 
     def parse_data(self, data: dict):
 
-        Errors = False
+        errors = False
 
         query_text = self._normalize_query_text(data['query'])
         self.next_data = data.copy()
@@ -456,7 +448,7 @@ class TextQueryParser(BaseParser):
         # Проверка года в запросе
         year = self._get_year(query_text)
         if year is None:
-            Errors = True
+            errors = True
         else:
             self.next_data['year'] = year
             self.year = year
@@ -466,7 +458,7 @@ class TextQueryParser(BaseParser):
             self.serial = True
             season = self._get_season(query_text)
             if season is None:
-                Errors = True
+                errors = True
             else:
                 self.next_data['season'] = season
                 self.season = season
@@ -477,7 +469,7 @@ class TextQueryParser(BaseParser):
         self.next_data['query'] = query_text
         self.next_data['query_ok'] = True
 
-        return not Errors
+        return not errors
 
     def can_parse(self, data: dict):
         return 'query_ok' not in data.keys() and 'query' in data.keys()
@@ -513,7 +505,8 @@ class TextQueryParser(BaseParser):
             )
         return self.messages
 
-    def _get_year(self, text: str)->int or None:
+    @staticmethod
+    def _get_year(text: str) -> int or None:
         """
         Выделяет год из запроса
         :param text:
@@ -532,7 +525,9 @@ class TextQueryParser(BaseParser):
             return None
         return int(re.findall(r'\d{1,2}', data[0])[0])
 
-    def _check_word_in_text(self, message, text, words=[]):
+    def _check_word_in_text(self, message, text, words=None):
+        if words is None:
+            words = []
         if len(words) == 0:
             words = self._get_words(message.upper())
         return text.upper() in words
@@ -560,7 +555,7 @@ class ParseTrackerThread(BaseParser):
         return 'thread' in data.keys()
 
 
-def get_parser_chain(config)-> AbstractParser:
+def get_parser_chain(config) -> BaseParser:
     """
     Возвращает цепочку парсеров в порядке их выполнения
 
@@ -585,35 +580,32 @@ def get_parser_chain(config)-> AbstractParser:
 
     return res
 
+
 if __name__ == '__main__':
 
-    from src.app import config
+    from src.app import config as _conf
 
-    class_list = [
+    _class_list = [
         BaseParser,
         PlexParser,
         KinopoiskParser,
         TextQueryParser,
     ]
 
-    prev_elem = None
-    res = None
+    _prev_elem = None
+    _res = None
 
-    for elem in class_list:
-        res = elem(prev_elem, config)
-        prev_elem = res
+    for _elem in _class_list:
+        _res = _elem(_prev_elem, _conf)
+        _prev_elem = _res
 
-    pParser = res
-
-    data = ParserData(
+    _data = ParserData(
         {
             'query': 'Игра престолов 2011 сезон 15',
             'serial': True,
             'season': 15,
             'year': 2011
         }
-        , 1)
-    messages = pParser.parse(data)
-
-
-    а = 1
+        , 1
+    )
+    msg = _prev_elem.parse(_data)

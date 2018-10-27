@@ -140,9 +140,12 @@ def crawler_message(
         action_type=app_enums.ActionType.FORCE_CHECK) -> MediatorMessage:
     """
     Send message to crawler
+    :param client_id:
+    :param action_type:
     :param client_from:
-    :pram client_id:
+    :param client_id:
     :param data: {media_id, media_type, force}
+    :param action_type:
     :return:
     """
 
@@ -168,8 +171,9 @@ def crawler_message(
 
 
 if __name__ == '__main__':
+    import src.app.config as _conf
     q_in = Queue()
     q_out = Queue()
 
-    client = AppMediatorClient(q_in, q_out)
+    client = AppMediatorClient(q_in, q_out, _conf)
     print(client)

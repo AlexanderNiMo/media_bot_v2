@@ -18,6 +18,7 @@ class AppMediator(Mediator):
     Класс посредник в приложении
 
     """
+
     def __init__(self, in_queue: Queue, clients: List[MediatorClient]) -> None:
         """
 
@@ -56,8 +57,8 @@ class AppMediator(Mediator):
         for d_client in self.__clients:
             client = d_client['client']
             # проверка адресации сообщений
-            if not (client.CLIENT_TYPE.value == message.component.value and \
-                                message.action.value in [a.value for a in client.CLIENT_ACTIONS]):
+            if not (client.CLIENT_TYPE.value == message.component.value
+                    and message.action.value in [a.value for a in client.CLIENT_ACTIONS]):
                 continue
             logger.debug('Сообщение с сервера отправлено для {}'.format(client))
             client.queue.put(message)
@@ -110,5 +111,3 @@ class AppMediator(Mediator):
                     self.__set_client(client)
                 except:
                     logger.error('Реанимация клиента {} не удалась...'.format(client.CLIENT_TYPE))
-
-

@@ -10,5 +10,5 @@ class ABCParser(metaclass=ABCMeta):
 
     """
     @abstractmethod
-    def parse(self, message: ParserMessage):
+    def parse(self, message):
         pass

@@ -16,7 +16,7 @@ import time
 
 def create_app_test():
 
-    LOG_FILE_NAME = 'main.log'
+    log_file_name = 'main.log'
 
     logger = logging.getLogger()
 
@@ -25,7 +25,7 @@ def create_app_test():
     consol_hndl = logging.StreamHandler()
     consol_hndl.setFormatter(formatter)
 
-    file_hndl = logging.FileHandler(LOG_FILE_NAME)
+    file_hndl = logging.FileHandler(log_file_name)
     file_hndl.setFormatter(formatter)
 
     logger.addHandler(file_hndl)

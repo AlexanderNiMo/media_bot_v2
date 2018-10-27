@@ -320,32 +320,37 @@ class AddDataHandler(AbstractHandler):
             data.command_data['url']
         )
 
-        messages = []
+        messages = [send_message(
+            ComponentType.COMMAND_HANDLER,
+            {
+                'user_id': data.client_id, 'message_text': message_text, 'choices': []
+            }
+        ), crawler_message(
+            ComponentType.COMMAND_HANDLER,
+            data.client_id,
+            {
+                'media_id': film.kinopoisk_id,
+                'media_type': MediaType.FILMS
+            }
+        ), send_message(
+            ComponentType.COMMAND_HANDLER,
+            {
+                'user_id': data.client_id, 'message_text': message_text, 'choices': []
+            }
+        ), crawler_message(
+            ComponentType.COMMAND_HANDLER,
+            data.client_id,
+            {
+                'media_id': film.kinopoisk_id,
+                'media_type': MediaType.FILMS
+            }
+        )]
 
-        messages.append(
-            send_message(
-                ComponentType.COMMAND_HANDLER,
-                {
-                    'user_id': data.client_id, 'message_text': message_text, 'choices': []
-                }
-            )
-        )
-
-        messages.append(
-            crawler_message(
-                ComponentType.COMMAND_HANDLER,
-                data.client_id,
-                {
-                    'media_id': film.kinopoisk_id,
-                    'media_type': MediaType.FILMS
-                }
-            )
-        )
         session.close()
         return messages
 
     @classmethod
-    def add_serial(self, data: CommandData, db_manager: DbManager):
+    def add_serial(cls, data: CommandData, db_manager: DbManager):
         session = db_manager.get_session()
         serial = db_manager.add_serial(
             data.client_id,
@@ -404,7 +409,7 @@ class AddDataHandler(AbstractHandler):
         return messages
 
     @classmethod
-    def add_media_to_user_list(self, data: CommandData, db_manager: DbManager):
+    def add_media_to_user_list(cls, data: CommandData, db_manager: DbManager):
         session = db_manager.get_session()
         db_manager.add_media_to_user_list(
             data.client_id,

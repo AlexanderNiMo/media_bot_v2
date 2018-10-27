@@ -1,5 +1,4 @@
 import logging
-from os import path
 from queue import Empty
 
 from src.crawler.Workers.WorkerABC import Worker
@@ -25,16 +24,6 @@ class DownloadWorker(Worker):
         logger.debug('End download worker.')
 
     def add_torrent_to_torrent_client(self, data):
-
-        if self.job.season == '':
-            dir_path = self.config.TORRENT_SERIAL_PATH
-        else:
-            dir_path = self.config.TORRENT_FILM_PATH
-
-        # download_path = path.join(dir_path, '{}.torrent'.format(data['id']))
-        # with open(download_path, 'wb') as file:
-        #     file.write(data['data'])
-
         self.returned_data.put(data)
 
     @property
@@ -42,7 +31,7 @@ class DownloadWorker(Worker):
         if not self.ended:
             return []
         try:
-            data = self.returned_data.get(False, timeout=2)
+            data = self.returned_data.get(block=False)
         except Empty:
             data = None
 

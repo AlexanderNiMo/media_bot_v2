@@ -1,12 +1,12 @@
-import deluge_client
+from deluge_client import DelugeRPCClient, FailedToReconnectException
 import logging
 import time
 import base64
+from typing import List
 from queue import Empty
 
-
 from src.app import config
-from src.app_enums import ComponentType, ClientCommands,MediaType,ActionType
+from src.app_enums import ComponentType, ClientCommands, MediaType, ActionType
 from src.mediator import command_message, crawler_message, send_message
 from src.crawler.Workers.WorkerABC import Worker
 
@@ -21,17 +21,18 @@ class DelugeWorker(Worker):
         elif self.job.action_type.value == ActionType.ADD_TORRENT_WATCHER.value:
             return self.work
 
-    def get_deluge_client(self)->deluge_client.DelugeRPCClient:
+    @staticmethod
+    def get_deluge_client():
         try:
-            deluge = deluge_client.DelugeRPCClient(
+            deluge = DelugeRPCClient(
                 config.DELUGE_HOST,
                 config.DELUGE_PORT,
                 config.DELUGE_USER,
                 config.DELUGE_PASS)
             deluge.connect()
             if not deluge.connected:
-                raise deluge_client.FailedToReconnectException
-        except deluge_client.FailedToReconnectException:
+                raise FailedToReconnectException
+        except FailedToReconnectException:
             logger.error('Не удалось соединиться с торрент торрент клиентом')
             return None
         return deluge
@@ -77,7 +78,7 @@ class DelugeWorker(Worker):
     def result(self):
         messages = []
         try:
-            data = self.returned_data.get(False, timeout=2)
+            data = self.returned_data.get(block=False)
         except Empty:
             data = None
         if data is None:

@@ -17,7 +17,6 @@ table_media_user_add = Table(
 
 
 class User(Base):
-
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True)
@@ -46,7 +45,6 @@ class User(Base):
 
 
 class UserOptionsT(Base):
-
     __tablename__ = 'user_options'
 
     id = Column(Integer, primary_key=True)
@@ -63,6 +61,7 @@ class UserOptionsT(Base):
 
     def __repr__(self):
         return '<UserOption(user={0}, option={1}, value={2})>'.format(self.user_id, self.option, self.value)
+
 
 # User.options = relationship("UserOptionsT", order_by=UserOptionsT.id, back_populates="user")
 
@@ -206,9 +205,9 @@ def test_user_env(s):
 
     alex = s.query(User).filter_by(name='Alex').first()
 
-    result = s.query(User, UserOptionsT).\
-                    filter(User.id==UserOptionsT.user_id).\
-                    filter(UserOptionsT.option==UserOptions.NOTIFICATION).first()
+    result = s.query(User, UserOptionsT). \
+        filter(User.id == UserOptionsT.user_id). \
+        filter(UserOptionsT.option == UserOptions.NOTIFICATION).first()
     if result is not None:
         alex, opt = result
         print(opt)
@@ -216,7 +215,6 @@ def test_user_env(s):
 
 
 def test_serial_env(s):
-
     serial = Serial(label='RR', year=1999, season=1)
 
     film = Film(label='RrdddR', year=1999)
@@ -234,7 +232,6 @@ def test_serial_env(s):
 
 
 def test_integreation_users_media(s):
-
     serial = s.query(Serial).filter_by(label='RR').first()
     alex = s.query(User).filter_by(name='Alex').first()
 
@@ -271,8 +268,6 @@ def create_db(connection_str, db_name):
     Base.metadata.create_all(enj)
     return enj
 
+
 if __name__ == '__main__':
-
     test()
-
-
