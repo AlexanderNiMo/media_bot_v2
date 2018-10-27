@@ -323,7 +323,7 @@ class PlexParser(BaseParser):
         if 'serial' in data.keys() and data['serial']:
             result = self.check_serials(plex_data, data)
         else:
-            result = plex_data
+            result = list(filter(lambda x: x.title.upper() == data['title'].upper(), plex_data))
 
         return len(result) == 0
 

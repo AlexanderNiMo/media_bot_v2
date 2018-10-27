@@ -28,19 +28,26 @@ class TorrentSearchWorker(Worker):
 
     def get_best_match(self, data: List[Torrent]):
 
-        loc_data = filter(lambda x: not x.kinopoisk_id == '', data)
+        f_list = []
+        f_list.append(lambda x: not x.kinopoisk_id == '')
+        f_data = filter(lambda x: not x.kinopoisk_id == '', data)
 
-        if len(list(loc_data)) > 5 or len(list(loc_data)) >= len(data) / 2:
+        if len(list(f_data)) > 5 or len(list(f_data)) >= len(data) / 2:
             if not self.job.media_id == -1:
-                loc_data = filter(lambda x: x.kinopoisk_id == self.job.media_id, data)
-        else:
-            loc_data = data
+                f_list.append(lambda x: x.kinopoisk_id == self.job.media_id)
+
+        f_list.append(lambda x: x.size <= float(15))
 
         if self.job.season == '':
-            loc_data = filter(lambda x: x.file_amount < 4, loc_data)
+            f_list.append(lambda x: x.file_amount < 4)
 
-        loc_data = sorted(loc_data, key=lambda x: x.pier)
-        res = list(loc_data)
+        result = data
+        for filter_func in f_list:
+            new_data = list(filter(filter_func, result))
+            result = new_data
+
+        s_data = sorted(list(result), key=lambda x: x.pier, reverse=True)
+        res = list(s_data)
         if len(res) == 0:
             return None
         return res[0]

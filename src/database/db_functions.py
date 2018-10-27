@@ -286,7 +286,7 @@ class MediaData:
     def __init__(self, media_id, title, year,
                  download_url, torrent_tracker,
                  theam_id, kinopoisk_url, torrent_id,
-                 season='', max_series=0):
+                 media_type, season='', max_series=0):
         self.media_id = media_id
         self.title = title
         self.download_url = download_url
@@ -297,6 +297,7 @@ class MediaData:
         self.kinopoisk_url = kinopoisk_url
         self.max_series = max_series
         self.torrent_id = torrent_id
+        self.media_type = media_type
 
 
 if __name__ == '__main__':

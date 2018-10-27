@@ -60,15 +60,25 @@ class DelugeWorker(Worker):
         start_time = time.time()
         first_time = True
         while do:
-            data = deluge.call('core.get_torrents_status', {'id': self.job.torrent_id}, ['progress'])
+            data = deluge.call('core.get_torrents_status', {'id': self.job.torrent_id}, [
+                'progress',
+                'total_done',
+                'total_size'
+            ])
+            torr_dict = data[bytes(self.job.torrent_id, 'utf-8')]
+            torrent_information = {
+                'progress': int(torr_dict[b'progress']),
+                'total_done': torr_dict[b'total_done'],
+                'total_size': torr_dict[b'total_size'],
+            }
             if self.job.crawler_data.forse:
-                self.returned_data.put({'progress': int(data[bytes(self.job.torrent_id, 'utf-8')][b'progress'])})
+                self.returned_data.put({'torrent_information': torrent_information})
                 break
             if first_time:
-                self.returned_data.put({'progress': int(data[bytes(self.job.torrent_id, 'utf-8')][b'progress'])})
+                self.returned_data.put({'torrent_information': torrent_information})
                 first_time = False
-            if int(data[bytes(self.job.torrent_id, 'utf-8')][b'progress']) == 100:
-                self.returned_data.put({'progress': int(data[bytes(self.job.torrent_id, 'utf-8')][b'progress'])})
+            if torrent_information['progress'] == 100:
+                self.returned_data.put({'torrent_information': torrent_information})
                 break
             if time.time() - start_time == 60*60:
                 break
@@ -106,12 +116,18 @@ class DelugeWorker(Worker):
                 self.job.client_id
             )
             messages.append(cmd_message)
-        if 'progress' in data.keys():
-            if data['progress'] == 100:
+        if 'torrent_information' in data.keys():
+            torrent_inform = data['torrent_information']
+            if torrent_inform['progress'] == 100:
                 message_text = 'Скачивание {} завершено, беги скорей на плекс.'.format(self.job.text_query)
                 choices = []
             else:
-                message_text = 'Прогресс скачивания {0}: {1}%'.format(self.job.text_query, data['progress'])
+                message_text = 'Прогресс скачивания {0}: {1}% {2}/{3}'.format(
+                    self.job.text_query,
+                    torrent_inform['progress'],
+                    torrent_inform['total_done'],
+                    torrent_inform['total_size'],
+                )
                 if 'key_board' in self.job.crawler_data.data.keys() and not self.job.crawler_data.data['key_board']:
                     choices = []
                 else:
