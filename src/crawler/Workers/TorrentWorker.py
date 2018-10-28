@@ -102,13 +102,21 @@ class TorrentSearchWorker(Worker):
             {
                 'media_id': self.job.media_id,
                 'media_type': MediaType.FILMS if self.job.season == '' else MediaType.SERIALS,
+                'upd_data': {
+                    'status': status,
+                    'download_url': data.url,
+                    'theam_id': data.theam_url,
+                    'torrent_tracker': data.tracker,
+                    'exsists_in_plex': True,
+                    'current_series': 0 if self.job.season == '' else data.file_amount
+                },
                 'next_messages': [
                     crawler_message(
                         ComponentType.CRAWLER,
                         self.job.client_id,
                         {
-                            'torrent_id': data.kinopoisk_id,
-                            'torrent_data': data.data,
+                            'torrent_id': data.data['id'],
+                            'torrent_data': data.data['data'],
                             'media_id': self.job.media_id
                         },
                         ActionType.ADD_TORRENT_TO_TORRENT_CLIENT
@@ -122,14 +130,6 @@ class TorrentSearchWorker(Worker):
                         }
                     )
                 ],
-                'upd_data': {
-                    'status': status,
-                    'download_url': data.url,
-                    'theam_id': data.theam_url,
-                    'torrent_tracker': data.tracker,
-                    'exsists_in_plex': True,
-                    'current_series': 0 if self.job.season == '' else data.file_amount
-                },
             },
             self.job.client_id
         )
