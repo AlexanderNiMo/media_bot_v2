@@ -2,8 +2,7 @@ import logging
 import time
 
 from src.app_enums import ComponentType, ActionType
-from src.crawler.Workers import DownloadWorker
-from src.crawler.Workers import TorrentSearchWorker, DelugeWorker
+from .Workers import TorrentSearchWorker, DelugeWorker
 from src.database import DbManager, MediaData
 from src.mediator import AppMediatorClient, MediatorActionMessage, CrawlerData
 from multiprocessing import Queue
@@ -46,7 +45,6 @@ class Crawler(AppMediatorClient):
         ActionType.CHECK_FILMS,
         ActionType.CHECK_SERIALS,
         ActionType.CHECK,
-        ActionType.DOWNLOAD_TORRENT,
         ActionType.ADD_TORRENT_WATCHER,
         ActionType.ADD_TORRENT_TO_TORRENT_CLIENT
     ]
@@ -144,10 +142,6 @@ class Crawler(AppMediatorClient):
             ActionType.CHECK.value
         ]:
             return TorrentSearchWorker(job, self.config)
-        elif job.action_type.value in [
-            ActionType.DOWNLOAD_TORRENT.value
-        ]:
-            return DownloadWorker(job, self.config)
         elif job.action_type.value in [
             ActionType.ADD_TORRENT_WATCHER.value,
             ActionType.ADD_TORRENT_TO_TORRENT_CLIENT.value

@@ -39,9 +39,8 @@ class ActionType(MyEnum):
     CHECK_FILMS = 5
     CHECK_SERIALS = 6
     CHECK = 7
-    DOWNLOAD_TORRENT = 8
-    ADD_TORRENT_TO_TORRENT_CLIENT = 9
-    ADD_TORRENT_WATCHER = 10
+    ADD_TORRENT_TO_TORRENT_CLIENT = 8
+    ADD_TORRENT_WATCHER = 9
 
 
 class ClientCommands(MyEnum):

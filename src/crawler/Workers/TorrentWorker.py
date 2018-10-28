@@ -36,10 +36,9 @@ class TorrentSearchWorker(Worker):
             if not self.job.media_id == -1:
                 f_list.append(lambda x: x.kinopoisk_id == self.job.media_id)
 
-        f_list.append(lambda x: x.size <= float(15))
-
         if self.job.season == '':
             f_list.append(lambda x: x.file_amount < 4)
+            f_list.append(lambda x: x.size <= float(15))
 
         result = data
         for filter_func in f_list:
@@ -85,6 +84,17 @@ class TorrentSearchWorker(Worker):
         else:
             status = LockingStatus.FIND_TORRENT
 
+        if self.job.media.media_type == MediaType.FILMS:
+            message_text = 'Фильм {0} будет скачан, через несколько минут. \n {1}'.format(
+                self.job.text_query,
+                self.job.kinopoisk_url
+            )
+        else:
+            message_text = 'Новая серия {0} () будет скачана, через несколько минут. \n {1}'.format(
+                self.job.text_query,
+                self.job.kinopoisk_url
+            )
+
         messages = []
         cmd_message = command_message(
             ComponentType.CRAWLER,
@@ -92,12 +102,26 @@ class TorrentSearchWorker(Worker):
             {
                 'media_id': self.job.media_id,
                 'media_type': MediaType.FILMS if self.job.season == '' else MediaType.SERIALS,
-                'next_messages': [crawler_message(
-                    ComponentType.COMMAND_HANDLER,
-                    self.job.client_id,
-                    {'media_id': self.job.media_id},
-                    ActionType.DOWNLOAD_TORRENT
-                )],
+                'next_messages': [
+                    crawler_message(
+                        ComponentType.CRAWLER,
+                        self.job.client_id,
+                        {
+                            'torrent_id': data.kinopoisk_id,
+                            'torrent_data': data.data,
+                            'media_id': self.job.media_id
+                        },
+                        ActionType.ADD_TORRENT_TO_TORRENT_CLIENT
+                    ),
+                    send_message(
+                        ComponentType.CRAWLER,
+                        {
+                            'user_id': self.job.client_id,
+                            'message_text': message_text,
+                            'choices': []
+                        }
+                    )
+                ],
                 'upd_data': {
                     'status': status,
                     'download_url': data.url,
