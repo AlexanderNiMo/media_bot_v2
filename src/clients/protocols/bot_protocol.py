@@ -282,6 +282,32 @@ class Bot:
             update.message.chat_id
         )
 
+    @staticmethod
+    def text_handler(bot, update):
+        """
+        Handle messages without command
+
+        :param bot:
+        :param update:
+        :return:
+        """
+        logger.info('New message {0} from {1}'.format(update.message.text, update.message.chat_id))
+        update.message.reply_text("Эээээ, чето ты хотел этим сказать?")
+
+    def start_handler(self, bot, update):
+        """
+        Handle add film command
+
+        :param bot:
+        :param update:
+        :return:
+        """
+        logger.info('New message /start from {0}'.format(update.message.chat_id))
+        update.message.reply_text("Привет! Для начала авторизации набери /auth."
+                                  "Для добавления фильма набери /film Название фильма год"
+                                  "Для добавления сериала /serial Название сериала сезон N год"
+                                  "Для включения уведомлений о новых фильмах и сериалах набери /notyfi")
+
     def auth_handler(self, bot, update):
         """
 
@@ -319,26 +345,15 @@ class Bot:
 
         """
         logger.info('New serial {0}'.format(update.message.text))
+        text = update.message.text.replace('/serial', '')
+        if not len(re.findall(r'\S', text)):
+            return
         BotCommandParser.start_command(
             '/serial',
-            {'text': update.message.text.replace('/serial', '')},
+            {'text': text},
             self.protocol,
             update.message.chat_id
         )
-
-    def start_handler(self, bot, update):
-        """
-        Handle add film command
-
-        :param bot:
-        :param update:
-        :return:
-        """
-        logger.info('New message /start from {0}'.format(update.message.chat_id))
-        update.message.reply_text("Привет! Для начала авторизации набери /auth."
-                                  "Для добавления фильма набери /film Название фильма год"
-                                  "Для добавления сериала /serial Название сериала сезон N год"
-                                  "Для включения уведомлений о новых фильмах и сериалах набери /notyfi")
 
     def film_handler(self, bot, update):
         """
@@ -349,23 +364,14 @@ class Bot:
         :return:
         """
         logger.info('New film {0}'.format(update.message.text))
+        text = update.message.text.replace('/film', '')
+        if not len(re.findall(r'\S', text)):
+            return
         BotCommandParser.start_command(
             '/film',
-            {'text': update.message.text.replace('/film', '')},
+            {'text': text},
             self.protocol,
             update.message.chat_id)
-
-    @staticmethod
-    def text_handler(bot, update):
-        """
-        Handle messages without command
-
-        :param bot:
-        :param update:
-        :return:
-        """
-        logger.info('New message {0} from {1}'.format(update.message.text, update.message.chat_id))
-        update.message.reply_text("Эээээ, чето ты хотел этим сказать?")
 
     def call_back_handler(self, bot, update):
         logger.debug('Пришел inline callback с данными {}'.format(update.callback_query.data))

@@ -7,7 +7,7 @@ from queue import Empty
 
 from src.app import config
 from src.app_enums import ComponentType, ClientCommands, MediaType, ActionType
-from src.mediator import command_message, crawler_message, send_message
+from src.mediator import command_message, crawler_message, send_message, MediatorMessage
 from src.crawler.Workers.WorkerABC import Worker
 
 logger = logging.getLogger(__name__)
@@ -95,7 +95,57 @@ class DelugeWorker(Worker):
             return []
 
         if 'torrent_id' in data.keys():
-            cmd_message = command_message(
+            messages.append(self.start_torrent_watcher_message())
+        if 'torrent_information' in data.keys():
+            messages += self.watcher_messages(data)
+
+        return messages
+
+    def watcher_messages(self, data):
+        messages = []
+        torrent_inform = data['torrent_information']
+        if torrent_inform['progress'] == 100:
+            message_text = 'Скачивание {} завершено, беги скорей на плекс.'.format(self.job.text_query)
+            choices = []
+            messages += [
+                command_message(
+                    ComponentType.CRAWLER,
+                    ClientCommands.UPDATE_PLEX_LIB,
+                    {},
+                    self.job.client_id
+                )
+            ]
+        else:
+            message_text = 'Прогресс скачивания {0}: {1}% {2}/{3}'.format(
+                self.job.text_query,
+                torrent_inform['progress'],
+                convert_size(torrent_inform['total_done']),
+                convert_size(torrent_inform['total_size']),
+            )
+            if 'key_board' in self.job.crawler_data.data.keys() and not self.job.crawler_data.data['key_board']:
+                choices = []
+            else:
+                choices = {
+                    'action': 'download_callback',
+                    'data': {
+                        'force': True,
+                        'media_id': self.job.media_id
+                    }
+                }
+        messages.append(
+            send_message(
+                ComponentType.CRAWLER,
+                {
+                    'user_id': self.job.client_id,
+                    'message_text': message_text,
+                    'choices': choices
+                }
+            )
+        )
+        return messages
+
+    def start_torrent_watcher_message(self)->MediatorMessage:
+        return command_message(
                 ComponentType.CRAWLER,
                 ClientCommands.UPDATE_MEDIA,
                 {
@@ -115,48 +165,6 @@ class DelugeWorker(Worker):
                 },
                 self.job.client_id
             )
-            messages.append(cmd_message)
-        if 'torrent_information' in data.keys():
-            torrent_inform = data['torrent_information']
-            if torrent_inform['progress'] == 100:
-                message_text = 'Скачивание {} завершено, беги скорей на плекс.'.format(self.job.text_query)
-                choices = []
-                messages.append(
-                    command_message(
-                        ComponentType.CRAWLER,
-                        ClientCommands.UPDATE_PLEX_LIB,
-                        {}
-                    )
-                )
-            else:
-                message_text = 'Прогресс скачивания {0}: {1}% {2}/{3}'.format(
-                    self.job.text_query,
-                    torrent_inform['progress'],
-                    convert_size(torrent_inform['total_done']),
-                    convert_size(torrent_inform['total_size']),
-                )
-                if 'key_board' in self.job.crawler_data.data.keys() and not self.job.crawler_data.data['key_board']:
-                    choices = []
-                else:
-                    choices = {
-                        'action': 'download_callback',
-                        'data': {
-                            'force': True,
-                            'media_id': self.job.media_id
-                        }
-                    }
-            messages.append(
-                send_message(
-                    ComponentType.CRAWLER,
-                    {
-                        'user_id': self.job.client_id,
-                        'message_text': message_text,
-                        'choices': choices
-                    }
-                )
-            )
-
-        return messages
 
 
 def convert_size(size_bytes):
