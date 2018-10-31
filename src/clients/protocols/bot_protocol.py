@@ -29,11 +29,12 @@ class BotProtocol(AppMediatorClient):
         self.__bot = None
         self.bot_process = None
         self.t_bot_checker = None
+        self.importer = None
 
     def main_actions(self):
         logger.debug('Запуск основного потока работы {}'.format(self))
-
         self.create_bot()
+        self.importer = DataImporter(self.config, self.__bot)
         self.listen()
 
     def send_bot_message(self, text, user_id, choices=None):
@@ -266,6 +267,14 @@ class Bot:
         call_back_handler = CallbackQueryHandler(callback=self.call_back_handler)
         dispatcher.add_handler(call_back_handler)
 
+    def ipdater_handler(self, bot, update):
+
+        text = update.message.text.replace('/import', '')
+        text.split(':')
+        (file_name, data_type, *f) = text.split(':')
+
+        self.protocol.importer.handle_data_from_file(file_name, data_type)
+
     def notify_handler(self, bot, update):
         """
         Обрабатывает команду на изменение оповещений
@@ -386,7 +395,8 @@ class Bot:
                                       ActionType.ADD_TORRENT_WATCHER)
         elif 'kinopoisk_id' in cache_data.keys():
             message = parser_message(ComponentType.CLIENT, cache_data, update.callback_query.from_user.id)
-
+        else:
+            return
         self.protocol.send_message(message)
 
 
@@ -460,6 +470,67 @@ class BotCommandParser:
             {'command_text': '/serial', 'command': ClientCommands.ADD_SERIAL},
             {'command_text': '/auth', 'command': ClientCommands.AUTHENTICATION},
         ]
+
+
+class DataImporter:
+
+    def __init__(self, config, bot):
+        self.bot = bot
+        self.config = config
+        self.user_id = self.config.TELEGRAMM_BOT_USER_ADMIN
+
+    def handle_data_from_file(self, file_name, data_type):
+        with open(file_name, 'br') as file:
+            data = file.readlines()
+        self.handle_data(data, data_type)
+
+    def handle_data(self, data, data_type):
+        for text in data:
+            if data_type == 'user':
+                self.handle_user(text)
+            elif data_type == 'film':
+                self.handle_film(text)
+            elif data_type == 'serial':
+                self.handle_serial(text)
+
+    def handle_user(self, user_id):
+        try:
+            client_data = self.bot.get_chat(user_id)
+            data = {
+                'client_id': self.user_id,
+                'name': client_data.first_name,
+                'last_name': client_data.last_name,
+                'nick': client_data.username
+            }
+        except teleg_error.BadRequest:
+            data = {'client_id': self.user_id, 'name': '', 'last_name': '', 'nick': ''}
+
+        self.bot.protocol.send_message(command_message(
+            ComponentType.CLIENT,
+            ClientCommands.AUTHENTICATION,
+            data,
+            self.user_id)
+        )
+
+    def handle_film(self, query):
+        message = command_message(
+            ComponentType.CLIENT,
+            ClientCommands.ADD_FILM,
+            {
+                'text': query
+            },
+            self.user_id)
+        self.bot.protocol.send_message(message)
+
+    def handle_serial(self, query):
+        message = command_message(
+            ComponentType.CLIENT,
+            ClientCommands.ADD_SERIAL,
+            {
+                'text': query
+            },
+            self.user_id)
+        self.bot.protocol.send_message(message)
 
 
 if __name__ == '__main__':

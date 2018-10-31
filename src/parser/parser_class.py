@@ -6,6 +6,8 @@ from multiprocessing import Queue
 from abc import ABC, abstractmethod
 from plexapi.server import PlexServer
 from kinopoisk import movie
+from telegram.ext import Updater
+from telegram import error as teleg_error
 
 from src.database import DbManager
 from src.app_enums import ActionType, ComponentType, ClientCommands, MediaType, LockingStatus
@@ -553,6 +555,48 @@ class ParseTrackerThread(BaseParser):
 
     def can_parse(self, data: dict):
         return 'thread' in data.keys()
+
+
+class TelegrammParser(BaseParser):
+
+    def __init__(self, base: AbstractParser, conf):
+        super(__class__, self).__init__(base, conf)
+        self.bot = self._get_bot()
+
+    def _get_bot(self):
+        r_kw = {
+            'proxy_url': self.config.PROXY_URL,
+            'urllib3_proxy_kwargs': {
+                "username": self.config.PROXY_USER,
+                "password": self.config.PROXY_PASS
+            }
+        }
+        return Updater(
+            token=self.config.TELEGRAMM_BOT_TOKEN,
+            request_kwargs=r_kw).bot
+
+    def parse_data(self, data: dict):
+        user_id = data['telegramm_client']
+        try:
+            client_data = self.bot.get_chat(user_id)
+            next_data = {
+                'client_id': user_id,
+                'name': client_data.first_name,
+                'last_name': client_data.last_name,
+                'nick': client_data.username
+            }
+        except teleg_error.BadRequest:
+            next_data = {'client_id': user_id, 'name': '', 'last_name': '', 'nick': ''}
+
+        self.next_data = data.copy()
+        self.next_data.update(next_data)
+        return False
+
+    def can_parse(self, data: dict):
+        return 'telegramm_client' in data.keys()
+
+    def end_chain(self, data: ParserData):
+        return self.messages
 
 
 def get_parser_chain(config) -> BaseParser:
