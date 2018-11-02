@@ -95,7 +95,7 @@ class DelugeWorker(Worker):
             return []
 
         if 'torrent_id' in data.keys():
-            messages.append(self.start_torrent_watcher_message())
+            messages.append(self.start_torrent_watcher_message(data))
         if 'torrent_information' in data.keys():
             messages += self.watcher_messages(data)
 
@@ -144,7 +144,7 @@ class DelugeWorker(Worker):
         )
         return messages
 
-    def start_torrent_watcher_message(self)->MediatorMessage:
+    def start_torrent_watcher_message(self, data)->MediatorMessage:
         return command_message(
                 ComponentType.CRAWLER,
                 ClientCommands.UPDATE_MEDIA,
