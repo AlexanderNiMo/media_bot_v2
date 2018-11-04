@@ -118,9 +118,13 @@ class CommandData(MessageData):
 
 class ParserData(MessageData):
 
-    def __init__(self, data: dict, client_id: int):
+    def __init__(self, data: dict, client_id: int, **kwargs):
         self.data = data
         self.client_id = client_id
+
+        self.data_needed = []
+        if 'data_needed' in kwargs:
+            self.data_needed = kwargs['data_needed']
 
 
 if __name__ == '__main__':

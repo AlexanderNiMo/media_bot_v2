@@ -507,6 +507,36 @@ class TextQueryParser(BaseParser):
             )
         return self.messages
 
+    def get_needed_data(self, text, needed_data)-> (bool, dict):
+        errors = False
+        result = {}
+        normal_query = self._normalize_query_text(text)
+        replace_data = []
+
+        if 'year' in needed_data:
+            year = self._get_year(normal_query)
+            if year is None:
+                errors = True
+            else:
+                result['year'] = year
+                replace_data.append(year)
+
+        if 'season' in needed_data:
+            season = self._get_season(normal_query)
+            if season is None:
+                errors = True
+            else:
+                result['season'] = season
+                replace_data.append('сезон {}'.format(self.season))
+
+        # Замена текста года и сезона
+        query_text = self._replase_data_in_query(normal_query, replace_data)
+
+        if 'query' in needed_data:
+            result['query'] = query_text
+
+        return errors, result
+
     @staticmethod
     def _get_year(text: str) -> int or None:
         """

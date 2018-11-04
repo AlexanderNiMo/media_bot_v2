@@ -41,6 +41,7 @@ class ActionType(MyEnum):
     CHECK = 7
     ADD_TORRENT_TO_TORRENT_CLIENT = 8
     ADD_TORRENT_WATCHER = 9
+    RETURNED_DATA = 10
 
 
 class ClientCommands(MyEnum):
