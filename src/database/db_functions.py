@@ -1,4 +1,4 @@
-from src.database.alch_db import get_session, init_db, OperationalError, create_db
+from src.database.alch_db import get_session, get_scorp_session, init_db, OperationalError, create_db, StaticPool
 from src.app_enums import UserRule, UserOptions, MediaType, LockingStatus
 
 
@@ -14,7 +14,7 @@ class DbManager:
 
     def __get_connection_str(self):
         if self.test:
-            return 'sqlite://'
+            return 'sqlite:///.test.db'
         else:
             return 'mysql+mysqldb://{0}:{1}@{2}:{3}'.format(
                 self.config.DATABASE_USER,
@@ -25,15 +25,20 @@ class DbManager:
 
     @property
     def engine(self):
+        args = {}
         if not self.test:
             connection_str = '{0}/{1}?charset=utf8'.format(self.__get_connection_str(), self.config.DATABASE_NAME)
+            args['encoding'] = 'utf-8'
         else:
             connection_str = self.__get_connection_str()
+            args['encoding'] = 'utf-8'
+            args['connect_args'] ={'check_same_thread':False}
+            args['poolclass'] = StaticPool
         try:
-            enj = init_db(connection_str)
+            enj = init_db(connection_str, **args)
         except OperationalError:
             create_db(self.__get_connection_str(), self.config.DATABASE_NAME)
-            enj = init_db(connection_str)
+            enj = init_db(connection_str, **args)
         return enj
 
     @property
