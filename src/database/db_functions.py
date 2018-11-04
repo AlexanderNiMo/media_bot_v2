@@ -10,14 +10,18 @@ class DbManager:
         self.config = config
         self.__enj = None
         self.__session = None
+        self.test = False
 
     def __get_connection_str(self):
-        return 'mysql+mysqldb://{0}:{1}@{2}:{3}'.format(
-            self.config.DATABASE_USER,
-            self.config.DATABASE_PASSWORD,
-            self.config.DATABASE_HOST,
-            self.config.DATABASE_PORT
-        )
+        if self.test:
+            return 'sqlite://'
+        else:
+            return 'mysql+mysqldb://{0}:{1}@{2}:{3}'.format(
+                self.config.DATABASE_USER,
+                self.config.DATABASE_PASSWORD,
+                self.config.DATABASE_HOST,
+                self.config.DATABASE_PORT
+            )
 
     @property
     def engine(self):
