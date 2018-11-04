@@ -6,8 +6,12 @@ import multiprocessing
 class TestParser(unittest.TestCase):
 
     def setUp(self):
-        self.parser = src.parser.Parser(multiprocessing.Queue(), multiprocessing.Queue(), src.app.config)
+        self.conf = src.app.config
+        self.conf.TEST = True
+        self.parser = src.parser.Parser(multiprocessing.Queue(), multiprocessing.Queue(), self.conf)
         self.component = src.app_enums.ComponentType.MAIN_APP
+        self.db = src.database.DbManager(self.conf)
+        self.db.test = True
 
     def get_message(self):
         return src.mediator.MediatorActionMessage(
@@ -100,6 +104,19 @@ class TestParser(unittest.TestCase):
         )
 
         self.assertFalse(target_message.data.data['media_in_plex'], 'Фильм должен отсутствовать в plex!')
+
+    def test_get_data_database(self):
+        needed_data = ['media_in_db']
+        target_message = self.parse_data(
+                    needed_data,
+                    {
+                        'media_type': src.app_enums.MediaType.SERIALS,
+                        'kinopoisk_id': 685246,
+                        'year': 2013
+                    }
+        )
+
+        self.assertFalse(target_message.data.data['media_in_db'], 'Фильм должен отсутствовать в plex!')
 
 
 def suite():

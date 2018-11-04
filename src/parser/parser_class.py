@@ -75,7 +75,8 @@ class TargetParser:
             KinopoiskParser(None, self.config),
             TextQueryParser(None, self.config),
             ParseTrackerThread(None, self.config),
-            TelegrammParser(None, self.config)
+            TelegrammParser(None, self.config),
+            DataBaseParser(None, self.config),
         ]
 
     def parse(self, message: MediatorActionMessage):
@@ -533,6 +534,34 @@ class DataBaseParser(BaseParser):
         )
 
         return self.messages
+
+    def get_needed_data(self, data: dict,  data_needed: list)-> (bool, dict):
+        error = False
+
+        db = DbManager(self.config)
+        media_type = data['media_type']
+        session = db.get_session()
+
+        if 'kinopoisk_id' in data.keys():
+            media = db.find_media(data['kinopoisk_id'], media_type, session=session)
+        else:
+            media = None
+            error = True
+        self.next_data = data.copy()
+        self.next_data['media_in_db'] = False
+        if media is not None and media.status == LockingStatus.ENDED:
+            self.next_data['media_in_db'] = True
+        session.close()
+
+        return error, self.next_data
+
+    def needed_data(self):
+        res = ['media_type', 'kinopoisk_id']
+        return res
+
+    @staticmethod
+    def returned_data():
+        return ['media_in_db']
 
 
 class TextQueryParser(BaseParser):

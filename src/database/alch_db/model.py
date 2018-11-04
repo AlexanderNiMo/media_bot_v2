@@ -241,10 +241,10 @@ def test_integreation_users_media(s):
     s.commit()
 
 
-def init_db(connection_str, db_name):
+def init_db(connection_str):
     from sqlalchemy import create_engine
     enj = create_engine(
-        '{0}/{1}?charset=utf8'.format(connection_str, db_name),
+        connection_str,
         encoding='utf-8'
     )
     Base.metadata.create_all(enj)
