@@ -385,7 +385,10 @@ class DataBaseParser(BaseParser):
         media_type = MediaType.FILMS if not data['serial'] else MediaType.SERIALS
         session = db.get_session()
         if 'kinopoisk_id' in data.keys():
-            media = db.find_media(data['kinopoisk_id'], media_type, session=session)
+            args = dict(session=session)
+            if media_type == MediaType.SERIALS:
+                args.update(dict(season=data['season']))
+            media = db.find_media(data['kinopoisk_id'], media_type, **args)
         elif all(key in data.keys() for key in ('label', 'year')):
             media = db.find_media_by_label(data['label'], data['year'], media_type, session=session)
         else:
