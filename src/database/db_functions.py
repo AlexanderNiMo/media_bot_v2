@@ -10,7 +10,7 @@ class DbManager:
         self.config = config
         self.__enj = None
         self.__session = None
-        self.test = False
+        self.test = config.TEST
 
     def __get_connection_str(self):
         if self.test:
@@ -25,11 +25,15 @@ class DbManager:
 
     @property
     def engine(self):
+        if not self.test:
+            connection_str = '{0}/{1}?charset=utf8'.format(self.__get_connection_str(), self.config.DATABASE_NAME)
+        else:
+            connection_str = self.__get_connection_str()
         try:
-            enj = init_db(self.__get_connection_str(), self.config.DATABASE_NAME)
+            enj = init_db(connection_str)
         except OperationalError:
             create_db(self.__get_connection_str(), self.config.DATABASE_NAME)
-            enj = init_db(self.__get_connection_str(), self.config.DATABASE_NAME)
+            enj = init_db(connection_str)
         return enj
 
     @property
