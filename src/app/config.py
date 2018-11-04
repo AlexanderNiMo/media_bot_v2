@@ -130,3 +130,5 @@ DELUGE_HOST = conf_parser['deluge']['host']
 DELUGE_PORT = int(conf_parser['deluge']['port'])
 DELUGE_USER = conf_parser['deluge']['user']
 DELUGE_PASS = conf_parser['deluge']['password']
+
+TEST = False

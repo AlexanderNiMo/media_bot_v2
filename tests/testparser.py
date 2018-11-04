@@ -1,6 +1,7 @@
 import unittest
 import src
 import multiprocessing
+import os
 
 
 class TestParser(unittest.TestCase):
@@ -11,7 +12,6 @@ class TestParser(unittest.TestCase):
         self.parser = src.parser.Parser(multiprocessing.Queue(), multiprocessing.Queue(), self.conf)
         self.component = src.app_enums.ComponentType.MAIN_APP
         self.db = src.database.DbManager(self.conf)
-        self.db.test = True
 
     def get_message(self):
         return src.mediator.MediatorActionMessage(
@@ -51,6 +51,29 @@ class TestParser(unittest.TestCase):
         self.check_target_message(target_message, needed_data)
         return target_message
 
+    def configure_db_data(self):
+        client_id = self.conf.TELEGRAMM_BOT_USER_ADMIN
+        session = self.db.get_session()
+        user = self.db.add_user(client_id, session=session)
+        serial = self.db.add_serial(
+            client_id,
+            685246,
+            'Рик и Морти',
+            2013,
+            1,
+            'http://www.kinopoisk.ru/film/685246/',
+            session=session
+        )
+        film = self.db.add_film(
+            client_id,
+            689,
+            'Гарри Поттер и философский камень',
+            2001,
+            'http://www.kinopoisk.ru/film/689/',
+            session=session
+        )
+        session.close()
+
     def test_get_data_text(self):
 
         needed_data = ['year', 'query', 'season']
@@ -79,6 +102,22 @@ class TestParser(unittest.TestCase):
                          'http://www.kinopoisk.ru/film/685246/',
                          'не верено определен url')
 
+        target_message = self.parse_data(
+            needed_data,
+            {
+                'media_type': src.app_enums.MediaType.FILMS,
+                'query': 'Гарри поттер'.upper(),
+                'year': 2001
+            }
+        )
+
+        self.assertEqual(target_message.data.data['title'], 'Гарри Поттер и философский камень',
+                         'Наименвоание определено не верно!')
+        self.assertEqual(target_message.data.data['kinopoisk_id'], 689, 'Id определен не верно!')
+        self.assertEqual(target_message.data.data['kinopoisk_url'],
+                         'http://www.kinopoisk.ru/film/689/',
+                         'не верено определен url')
+
     def test_get_data_telegramm(self):
         needed_data = ['nick', 'name', 'last_name']
         target_message = self.parse_data(
@@ -105,19 +144,60 @@ class TestParser(unittest.TestCase):
 
         self.assertFalse(target_message.data.data['media_in_plex'], 'Фильм должен отсутствовать в plex!')
 
+        target_message = self.parse_data(
+                    needed_data,
+                    {
+                        'media_type': src.app_enums.MediaType.SERIALS,
+                        'title': 'Игра престолов',
+                        'season': 1,
+                        'year': 2011
+                    }
+        )
+
+        self.assertTrue(target_message.data.data['media_in_plex'], 'Сериал должен присутствовать в plex!')
+
     def test_get_data_database(self):
+
+        self.configure_db_data()
         needed_data = ['media_in_db']
         target_message = self.parse_data(
                     needed_data,
                     {
                         'media_type': src.app_enums.MediaType.SERIALS,
                         'kinopoisk_id': 685246,
+                        'year': 2013,
+                        'season': 1
+                    }
+        )
+
+        self.assertTrue(target_message.data.data['media_in_db'], 'Сериал должен присутствовать в db!')
+
+        target_message = self.parse_data(
+                    needed_data,
+                    {
+                        'media_type': src.app_enums.MediaType.FILMS,
+                        'kinopoisk_id': 685246,
                         'year': 2013
                     }
         )
 
-        self.assertFalse(target_message.data.data['media_in_db'], 'Фильм должен отсутствовать в plex!')
+        self.assertFalse(target_message.data.data['media_in_db'], 'Фильм должен отсутствовать в db!')
 
+        target_message = self.parse_data(
+                    needed_data,
+                    {
+                        'media_type': src.app_enums.MediaType.FILMS,
+                        'kinopoisk_id': 689,
+                        'year': 2001
+                    }
+        )
+
+        self.assertTrue(target_message.data.data['media_in_db'], 'Фильм должен присутствовать в db!')
+
+    def tearDown(self):
+        db_path = '.test.db'
+        if os.path.exists(db_path):
+            os.remove(db_path)
 
 def suite():
     return unittest.defaultTestLoader.loadTestsFromTestCase(TestParser)

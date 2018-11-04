@@ -1,6 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, SmallInteger, Unicode, Boolean, ForeignKey, Table
 from sqlalchemy import Enum
+from sqlalchemy.pool import StaticPool
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.exc import OperationalError
 
@@ -241,11 +242,11 @@ def test_integreation_users_media(s):
     s.commit()
 
 
-def init_db(connection_str):
+def init_db(connection_str, **kwargs):
     from sqlalchemy import create_engine
     enj = create_engine(
         connection_str,
-        encoding='utf-8'
+        **kwargs
     )
     Base.metadata.create_all(enj)
     return enj
@@ -255,6 +256,11 @@ def get_session(enj):
     from sqlalchemy.orm import sessionmaker
     Session = sessionmaker(bind=enj)
     return Session()
+
+
+def get_scorp_session(enj):
+    from sqlalchemy.orm import scoped_session, sessionmaker
+    return scoped_session(sessionmaker(bind=enj))
 
 
 def create_db(connection_str, db_name):

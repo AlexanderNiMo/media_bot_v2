@@ -435,7 +435,8 @@ class PlexParser(BaseParser):
         for element in plex_data:
             if not element.TYPE == 'show':
                 continue
-            title_match = self._normalize_query_text(element.title) == self._normalize_query_text(data['title'])
+            title_match = self._normalize_query_text(element.title) == self._normalize_query_text(data['title']) \
+                          and element.year == data['year']
             if not title_match:
                 continue
             season_in_show = True
@@ -543,14 +544,15 @@ class DataBaseParser(BaseParser):
         session = db.get_session()
 
         if 'kinopoisk_id' in data.keys():
-            media = db.find_media(data['kinopoisk_id'], media_type, session=session)
+            args = dict(session=session)
+            if media_type == MediaType.SERIALS:
+                args.update(dict(season=data['season']))
+            media = db.find_media(data['kinopoisk_id'], media_type, **args)
         else:
             media = None
             error = True
         self.next_data = data.copy()
-        self.next_data['media_in_db'] = False
-        if media is not None and media.status == LockingStatus.ENDED:
-            self.next_data['media_in_db'] = True
+        self.next_data['media_in_db'] = media is not None
         session.close()
 
         return error, self.next_data
