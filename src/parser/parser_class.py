@@ -404,7 +404,7 @@ class PlexParser(BaseParser):
         if 'serial' in data.keys() and data['serial']:
             result = self.check_serials(plex_data, data)
         else:
-            result = list(filter(lambda x: x.title.upper() == data['title'].upper(), plex_data))
+            result = self.check_film(plex_data, data)
 
         return len(result) == 0
 
@@ -445,6 +445,12 @@ class PlexParser(BaseParser):
                 result.append(element)
         return result
 
+    def check_film(self, plex_data: list, data: dict) -> list:
+        return list(filter(
+                lambda x: x.title.upper() == data['title'].upper() and x.year == data['year'],
+                plex_data
+            ))
+
     def get_needed_data(self, data: dict,  data_needed: list)-> (bool, dict):
         server = PlexServer(
             'http://{0}:{1}'.format(self.config.PLEX_HOST, self.config.PLEX_PORT),
@@ -452,10 +458,7 @@ class PlexParser(BaseParser):
         )
         plex_data = server.search(data['title'])
         if data['media_type'] == MediaType.FILMS:
-            result = list(filter(
-                lambda x: x.title.upper() == data['title'].upper() and x.year == data['year'],
-                plex_data
-            ))
+            result = self.check_film(plex_data, data)
         else:
             result = self.check_serials(plex_data, data)
 
