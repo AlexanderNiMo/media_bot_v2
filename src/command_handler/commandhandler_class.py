@@ -416,7 +416,7 @@ class PlexServerHandler(AbstractHandler):
     @classmethod
     def get_command_list(cls):
         return {
-            ClientCommands.UPDATE_PLEX_LIB.value: cls.update_plex_libraries(),
+            ClientCommands.UPDATE_PLEX_LIB.value: cls.update_plex_libraries,
         }
 
     @classmethod
