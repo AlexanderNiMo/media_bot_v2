@@ -44,10 +44,7 @@ class DbManager:
     @property
     def session(self):
         if self.__session is None:
-            if self.test:
-                self.__session = get
-            else:
-                self.__session = get_session(self.engine)
+            self.__session = get_session(self.engine)
         return self.__session
 
     def get_session(self):
