@@ -325,7 +325,7 @@ class PlexParser(BaseParser):
         if 'serial' in data.keys() and data['serial']:
             result = self.check_serials(plex_data, data)
         else:
-            result = list(filter(lambda x: x.title.upper() == data['title'].upper(), plex_data))
+            result = self.check_film(plex_data, data)
 
         return len(result) == 0
 
@@ -349,6 +349,9 @@ class PlexParser(BaseParser):
         )
 
         return self.messages
+
+    def check_film(self, plex_data: list, data: dict) -> list:
+        return list(filter(lambda x: x.title.upper() == data['title'].upper() and x.year == data['year'], plex_data))
 
     def check_serials(self, plex_data: list, data: dict) -> list:
         result = []
