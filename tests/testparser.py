@@ -35,10 +35,10 @@ class TestParser(unittest.TestCase):
 
         returned_keys = target_message.data.data.keys()
 
-        self.assertTrue(all(map((lambda x, y: x == y), needed_data, returned_keys)), 'Не все данные полученны!')
+        self.assertTrue(all(map((lambda x: x in returned_keys), needed_data)), 'Не все данные полученны!')
 
         self.assertEqual(target_message.data.data['year'], 2011, 'Год найден не верно!')
-        self.assertEqual(target_message.data.data['query'], 'Игра престолов', 'Запрос определен не верно!')
+        self.assertEqual(target_message.data.data['query'], 'ИГРА ПРЕСТОЛОВ СЕЗОН 1', 'Запрос определен не верно!')
         self.assertEqual(target_message.data.data['season'], 1, 'Сезон определен не верно!')
 
 

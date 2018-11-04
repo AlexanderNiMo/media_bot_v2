@@ -56,7 +56,41 @@ class Parser(AppMediatorClient):
         Выполняет парсинг данных
         """
         logger.debug('Начало парсинга данных {}'.format(message.data.data))
-        return self.parser.parse(message.data)
+        if len(message.data.data_needed) == 0:
+            return self.parser.parse(message.data)
+        else:
+            t_parser = TargetParser(self.config)
+            return t_parser.parse(message)
+
+
+class TargetParser:
+    """
+    Производит поиск заказанных данных
+    """
+    def __init__(self ,conf):
+        self.config = conf
+        self.parser_class_list = [
+            TextQueryParser(None, self.config),
+            PlexParser(None, self.config),
+            KinopoiskParser(None, self.config),
+            TextQueryParser(None, self.config),
+            ParseTrackerThread(None, self.config),
+        ]
+
+    def parse(self, message: MediatorActionMessage):
+        data = message.data
+        for parser in self.parser_class_list:
+            if parser.can_get_data(data.data_needed, data.data):
+                error = parser.get_data(data)
+                if not error:
+                    data.data.update(parser.next_data)
+                else:
+                    parser.end_chain(data)
+
+        msg = MediatorActionMessage(message.from_component, ActionType.RETURNED_DATA, ComponentType.PARSER)
+        msg.data = data
+
+        return [msg]
 
 
 class AbstractParser(ABC):
@@ -157,6 +191,12 @@ class BaseParser(AbstractParser):
         """
         res = u' '
         return res.join(self._get_words(query))
+
+    def can_get_data(self, needed_data: list, data: dict):
+        return False
+
+    def get_data(self, data: ParserData):
+        return False, data
 
 
 class KinopoiskParser(BaseParser):
@@ -507,7 +547,28 @@ class TextQueryParser(BaseParser):
             )
         return self.messages
 
-    def get_needed_data(self, text, needed_data)-> (bool, dict):
+    def can_get_data(self, needed_data: list, data: dict):
+        return all(map(lambda x: x in data.keys(), self.needed_data())) \
+               and any(map(lambda x: x in self.returned_data(), needed_data))
+
+    def get_data(self, data: ParserData):
+        if self.can_get_data(data.data_needed, data.data):
+            errors, result_data = self.get_needed_data(data.data, data.data_needed)
+            data.data.update(result_data)
+            self.next_data = data.data
+            return errors
+        else:
+            return False
+
+    def needed_data(self):
+        return ['query']
+
+    @staticmethod
+    def returned_data():
+        return ['year', 'query', 'season']
+
+    def get_needed_data(self, data: dict, needed_data: list)-> (bool, dict):
+        text = data['query']
         errors = False
         result = {}
         normal_query = self._normalize_query_text(text)
