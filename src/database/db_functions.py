@@ -196,7 +196,9 @@ class DbManager:
         return client_id == int(self.config.TELEGRAMM_BOT_USER_ADMIN)
 
     def update_media_params(self, media_id: int, params: dict, media_type, session=None):
+        close = False
         if session is None:
+            close = True
             session = self.session
         find_dict = {
             'kinopoisk_id': media_id,
@@ -212,14 +214,15 @@ class DbManager:
         media = self._find_media(**find_dict)
 
         if media is None:
-            raise AttributeError('По kinopoisk_id {} не существует фильма для обновления.'.format(media_id))
+            raise AttributeError('По kinopoisk_id {} не существует медиа для обновления.'.format(media_id))
 
         for key in params.keys():
             setattr(media, key, params[key])
 
         session.add(media)
         session.commit()
-        self.close_session()
+        if close:
+            session.close()
 
     def add_film(self, client_id, kinopoisk_id, label, year, url, session=None)->MediaData:
         if session is None:
@@ -227,6 +230,8 @@ class DbManager:
         film = self.Film(kinopoisk_id=kinopoisk_id, label=label, year=year, kinopoisk_url=url)
         user = self.find_user(client_id, session=session)
         user.media.append(film)
+        if user is None:
+            raise EnvironmentError(f'No user by id {client_id}')
         session.add(film)
         session.add(user)
         session.commit()
@@ -261,7 +266,7 @@ class DbManager:
         session.commit()
         return user
 
-    def add_media_to_user_list(self, client_id, kinopoisk_id, media_type, season, session=None):
+    def add_media_to_user_list(self, client_id, kinopoisk_id, media_type, season=0, session=None):
         if session is None:
             session = self.session
         media = self._find_media(kinopoisk_id, media_type, season, session=session)
