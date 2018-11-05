@@ -358,8 +358,8 @@ class PlexParser(BaseParser):
         for element in plex_data:
             if not element.TYPE == 'show':
                 continue
-            title_match = self._normalize_query_text(element.title) == self._normalize_query_text(data['title']) \
-                          and element.year == data['year']
+            title_match = self._normalize_query_text(element.title) == self._normalize_query_text(
+                data['title']) and element.year == data['year']
             if not title_match:
                 continue
             season_in_show = True
@@ -435,7 +435,10 @@ class DataBaseParser(BaseParser):
 
         return self.messages
 
-    def get_needed_data(self, data: dict,  data_needed: list)-> (bool, dict):
+    def get_needed_data(self, data: dict, data_needed: list) -> (bool, dict):
+
+        if not 'media_in_db' in data_needed:
+            return False, self.next_data
         error = False
 
         db = DbManager(self.config)
@@ -685,7 +688,7 @@ if __name__ == '__main__':
             'serial': True,
             'season': 15,
             'year': 2011
-        }
-        , 1
+        },
+        1
     )
     msg = _prev_elem.parse(_data)
