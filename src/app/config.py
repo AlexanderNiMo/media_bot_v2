@@ -1,6 +1,7 @@
 import configparser
 from os import path
 import os
+from os.path import exists
 
 CONFIG_FILE_NAME = path.normpath(
     '{0}/conf/{1}'.format(path.dirname(__file__), '.config.ini')
@@ -8,48 +9,47 @@ CONFIG_FILE_NAME = path.normpath(
 
 
 def create_default_config(parser: configparser.ConfigParser):
-
     parser['client'] = {
         'bot_token': '',
         'bot_mode': 1,
         'admin_id': 1
     }
     parser['proxy'] = {
-            'url': '',
-            'user': '',
-            'pass': '',
-        }
+        'url': '',
+        'user': '',
+        'pass': '',
+    }
     parser['webhook'] = {
-            'host': '127.0.0.1',
-            'port': '5000',
-            'ssl_cert': '',
-            'ssl_prv_key': '',
-            'url_base': '',
-        }
+        'host': '127.0.0.1',
+        'port': '5000',
+        'ssl_cert': '',
+        'ssl_prv_key': '',
+        'url_base': '',
+    }
 
     parser['plex'] = {
-            'host': '127.0.0.1',
-            'port': '32400',
-            'token': '',
-        }
+        'host': '127.0.0.1',
+        'port': '32400',
+        'token': '',
+    }
 
     parser['database'] = {
-            'host': '127.0.0.1',
-            'port': '3306',
-            'user': 'root',
-            'password': 'qwerty',
-            'base_name': 'media_data',
-        }
+        'host': '127.0.0.1',
+        'port': '3306',
+        'user': 'root',
+        'password': 'qwerty',
+        'base_name': 'media_data',
+    }
 
     parser['rutracker'] = {
-            'user_name': '',
-            'password': ''
-        }
+        'user_name': '',
+        'password': ''
+    }
 
     parser['Torrents_folders'] = {
-            'film_folder': '',
-            'serial_folder': ''
-        }
+        'film_folder': '',
+        'serial_folder': ''
+    }
 
     parser['logger'] = {'logger_level': 'info'}
 
@@ -63,72 +63,113 @@ def create_default_config(parser: configparser.ConfigParser):
     with open(CONFIG_FILE_NAME, 'w') as configfile:
         parser.write(configfile)
 
-conf_parser = configparser.ConfigParser()
 
-if path.exists(CONFIG_FILE_NAME):
-    conf_parser.read(CONFIG_FILE_NAME)
-else:
-    if not path.exists(path.dirname(CONFIG_FILE_NAME)):
-        os.mkdir(path.dirname(CONFIG_FILE_NAME))
-    create_default_config(conf_parser)
+class Config:
+    conf_parser = configparser.ConfigParser()
 
+    def __init__(self):
+        self.base_folder = path.dirname(__file__)
+        self.test = None
 
-TELEGRAMM_BOT_TOKEN = conf_parser['client']['bot_token']
-BOT_MODE = conf_parser['client']['bot_mode']
-TELEGRAMM_BOT_USER_ADMIN = conf_parser['client']['admin_id']
+    @classmethod
+    def set_config_file(cls, file=CONFIG_FILE_NAME):
+        if path.exists(file):
+            cls.conf_parser.read(file)
+        else:
+            if not path.exists(path.dirname(file)):
+                os.mkdir(path.dirname(file))
+            create_default_config(cls.conf_parser)
 
-PROXY_URL = conf_parser['proxy']['url']
-PROXY_USER = conf_parser['proxy']['user']
-PROXY_PASS = conf_parser['proxy']['pass']
+    @classmethod
+    def get_parser_data(cls, data_path: list):
+        dict_data = cls.conf_parser
+        for elem in data_path:
+            dict_data = dict_data[elem]
+        return dict_data
 
-WEBHOOK = {
-    'WEBHOOK_HOST': conf_parser['webhook']['host'],
-    'WEBHOOK_PORT': int(conf_parser['webhook']['port']),
-    'WEBHOOK_SSL_CERT': conf_parser['webhook']['ssl_cert'],
-    'WEBHOOK_SSL_PRIV': conf_parser['webhook']['ssl_prv_key'],
-    'WEBHOOK_URL_BASE': conf_parser['webhook']['url_base'],
-}
+    def get_path_data(self, pattern):
+        data_path = path.normpath(
+            'pattern'.format(path.dirname(self.base_folder))
+        )
+        if not path.exists(data_path):
+            os.mkdir(data_path)
 
-PLEX_HOST = conf_parser['plex']['host']
-PLEX_PORT = conf_parser['plex']['port']
-PLEX_TOKEN = conf_parser['plex']['token']
+        return data_path
 
-DATABASE_HOST = conf_parser['database']['host']
-DATABASE_PORT = conf_parser['database']['port']
-DATABASE_USER = conf_parser['database']['user']
-DATABASE_PASSWORD = conf_parser['database']['password']
-DATABASE_NAME = conf_parser['database']['base_name']
+    def __getattr__(self, item):
+        if item in self.__class__.__dict__.keys():
+            return super(self.__class__, self).__getattribute__(item)
+        data_dict = {
+            'TELEGRAMM_BOT_TOKEN': ['client', 'bot_token'],
+            'BOT_MODE': ['client', 'bot_mode'],
+            'TELEGRAMM_BOT_USER_ADMIN': ['client', 'admin_id'],
+            'PROXY_URL': ['proxy', 'url'],
+            'PROXY_USER': ['proxy', 'user'],
+            'PROXY_PASS': ['proxy', 'pass'],
+            'PLEX_HOST': ['plex', 'host'],
+            'PLEX_PORT': ['plex', 'port'],
+            'PLEX_TOKEN': ['plex', 'token'],
+            'DATABASE_HOST': ['database', 'host'],
+            'DATABASE_PORT': ['database', 'port'],
+            'DATABASE_USER': ['database', 'user'],
+            'DATABASE_PASSWORD': ['database', 'password'],
+            'DATABASE_NAME': ['database', 'base_name'],
+            'TORRENT_FILM_PATH': ['Torrents_folders', 'film_folder'],
+            'TORRENT_SERIAL_PATH': ['Torrents_folders', 'serial_folder'],
+            'LOGGER_LEVEL': ['logger', 'logger_level'],
+            'DELUGE_HOST': ['deluge', 'host'],
+            'DELUGE_PORT': ['deluge', 'port'],
+            'DELUGE_USER': ['deluge', 'user'],
+            'DELUGE_PASS': ['deluge', 'password'],
+        }
 
-TORRENTS = {
-    'rutracker': {
-        'user_name': conf_parser['rutracker']['user_name'],
-        'password': conf_parser['rutracker']['password']
-    }
-}
+        if item in data_dict.keys():
+            return self.get_parser_data(data_dict[item])
 
-TORRENT_TEMP_PATH = path.normpath(
-    '{0}/data'.format(path.dirname(__file__))
-)
-if not path.exists(TORRENT_TEMP_PATH):
-    os.mkdir(TORRENT_TEMP_PATH)
+        path_dict = {
+            'TORRENT_FILM_PATH': ['Torrents_folders', 'film_folder'],
+            'TORRENT_SERIAL_PATH': ['Torrents_folders', 'serial_folder'],
+        }
 
-CACHE_DB_PATH = path.normpath(
-    '{0}/data/{1}'.format(path.abspath(path.dirname(__file__)), 'cachedb.db')
-)
+        if item in path_dict.keys():
+            return path.normpath(self.get_parser_data(path_dict[item]))
 
-TORRENT_FILM_PATH = path.normpath(conf_parser['Torrents_folders']['film_folder'])
-# if not path.exists(TORRENT_FILM_PATH):
-#     os.mkdir(TORRENT_FILM_PATH)
+        base_path_dict = {
+            'TORRENT_TEMP_PATH': '{0}/data',
+            'CACHE_DB_PATH': '{0}/data/cachedb.db',
+        }
 
-TORRENT_SERIAL_PATH = path.normpath(conf_parser['Torrents_folders']['serial_folder'])
-# if not path.exists(TORRENT_SERIAL_PATH):
-#     os.mkdir(TORRENT_SERIAL_PATH)
+        if item in base_path_dict.keys():
+            return self.get_path_data(base_path_dict[item])
 
-LOGGER_LEVEL = conf_parser['logger']['logger_level']
+    @property
+    def TEST(self):
+        if self.test is None:
+            try:
+                self.test = self.get_parser_data(['Test'])
+            except KeyError:
+                self.test = False
+        return self.test
 
-DELUGE_HOST = conf_parser['deluge']['host']
-DELUGE_PORT = int(conf_parser['deluge']['port'])
-DELUGE_USER = conf_parser['deluge']['user']
-DELUGE_PASS = conf_parser['deluge']['password']
+    @TEST.setter
+    def TEST(self, value):
+        self.test = value
 
-TEST = False
+    @property
+    def TORRENTS(self):
+        return {
+            'rutracker': {
+                'user_name': self.get_parser_data(['rutracker', 'user_name']),
+                'password': self.get_parser_data(['rutracker', 'password'])
+            }
+        }
+
+    @property
+    def WEBHOOK(self):
+        return {
+            'WEBHOOK_HOST': self.get_parser_data(['webhook', 'host']),
+            'WEBHOOK_PORT': int(self.get_parser_data(['webhook', 'port'])),
+            'WEBHOOK_SSL_CERT': self.get_parser_data(['webhook', 'ssl_cert']),
+            'WEBHOOK_SSL_PRIV': self.get_parser_data(['webhook', 'ssl_prv_key']),
+            'WEBHOOK_URL_BASE': self.get_parser_data(['webhook', 'url_base']),
+        }
