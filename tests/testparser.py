@@ -200,6 +200,7 @@ class TestParser(unittest.TestCase):
         if os.path.exists(db_path):
             os.remove(db_path)
 
+
 def suite():
     return unittest.defaultTestLoader.loadTestsFromTestCase(TestParser)
 
