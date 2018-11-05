@@ -56,7 +56,7 @@ class DbManager:
         self.__session.close()
         self.__session = None
 
-    def get_users_for_notification(self, media_id, session=None):
+    def get_users_for_notification(self, media_id, session=None)->list:
         if session is None:
             session = self.session
         users = []
@@ -73,7 +73,7 @@ class DbManager:
         return users
 
     @staticmethod
-    def construct_media_by_ohm_object(elem):
+    def construct_media_by_orm_object(elem):
         if elem is None:
             return None
         media_type = MediaType.FILMS
@@ -104,11 +104,11 @@ class DbManager:
         }
         return MediaData(**data_dict)
 
-    def find_all_media(self, media_type, session=None):
+    def find_all_media(self, media_type, session=None)->MediaData:
         result = []
         data = self._find_all_media(media_type, session)
         for elem in data:
-            result.append(self.construct_media_by_ohm_object(elem))
+            result.append(self.construct_media_by_orm_object(elem))
         return result
 
     def _find_all_media(self, media_type, session=None):
@@ -128,9 +128,9 @@ class DbManager:
         data = session.query(data_class).filter(data_class.status != LockingStatus.ENDED).all()
         return data
 
-    def find_media(self, kinopoisk_id, media_type, season=None, session=None):
+    def find_media(self, kinopoisk_id, media_type, season=None, session=None)->MediaData:
         data = self._find_media(kinopoisk_id, media_type, season, session)
-        return self.construct_media_by_ohm_object(data)
+        return self.construct_media_by_orm_object(data)
 
     def _find_media(self, kinopoisk_id, media_type, season=None, session=None):
         """
@@ -152,9 +152,9 @@ class DbManager:
         self.close_session()
         return data
 
-    def find_media_by_label(self, label, year, media_type, season=None, session=None):
+    def find_media_by_label(self, label, year, media_type, season=None, session=None)->MediaData:
         data = self._find_media_by_label(label, year, media_type, season, session)
-        return self.construct_media_by_ohm_object(data)
+        return self.construct_media_by_orm_object(data)
 
     def _find_media_by_label(self, label, year, media_type, season=None, session=None):
         """
@@ -221,7 +221,7 @@ class DbManager:
         session.commit()
         self.close_session()
 
-    def add_film(self, client_id, kinopoisk_id, label, year, url, session=None):
+    def add_film(self, client_id, kinopoisk_id, label, year, url, session=None)->MediaData:
         if session is None:
             session = self.session
         film = self.Film(kinopoisk_id=kinopoisk_id, label=label, year=year, kinopoisk_url=url)
@@ -230,9 +230,10 @@ class DbManager:
         session.add(film)
         session.add(user)
         session.commit()
-        return film
+        res_film = self.construct_media_by_orm_object(film)
+        return res_film
 
-    def add_serial(self, client_id, kinopoisk_id, label, year, season, url, max_series=0, session=None):
+    def add_serial(self, client_id, kinopoisk_id, label, year, season, url, max_series=0, session=None)->MediaData:
         if session is None:
             session = self.session
         serial = self.Serial(
@@ -243,13 +244,16 @@ class DbManager:
             series=max_series,
             kinopoisk_url=url)
         user = self.find_user(client_id, session=session)
+        if user is None:
+            raise EnvironmentError(f'No user by id {client_id}')
         user.media.append(serial)
         session.add(serial)
         session.add(user)
         session.commit()
-        return serial
+        res_serial = self.construct_media_by_orm_object(serial)
+        return res_serial
 
-    def add_user(self, clien_id, name='', last_name='', nick_name='', rule=UserRule.USER, session=None):
+    def add_user(self, clien_id, name='', last_name='', nick_name='', session=None):
         if session is None:
             session = self.session
         user = self.User(name=name, last_name=last_name, nick_name=nick_name, client_id=clien_id)
@@ -301,7 +305,7 @@ class MediaData:
                  download_url, torrent_tracker,
                  theam_id, kinopoisk_url, torrent_id,
                  media_type, status, season='', max_series=0):
-        self.media_id = media_id
+        self.media_id = int(media_id)
         self.title = title
         self.download_url = download_url
         self.torrent_tracker = torrent_tracker
