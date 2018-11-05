@@ -12,7 +12,6 @@ class TestDB(TestCase):
         self.conf = src.app.config
         self.conf.set_config_file(os.path.abspath('./test_config.ini'))
         self.conf.TEST = True
-        self.parser = src.parser.Parser(Queue(), Queue(), self.conf)
         self.component = src.app_enums.ComponentType.MAIN_APP
         self.db = DbManager(self.conf)
 
