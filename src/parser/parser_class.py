@@ -563,6 +563,8 @@ class TextQueryParser(BaseParser):
             return None
         data = re.findall(r'СЕЗОН\s+\d{1,2}', text.upper())
         if len(data) == 0:
+            data = re.findall(r'\d{1,2}\s+СЕЗОН', text.upper())
+        if len(data) == 0:
             return None
         return int(re.findall(r'\d{1,2}', data[0])[0])
 
