@@ -171,7 +171,7 @@ def crawler_message(
 
 
 if __name__ == '__main__':
-    import src.app.config as _conf
+    from src.app.app_config import default_conf as _conf
     q_in = Queue()
     q_out = Queue()
 

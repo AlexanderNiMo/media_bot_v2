@@ -536,7 +536,7 @@ class DataImporter:
 if __name__ == '__main__':
 
     from multiprocessing import Queue
-    import app.config as conf
+    from app.app_config import default_conf as conf
 
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                         level=logging.DEBUG)

@@ -5,7 +5,7 @@ import base64
 import math
 from queue import Empty
 
-from src.app import config
+from src.app.app_config import default_conf as config
 from src.app_enums import ComponentType, ClientCommands, MediaType, ActionType
 from src.mediator import command_message, crawler_message, send_message, MediatorMessage
 from src.crawler.Workers.WorkerABC import Worker

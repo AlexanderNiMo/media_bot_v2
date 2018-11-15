@@ -8,7 +8,7 @@ from src.clients import BotProtocol
 from src.parser import Parser
 from src.crawler import Crawler
 from src.command_handler import CommandMessageHandler
-from src.app import config
+from src.app.app_config import default_conf as config
 
 import logging
 import time
