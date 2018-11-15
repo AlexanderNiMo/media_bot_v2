@@ -6,6 +6,6 @@ if __name__ == '__main__':
     """
     Осуществляет тестовую сборку приложения
     """
-    from src.app import create_app_test
+    from src.app.App import create_app_test
 
     create_app_test()

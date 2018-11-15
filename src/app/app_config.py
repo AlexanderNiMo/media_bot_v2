@@ -173,3 +173,7 @@ class Config:
             'WEBHOOK_SSL_PRIV': self.get_parser_data(['webhook', 'ssl_prv_key']),
             'WEBHOOK_URL_BASE': self.get_parser_data(['webhook', 'url_base']),
         }
+
+
+default_conf = Config()
+default_conf.set_config_file()
