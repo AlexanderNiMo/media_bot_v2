@@ -323,6 +323,10 @@ class MediaData:
         self.media_type = media_type
         self.status = status
 
+    @property
+    def kinopoisk_id(self):
+        return self.media_id
+
 
 if __name__ == '__main__':
     pass
