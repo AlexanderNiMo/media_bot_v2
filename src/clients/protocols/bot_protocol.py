@@ -541,7 +541,9 @@ if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                         level=logging.DEBUG)
 
-    b = Bot(conf, conf.BOT_MODE, BotProtocol(Queue(), Queue(), conf))
+    # b = Bot(conf, conf.BOT_MODE, BotProtocol(Queue(), Queue(), conf))
+    #
+    # act = b.get_start_bot_action()
+    # act()
 
-    act = b.get_start_bot_action()
-    act()
+    db = BotCache(conf.CACHE_DB_PATH)

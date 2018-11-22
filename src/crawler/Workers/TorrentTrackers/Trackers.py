@@ -36,7 +36,7 @@ class Torrent:
         self.pier = pier
         self.resolution = resolution
         self.file_amount = file_amount
-        self.kinopoisk_id = kinopoisk_id
+        self.kinopoisk_id = int(kinopoisk_id) if not kinopoisk_id == '' else 0
         self.tracker = tracker
 
     def __repr__(self):

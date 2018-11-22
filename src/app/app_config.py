@@ -89,10 +89,12 @@ class Config:
 
     def get_path_data(self, pattern):
         data_path = path.normpath(
-            'pattern'.format(path.dirname(self.base_folder))
+            pattern.format(path.dirname(self.base_folder))
         )
+
         if not path.exists(data_path):
-            os.mkdir(data_path)
+            if not path.exists(path.dirname(data_path)):
+                os.mkdir(path.dirname(data_path))
 
         return data_path
 
