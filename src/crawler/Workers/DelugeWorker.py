@@ -26,7 +26,7 @@ class DelugeWorker(Worker):
         try:
             deluge = DelugeRPCClient(
                 config.DELUGE_HOST,
-                config.DELUGE_PORT,
+                int(config.DELUGE_PORT),
                 config.DELUGE_USER,
                 config.DELUGE_PASS)
             deluge.connect()
