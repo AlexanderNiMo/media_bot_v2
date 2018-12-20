@@ -2,12 +2,13 @@ import unittest
 import src
 import multiprocessing
 import os
+from src.app.app_config import default_conf as config
 
 
 class TestParser(unittest.TestCase):
 
     def setUp(self):
-        self.conf = src.app.config
+        self.conf = config
         self.conf.set_config_file(os.path.abspath('./test_config.ini'))
         self.conf.TEST = True
         self.parser = src.parser.Parser(multiprocessing.Queue(), multiprocessing.Queue(), self.conf)
@@ -42,7 +43,7 @@ class TestParser(unittest.TestCase):
 
         msg.data = src.mediator.ParserData(
             data_dict,
-            src.app.config.TELEGRAMM_BOT_USER_ADMIN,
+            self.conf.TELEGRAMM_BOT_USER_ADMIN,
             data_needed=needed_data
         )
         returned_data = self.parser.parse(msg)
@@ -124,7 +125,7 @@ class TestParser(unittest.TestCase):
         target_message = self.parse_data(
             needed_data,
             {
-                'client_id': src.app.config.TELEGRAMM_BOT_USER_ADMIN
+                'client_id': self.conf.TELEGRAMM_BOT_USER_ADMIN
             }
         )
 
