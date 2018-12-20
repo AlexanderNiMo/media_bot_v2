@@ -279,6 +279,9 @@ class KinopoiskParser(BaseParser):
         return 'choices' not in self.next_data.keys()
 
     def find_serial(self, data: dict) -> [bool, list]:
+        # Корректировка xpath для URL
+        movie.MovieLink.xpath['url'] = './/p[@class="name"]/a/@data-url'
+
         result = movie.Movie.objects.search(data['query'])
 
         if len(result) == 0:
