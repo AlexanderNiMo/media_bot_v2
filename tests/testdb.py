@@ -9,7 +9,7 @@ import src
 
 class TestDB(TestCase):
     def setUp(self):
-        self.conf = src.app.config
+        self.conf = src.app.app_config.default_conf
         self.conf.set_config_file(os.path.abspath('./test_config.ini'))
         self.conf.TEST = True
         self.component = src.app_enums.ComponentType.MAIN_APP
