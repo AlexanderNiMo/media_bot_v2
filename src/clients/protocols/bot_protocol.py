@@ -68,8 +68,11 @@ class BotProtocol(AppMediatorClient):
         while True:
             time.sleep(60)
             logger.debug('Начало проверки состояния процесса bot.')
-            if not self.bot_process.is_alive():
+            if self.bot_process is None or not self.bot_process.is_alive():
+                logger.error('Bot мертв, перезапускаю.')
                 self.start_bot_process()
+            else:
+                logger.debug('Bot жив-здоров.')
 
 
 class Bot:
@@ -115,10 +118,15 @@ class Bot:
             url_path=url_path
         )
 
-        self.updater.bot.set_webhook(
+        sucsess = self.updater.bot.set_webhook(
             url='{0}/{1}'.format(self.WEBHOOK_URL_BASE, url_path),
             certificate=open(self.WEBHOOK_SSL_CERT, 'rb')
         )
+        if not sucsess:
+            logger.error('Webhook не установлен.')
+            return
+        else:
+            logger.debug('Webhook успешно установлен.')
         self.updater.idle()
 
     def _start_pooling(self):
@@ -212,10 +220,12 @@ class Bot:
     @property
     def updater(self):
         if self.__updater is None:
-            r_kw = {
-                'proxy_url': self.__config.PROXY_URL,
-                'urllib3_proxy_kwargs': {"username": self.__config.PROXY_USER, "password": self.__config.PROXY_PASS}
-            }
+            r_kw = {}
+            if not self.__config.PROXY_URL == '':
+                r_kw.update({
+                    'proxy_url': self.__config.PROXY_URL,
+                    'urllib3_proxy_kwargs': {"username": self.__config.PROXY_USER, "password": self.__config.PROXY_PASS}
+                })
             self.__updater = telegram.ext.Updater(token=self.token, request_kwargs=r_kw)
             self.set_bot_hendlers(self.__updater.dispatcher)
 
