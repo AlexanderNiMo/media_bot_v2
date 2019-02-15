@@ -73,7 +73,7 @@ class AppMediator(Mediator):
         logger.debug('СОздана новая копия клиента {}'.format(client.CLIENT_TYPE))
         return client.__class__(client.queue, self.in_queue, client.config)
 
-    def __set_client(self, new_client: MediatorClient):
+    def set_client(self, new_client: MediatorClient):
         """
         Устанавливает нового клиента в список клиентов
 
@@ -108,6 +108,6 @@ class AppMediator(Mediator):
                 try:
                     client = self._get_new_client(client)
                     client.start()
-                    self.__set_client(client)
+                    self.set_client(client)
                 except:
                     logger.error('Реанимация клиента {} не удалась...'.format(client.CLIENT_TYPE))
