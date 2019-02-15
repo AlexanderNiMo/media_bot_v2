@@ -12,15 +12,72 @@ class TestEnvCreator:
         self.conf = self.get_test_conf()
         self.admin_id = self.conf.TELEGRAMM_BOT_USER_ADMIN
         self.mediator_q = multiprocessing.Queue()
-        self.db = DbManager(self.conf)
-        self.parser = self.get_client(src.app_enums.ComponentType.PARSER)
+
+        self._mediator = None
+        self._db = None
+        self._parser = None
+        self._crawler = None
+        self._client = None
+        self._command_handler = None
+
+    @property
+    def db(self):
+        if self._db is None:
+            self._db = DbManager(self.conf)
+            self.mediator.set_client(self._db)
+        return self._db
+
+    @property
+    def parser(self):
+        if self._parser is None:
+            self._parser = self.get_client(src.app_enums.ComponentType.PARSER)
+            self.mediator.set_client(self._parser)
+        return self._parser
+
+    @property
+    def crawler(self):
+        if self._crawler is None:
+            self._crawler = self.get_client(src.app_enums.ComponentType.CRAWLER)
+            self.mediator.set_client(self._crawler)
+        return self._crawler
+
+    def command_handler(self):
+        if self._command_handler is None:
+            self._command_handler = self.get_client(src.app_enums.ComponentType.COMMAND_HANDLER)
+            self.mediator.set_client(self._command_handler)
+        return self._command_handler
+
+    @property
+    def client(self):
+        if self._client is None:
+            self._client = self.get_client(src.app_enums.ComponentType.CLIENT)
+            self.mediator.set_client(self._client)
+        return self._client
+
+    @property
+    def mediator(self):
+        if self._mediator is None:
+            self._mediator = src.mediator.AppMediator(self.mediator_q, [])
+        return self._mediator
 
     def get_client(self, component_type):
         if component_type == src.app_enums.ComponentType.PARSER:
             return src.parser.Parser(multiprocessing.Queue(), self.mediator_q, self.conf)
+        elif component_type == src.app_enums.ComponentType.CRAWLER:
+            return src.crawler.Crawler(
+                multiprocessing.Queue(), self.mediator_q, self.conf, 2
+            )
+        elif component_type == src.app_enums.ComponentType.COMMAND_HANDLER:
+            return src.command_handler.CommandMessageHandler(
+                multiprocessing.Queue(), self.mediator_q, self.conf
+            )
+        elif component_type == src.app_enums.ComponentType.CLIENT:
+            return src.clients.BotProtocol(
+                multiprocessing.Queue(), self.mediator_q, self.conf
+            )
 
     def get_test_conf(self):
-        conf = src.app.config
+        conf = src.app.app_config.default_conf
         conf.set_config_file(os.path.abspath('./test_config.ini'))
         conf.TEST = True
         return conf
