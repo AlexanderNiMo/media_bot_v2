@@ -1,19 +1,20 @@
 import unittest
 import src
-import multiprocessing
 import os
-from src.app.app_config import default_conf as config
+
+
+from tests.utils import TestEnvCreator
 
 
 class TestParser(unittest.TestCase):
 
     def setUp(self):
-        self.conf = config
-        self.conf.set_config_file(os.path.abspath('./test_config.ini'))
-        self.conf.TEST = True
-        self.parser = src.parser.Parser(multiprocessing.Queue(), multiprocessing.Queue(), self.conf)
+        self.test_content = TestEnvCreator()
+        self.conf = self.test_content.conf
+
+        self.parser = self.test_content.parser
         self.component = src.app_enums.ComponentType.MAIN_APP
-        self.db = src.database.DbManager(self.conf)
+        self.db = self.test_content.db
 
     def get_message(self):
         return src.mediator.MediatorActionMessage(

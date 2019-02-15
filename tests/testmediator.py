@@ -1,7 +1,7 @@
 from unittest import TestCase, TestSuite, TextTestRunner, defaultTestLoader
 from src.mediator import *
 from src.app_enums import ComponentType, ActionType
-from src.app import app_config as config
+from src.app import config
 from multiprocessing import Queue
 
 

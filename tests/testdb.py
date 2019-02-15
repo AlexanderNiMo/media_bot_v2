@@ -3,20 +3,20 @@ from multiprocessing import Queue
 import os
 from subprocess import Popen
 
+from tests.utils import TestEnvCreator
 from src.database import DbManager, MediaData
 import src
 
 
 class TestDB(TestCase):
     def setUp(self):
-        self.conf = src.app.app_config.default_conf
-        self.conf.set_config_file(os.path.abspath('./test_config.ini'))
-        self.conf.TEST = True
+        self.test_content = TestEnvCreator()
+        self.conf = self.test_content.conf
+
         self.component = src.app_enums.ComponentType.MAIN_APP
-        self.db = DbManager(self.conf)
+        self.db = self.test_content.db
 
         self.anather_client_id = 2
-
         self.client_id = 1
         self.name = 'Александр'
         self.last_name = 'Morozov'

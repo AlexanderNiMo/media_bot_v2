@@ -3,6 +3,8 @@ from multiprocessing import Queue
 import os
 from subprocess import Popen
 
+from tests.utils import TestEnvCreator
+
 from src.mediator import CrawlerData
 from src.database import DbManager, MediaData
 from src.crawler import Crawler
@@ -12,17 +14,22 @@ import src
 
 class TestCrawler(TestCase):
     def setUp(self):
-        client_quine = Queue()
-        mediator_quine = Queue()
 
-        self.conf = src.app.app_config.default_conf
-        self.conf.set_config_file(os.path.abspath('./test_config.ini'))
-        self.conf.TEST = True
-
-        self.component = src.app_enums.ComponentType.MAIN_APP
-        self.db = DbManager(self.conf)
+        self.test_context = TestEnvCreator()
+        self.test_context.construct_test_db()
         self.client_id = 1
-        self.crawler = Crawler(client_quine, mediator_quine, self.conf, 10)
+
+    @property
+    def conf(self):
+        return self.test_context.conf
+
+    @property
+    def db(self):
+        return self.test_context.db
+
+    @property
+    def crawler(self):
+        return self.test_context.crawler
 
     def add_test_film(self, session, **kwargs):
         return self.db.add_film(session=session, **kwargs)
