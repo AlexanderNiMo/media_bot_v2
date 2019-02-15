@@ -1,10 +1,8 @@
-from unittest import TestCase, TestSuite, TextTestRunner, defaultTestLoader
-from multiprocessing import Queue
+from unittest import TestCase, TextTestRunner, defaultTestLoader
 import os
-from subprocess import Popen
 
 from tests.utils import TestEnvCreator
-from src.database import DbManager, MediaData
+from src.database import MediaData
 import src
 
 
@@ -13,7 +11,6 @@ class TestDB(TestCase):
         self.test_content = TestEnvCreator()
         self.conf = self.test_content.conf
 
-        self.component = src.app_enums.ComponentType.MAIN_APP
         self.db = self.test_content.db
 
         self.anather_client_id = 2

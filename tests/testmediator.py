@@ -1,19 +1,16 @@
-from unittest import TestCase, TestSuite, TextTestRunner, defaultTestLoader
+from unittest import TestCase, TextTestRunner, defaultTestLoader
 from src.mediator import *
 from src.app_enums import ComponentType, ActionType
-from src.app import config
-from multiprocessing import Queue
+
+from tests.utils import TestEnvCreator
 
 
 class TestMediator(TestCase):
 
     def setUp(self):
-        client_quine = Queue()
-        mediator_quine = Queue()
-        self.test_client = AppMediatorClient(client_quine, mediator_quine, config)
-        self.test_client.CLIENT_TYPE = ComponentType.MAIN_APP
-        self.test_client.CLIENT_ACTIONS = [ActionType.SEND_MESSAGE]
-        self.mediator = AppMediator(mediator_quine, [self.test_client])
+        self.test_content = TestEnvCreator()
+        self.test_client = self.test_content.client
+        self.mediator = self.test_content.mediator
 
     def test_send_message(self):
 

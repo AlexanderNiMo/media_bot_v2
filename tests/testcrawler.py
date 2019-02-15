@@ -1,13 +1,9 @@
-from unittest import TestCase, TestSuite, TextTestRunner, defaultTestLoader
-from multiprocessing import Queue
+from unittest import TestCase, TextTestRunner, defaultTestLoader
 import os
-from subprocess import Popen
 
 from tests.utils import TestEnvCreator
 
 from src.mediator import CrawlerData
-from src.database import DbManager, MediaData
-from src.crawler import Crawler
 from src.crawler.crawler_class import Job
 import src
 
