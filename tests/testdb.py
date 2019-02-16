@@ -281,9 +281,7 @@ class TestDB(TestCase):
         self.assertTrue(len(test_user.media.all()) == 1, 'Новый фильм не добавился в список пользователя')
 
     def tearDown(self):
-        db_path = '.test.db'
-        if os.path.exists(db_path):
-            os.remove(db_path)
+        self.test_content.clear_test_db()
 
 
 def suite():

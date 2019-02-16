@@ -59,9 +59,7 @@ class TestCrawler(TestCase):
         self.assertTrue(len(self.crawler.active_workers) == 1, 'Не добавился процесс воркер.')
 
     def tearDown(self):
-        db_path = '.test.db'
-        if os.path.exists(db_path):
-            os.remove(db_path)
+        self.test_content.clear_test_db()
 
 
 def suite():

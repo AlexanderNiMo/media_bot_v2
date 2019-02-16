@@ -24,34 +24,34 @@ class TestEnvCreator:
     def db(self):
         if self._db is None:
             self._db = DbManager(self.conf)
-            self.mediator.set_client(self._db)
         return self._db
 
     @property
     def parser(self):
         if self._parser is None:
             self._parser = self.get_client(src.app_enums.ComponentType.PARSER)
-            self.mediator.set_client(self._parser)
+            self.mediator.add_client(self._parser)
         return self._parser
 
     @property
     def crawler(self):
         if self._crawler is None:
             self._crawler = self.get_client(src.app_enums.ComponentType.CRAWLER)
-            self.mediator.set_client(self._crawler)
+            self.mediator.add_client(self._crawler)
         return self._crawler
 
+    @property
     def command_handler(self):
         if self._command_handler is None:
             self._command_handler = self.get_client(src.app_enums.ComponentType.COMMAND_HANDLER)
-            self.mediator.set_client(self._command_handler)
+            self.mediator.add_client(self._command_handler)
         return self._command_handler
 
     @property
     def client(self):
         if self._client is None:
             self._client = self.get_client(src.app_enums.ComponentType.CLIENT)
-            self.mediator.set_client(self._client)
+            self.mediator.add_client(self._client)
         return self._client
 
     @property
@@ -111,6 +111,11 @@ class TestEnvCreator:
             self.add_test_serial(session=session, client_id=self.admin_id, **serial)
 
         session.close()
+
+    def clear_test_db(self):
+        db_path = '.test.db'
+        if os.path.exists(db_path):
+            os.remove(db_path)
 
 
 if __name__ == '__main__':

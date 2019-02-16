@@ -198,9 +198,7 @@ class TestParser(unittest.TestCase):
         self.assertTrue(target_message.data.data['media_in_db'], 'Фильм должен присутствовать в db!')
 
     def tearDown(self):
-        db_path = '.test.db'
-        if os.path.exists(db_path):
-            os.remove(db_path)
+        self.test_content.clear_test_db()
 
 
 def suite():
