@@ -73,16 +73,37 @@ class AppMediator(Mediator):
         logger.debug('СОздана новая копия клиента {}'.format(client.CLIENT_TYPE))
         return client.__class__(client.queue, self.in_queue, client.config)
 
-    def set_client(self, new_client: MediatorClient):
+    def add_client(self, new_client):
         """
-        Устанавливает нового клиента в список клиентов
+        Добавление нового клиента в список клиентов
 
         :param new_client:
         :return:
         """
+        if not isinstance(new_client, MediatorClient):
+            logger.debug('Попытка добавить в медиатор неверного клиента. с типом {}'.format(type(new_client)))
+            return
+
+        client_added = self.__set_client(new_client)
+
+        if not client_added:
+            self.__clients.append({
+                'client_type': new_client.CLIENT_TYPE,
+                'client': new_client
+            })
+
+    def __set_client(self, new_client: MediatorClient):
+        """
+        Устанавливает нового клиента в список клиентов
+
+        :param new_client:
+        :return: Bool
+        """
         for client in self.__clients:
             if client['client_type'] == new_client.CLIENT_TYPE:
                 client['client'] = new_client
+                return True
+        return False
 
     @property
     def in_queue(self):
@@ -108,6 +129,6 @@ class AppMediator(Mediator):
                 try:
                     client = self._get_new_client(client)
                     client.start()
-                    self.set_client(client)
+                    self.__set_client(client)
                 except:
                     logger.error('Реанимация клиента {} не удалась...'.format(client.CLIENT_TYPE))

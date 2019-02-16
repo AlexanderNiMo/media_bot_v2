@@ -30,7 +30,6 @@ class CommandMessageHandler(AppMediatorClient):
         super(self.__class__, self).__init__(in_queue, out_queue, config)
         self.db_manager = DbManager(self.config)
 
-
     def run(self):
         """
         Процедура, выполняемая при запуске процесса

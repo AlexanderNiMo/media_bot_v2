@@ -299,6 +299,18 @@ class DbManager:
         session.commit()
         return new_value
 
+    def get_user_option(self, client_id, option_name: UserOptions, session=None):
+        if session is None:
+            session = self.session
+        result = session.query(self.User, self.UserOptionsT). \
+            filter(self.User.id == self.UserOptionsT.user_id). \
+            filter(self.User.client_id == client_id). \
+            filter(self.UserOptionsT.option == option_name).first()
+        if result is None:
+            return 0
+        else:
+            user, opt = result
+            return opt.value
 
 class MediaData:
     """
