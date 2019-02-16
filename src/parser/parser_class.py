@@ -56,7 +56,43 @@ class Parser(AppMediatorClient):
         Выполняет парсинг данных
         """
         logger.debug('Начало парсинга данных {}'.format(message.data.data))
-        return self.parser.parse(message.data)
+        if len(message.data.data_needed) == 0:
+            return self.parser.parse(message.data)
+        else:
+            t_parser = TargetParser(self.config)
+            return t_parser.parse(message)
+
+
+class TargetParser:
+    """
+    Производит поиск заказанных данных
+    """
+    def __init__(self ,conf):
+        self.config = conf
+        self.parser_class_list = [
+            TextQueryParser(None, self.config),
+            PlexParser(None, self.config),
+            KinopoiskParser(None, self.config),
+            TextQueryParser(None, self.config),
+            ParseTrackerThread(None, self.config),
+            TelegrammParser(None, self.config),
+            DataBaseParser(None, self.config),
+        ]
+
+    def parse(self, message: MediatorActionMessage):
+        data = message.data
+        for parser in self.parser_class_list:
+            if parser.can_get_data(data.data_needed, data.data):
+                error = parser.get_data(data)
+                if not error:
+                    data.data.update(parser.next_data)
+                else:
+                    parser.end_chain(data)
+
+        msg = MediatorActionMessage(message.from_component, ActionType.RETURNED_DATA, ComponentType.PARSER)
+        msg.data = data
+
+        return [msg]
 
 
 class AbstractParser(ABC):
@@ -158,6 +194,30 @@ class BaseParser(AbstractParser):
         res = u' '
         return res.join(self._get_words(query))
 
+    def can_get_data(self, needed_data: list, data: dict):
+        return all(map(lambda x: x in data.keys(), self.needed_data())) \
+               and any(map(lambda x: x in self.returned_data(), needed_data))
+
+    def get_data(self, data: ParserData):
+        if self.can_get_data(data.data_needed, data.data):
+            errors, result_data = self.get_needed_data(data.data, data.data_needed)
+            data.data.update(result_data)
+            self.next_data = data.data
+            return errors
+        else:
+            return False
+
+    def get_needed_data(self, data: dict,  data_needed: list)-> (bool, dict):
+        return False, {}
+
+    @staticmethod
+    def needed_data():
+        return []
+
+    @staticmethod
+    def returned_data():
+        return []
+
 
 class KinopoiskParser(BaseParser):
     """
@@ -206,6 +266,7 @@ class KinopoiskParser(BaseParser):
                 'title': self._normalize_query_text(element.title),
                 'year': element.year,
                 'url': element.get_url('main_page'),
+                'kinopoisk_url': element.get_url('main_page'),
                 'serial': False
             }
             self.next_data['choices'].append(choise)
@@ -252,6 +313,7 @@ class KinopoiskParser(BaseParser):
                 'kinopoisk_id': element.id,
                 'title': self._normalize_query_text(element.title),
                 'year': element.year,
+                'kinopoisk_url': element.get_url('main_page'),
                 'url': element.get_url('main_page'),
                 'season': data['season'],
                 'serial': True,
@@ -311,6 +373,24 @@ class KinopoiskParser(BaseParser):
 
         return self.messages
 
+    def get_needed_data(self, data: dict,  data_needed: list)-> (bool, dict):
+        if data['media_type'] == MediaType.FILMS:
+            find_func = self.find_film
+        else:
+            find_func = self.find_serial
+
+        sucsess = find_func(data)
+
+        return not sucsess, self.next_data
+
+    def needed_data(self):
+        res = ['media_type', 'query']
+        return res
+
+    @staticmethod
+    def returned_data():
+        return ['kinopoisk_url', 'kinopoisk_id', 'title']
+
 
 class PlexParser(BaseParser):
     """
@@ -363,8 +443,8 @@ class PlexParser(BaseParser):
         for element in plex_data:
             if not element.TYPE == 'show':
                 continue
-            title_match = self._normalize_query_text(element.title) == self._normalize_query_text(
-                data['title']) and element.year == data['year']
+            title_match = self._normalize_query_text(element.title) == self._normalize_query_text(data['title']) \
+                          and element.year == data['year']
             if not title_match:
                 continue
             season_in_show = True
@@ -374,6 +454,33 @@ class PlexParser(BaseParser):
             if season_in_show:
                 result.append(element)
         return result
+
+    def check_film(self, plex_data: list, data: dict) -> list:
+        return list(filter(
+                lambda x: x.title.upper() == data['title'].upper() and x.year == data['year'],
+                plex_data
+            ))
+
+    def get_needed_data(self, data: dict,  data_needed: list)-> (bool, dict):
+        server = PlexServer(
+            'http://{0}:{1}'.format(self.config.PLEX_HOST, self.config.PLEX_PORT),
+            self.config.PLEX_TOKEN
+        )
+        plex_data = server.search(data['title'])
+        if data['media_type'] == MediaType.FILMS:
+            result = self.check_film(plex_data, data)
+        else:
+            result = self.check_serials(plex_data, data)
+
+        return not len(result) == 0, {'media_in_plex': not len(result) == 0}
+
+    def needed_data(self):
+        res = ['media_type', 'title', 'year']
+        return res
+
+    @staticmethod
+    def returned_data():
+        return ['media_in_plex']
 
 
 class DataBaseParser(BaseParser):
@@ -552,6 +659,45 @@ class TextQueryParser(BaseParser):
         return self.messages
 
     @staticmethod
+    def needed_data():
+        return ['query']
+
+    @staticmethod
+    def returned_data():
+        return ['year', 'query', 'season']
+
+    def get_needed_data(self, data: dict, needed_data: list)-> (bool, dict):
+        text = data['query']
+        errors = False
+        result = {}
+        normal_query = self._normalize_query_text(text)
+        replace_data = []
+
+        if 'year' in needed_data:
+            year = self._get_year(normal_query)
+            if year is None:
+                errors = True
+            else:
+                result['year'] = year
+                replace_data.append(year)
+
+        if 'season' in needed_data:
+            season = self._get_season(normal_query)
+            if season is None:
+                errors = True
+            else:
+                result['season'] = season
+                replace_data.append('сезон {}'.format(self.season))
+
+        # Замена текста года и сезона
+        query_text = self._replase_data_in_query(normal_query, replace_data)
+
+        if 'query' in needed_data:
+            result['query'] = query_text
+
+        return errors, result
+
+    @staticmethod
     def _get_year(text: str) -> int or None:
         """
         Выделяет год из запроса
@@ -643,6 +789,31 @@ class TelegrammParser(BaseParser):
 
     def end_chain(self, data: ParserData):
         return self.messages
+
+    @staticmethod
+    def needed_data():
+        return ['client_id']
+
+    @staticmethod
+    def returned_data():
+        return ['nick', 'name', 'last_name']
+
+    def get_needed_data(self, data: dict, needed_data: list)-> (bool, dict):
+        user_id = data['client_id']
+        try:
+            client_data = self.bot.get_chat(user_id)
+            next_data = {
+                'client_id': user_id,
+                'name': client_data.first_name,
+                'last_name': client_data.last_name,
+                'nick': client_data.username
+            }
+        except teleg_error.BadRequest:
+            next_data = {'client_id': user_id, 'name': '', 'last_name': '', 'nick': ''}
+
+        self.next_data = data.copy()
+        self.next_data.update(next_data)
+        return False, self.next_data
 
 
 def get_parser_chain(config) -> BaseParser:

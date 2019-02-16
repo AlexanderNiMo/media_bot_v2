@@ -73,16 +73,37 @@ class AppMediator(Mediator):
         logger.debug('СОздана новая копия клиента {}'.format(client.CLIENT_TYPE))
         return client.__class__(client.queue, self.in_queue, client.config)
 
+    def add_client(self, new_client):
+        """
+        Добавление нового клиента в список клиентов
+
+        :param new_client:
+        :return:
+        """
+        if not isinstance(new_client, MediatorClient):
+            logger.debug('Попытка добавить в медиатор неверного клиента. с типом {}'.format(type(new_client)))
+            return
+
+        client_added = self.__set_client(new_client)
+
+        if not client_added:
+            self.__clients.append({
+                'client_type': new_client.CLIENT_TYPE,
+                'client': new_client
+            })
+
     def __set_client(self, new_client: MediatorClient):
         """
         Устанавливает нового клиента в список клиентов
 
         :param new_client:
-        :return:
+        :return: Bool
         """
         for client in self.__clients:
             if client['client_type'] == new_client.CLIENT_TYPE:
                 client['client'] = new_client
+                return True
+        return False
 
     @property
     def in_queue(self):
