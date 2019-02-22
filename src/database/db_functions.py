@@ -285,7 +285,7 @@ class DbManager:
             filter(self.User.client_id == client_id). \
             filter(self.UserOptionsT.option == option_name).first()
         if result is None:
-            opt = self.UserOptionsT(option=option_name, value=value)
+            opt = self.UserOptionsT(option=option_name, value=1)
             user = self.find_user(client_id, session)
             user.options.append(opt)
         else:

@@ -7,7 +7,7 @@ import json
 import re
 
 from src.mediator import AppMediatorClient, MediatorActionMessage, parser_message
-from src.app_enums import ActionType, ComponentType, ClientCommands
+from src.app_enums import ActionType, ComponentType, ClientCommands, UserOptions
 from src.mediator import command_message, crawler_message
 
 from multiprocessing import Process, Queue
@@ -296,7 +296,7 @@ class Bot:
         logger.info('Change notification status for user {}'.format(update.message.chat_id))
         BotCommandParser.start_command(
             '/notify',
-            {'option': 0},
+            {'option': UserOptions.NOTIFICATION},
             self.protocol,
             update.message.chat_id
         )
@@ -325,7 +325,7 @@ class Bot:
         update.message.reply_text("Привет! Для начала авторизации набери /auth."
                                   "Для добавления фильма набери /film Название фильма год"
                                   "Для добавления сериала /serial Название сериала сезон N год"
-                                  "Для включения уведомлений о новых фильмах и сериалах набери /notyfi")
+                                  "Для включения уведомлений о новых фильмах и сериалах набери /notify")
 
     def auth_handler(self, bot, update):
         """
@@ -479,6 +479,7 @@ class BotCommandParser:
             {'command_text': '/film', 'command': ClientCommands.ADD_FILM},
             {'command_text': '/serial', 'command': ClientCommands.ADD_SERIAL},
             {'command_text': '/auth', 'command': ClientCommands.AUTHENTICATION},
+            {'command_text': '/notify', 'command': ClientCommands.EDIT_SETTINGS},
         ]
 
 
