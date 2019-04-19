@@ -46,10 +46,9 @@ class Torrent:
 
 class AbcTorrentTracker(metaclass=ABCMeta):
 
-    @classmethod
     @property
     @abstractmethod
-    def site_name(cls):
+    def site_name(self):
         return ''
 
     @abstractmethod
@@ -330,7 +329,6 @@ class Rutracker(TorrentTracker):
         resp = self.connection.get(url)
         if 'Видео:' not in resp.text:
             return None
-        soup = BeautifulSoup(resp.text, features='lxml')
 
     def _get_sub_forum(self, forum_list):
         res = []
@@ -570,13 +568,3 @@ def get_torrent_details(data_dict):
 
     return torrent_ditails
 
-if __name__ == '__main__':
-
-    logger.setLevel(logging.DEBUG)
-
-    from app import config as _conf
-
-    t = Rutracker(_conf)
-    _torrents = t.search('Гарри поттер')
-    for torr in _torrents:
-        print(torr)
