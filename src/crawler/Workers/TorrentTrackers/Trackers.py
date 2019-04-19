@@ -305,18 +305,6 @@ class Rutracker(TorrentTracker):
         if tor_dict['resolution'] is None:
             return None
 
-        # tor_dict['data'] = self.get_torrent_data(tor_dict['url'])
-        #
-        # torrent_ditails = get_torrent_details(tor_dict['data']['data'])
-        # if torrent_ditails is None:
-        #     return None
-        # if 'files' in torrent_ditails['info'].keys():
-        #     tor_dict['file_amount'] = len(torrent_ditails['info']['files'])
-        # elif 'name' in torrent_ditails['info'].keys():
-        #     tor_dict['file_amount'] = 1
-        # else:
-        #     return None
-
         tor_dict['kinopoisk_id'] = self.get_kinopoisk_id(tor_dict['theam_url'])
 
         tor_dict['tracker'] = self.site_type
@@ -335,6 +323,7 @@ class Rutracker(TorrentTracker):
                     result = result.group()
                 else:
                     result = ''
+                break
         return result
 
     def get_resolution_from_page(self, url):
@@ -474,18 +463,6 @@ class Rutor(TorrentTracker):
         if tor_dict['resolution'] is None:
             return None
 
-        # tor_dict['data'] = self.get_torrent_data(tor_dict['url'])
-        #
-        # torrent_ditails = get_torrent_details(tor_dict['data']['data'])
-        # if torrent_ditails is None:
-        #     return None
-        # elif 'files' in torrent_ditails['info'].keys():
-        #     tor_dict['file_amount'] = len(torrent_ditails['info']['files'])
-        # elif 'name' in torrent_ditails['info'].keys():
-        #     tor_dict['file_amount'] = 1
-        # else:
-        #     return None
-
         tor_dict['kinopoisk_id'] = self.get_kinopoisk_id(tor_dict['theam_url'])
         tor_dict['tracker'] = self.site_type
 
@@ -503,6 +480,7 @@ class Rutor(TorrentTracker):
                     result = result.group()
                 else:
                     result = ''
+                break
 
         return result
 
@@ -550,7 +528,8 @@ def download(conf, url):
     trackers = get_trackers(conf)
     for tracker in trackers:
         if tracker.site_domain in url or tracker.site_download in url:
-            return tracker.get_torrent_data(url)
+            data = get_torrent_details(tracker.get_torrent_data(url))
+            return data
 
 
 def get_trackers(conf) -> list:
@@ -569,14 +548,27 @@ def get_trackers(conf) -> list:
     return result
 
 
-def get_torrent_details(data):
-    try:
-        return torrent_parser.decode(data)
-    except torrent_parser.InvalidTorrentDataException:
-        return None
-    except TypeError:
-        return None
+def get_torrent_details(data_dict):
 
+    try:
+        torrent_ditails = torrent_parser.decode(data_dict['data'])
+    except torrent_parser.InvalidTorrentDataException:
+        torrent_ditails = None
+    except TypeError:
+        torrent_ditails = None
+
+    file_amount = 0
+
+    if torrent_ditails is None:
+        file_amount = 0
+    elif 'files' in torrent_ditails['info'].keys():
+        file_amount = len(torrent_ditails['info']['files'])
+    elif 'name' in torrent_ditails['info'].keys():
+        file_amount = 1
+    torrent_ditails.update({'file_amount': file_amount})
+    torrent_ditails.update(data_dict)
+
+    return torrent_ditails
 
 if __name__ == '__main__':
 

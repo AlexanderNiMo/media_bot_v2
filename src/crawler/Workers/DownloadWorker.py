@@ -22,16 +22,11 @@ class DownloadWorker(Worker):
         logger.debug('Start torrent worker.')
         torrent_data = []
 
-        media = self.job
+        media = self.job.media
         torrdata = download(self.config, media.download_url)
 
-        if not (media.type == MediaType.SERIALS and torrdata.data.file_amount == media.series):
-            torrent_data.append(
-                {
-                    'media': media,
-                    'torrent_data': torrdata,
-                }
-            )
+        if not (media.media_type == MediaType.SERIALS and torrdata.data.file_amount == media.series):
+            torrent_data.append(torrdata)
 
         self.returned_data.put(torrent_data)
         logger.debug('Torrent worker ended.')
@@ -49,9 +44,8 @@ class DownloadWorker(Worker):
 
         messages = []
 
-        for media_data in data:
-            media = media_data['media']
-            torrent_data = media_data['torrent_data']
+        for torrent_data in data:
+            media = self.job
             if media.media_type == MediaType.FILMS:
                 message_text = 'Фильм {0} будет скачан, через несколько минут. \n {1}'.format(
                     media.text_query,
@@ -71,7 +65,7 @@ class DownloadWorker(Worker):
                         'media_type': MediaType.FILMS if media.season == '' else MediaType.SERIALS,
                         'upd_data': {
                             'exsists_in_plex': True,
-                            'current_series': 0 if media.season == '' else data.file_amount
+                            'current_series': 0 if media.season == '' else torrent_data.file_amount
                         }
                     },
                     self.job.client_id
@@ -80,8 +74,8 @@ class DownloadWorker(Worker):
                     ComponentType.CRAWLER,
                     media.client_id,
                     {
-                        'torrent_id': torrent_data.data['id'],
-                        'torrent_data': torrent_data.data['data'],
+                        'torrent_id': torrent_data['id'],
+                        'torrent_data': torrent_data['data'],
                         'media_id': media.media_id
                     },
                     ActionType.ADD_TORRENT_TO_TORRENT_CLIENT
