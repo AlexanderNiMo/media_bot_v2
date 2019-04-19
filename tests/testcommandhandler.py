@@ -41,6 +41,62 @@ class TestCommandHandler(TestCase):
         val = self.db.get_user_option(self.client_id, notif_option)
         self.assertTrue(val == 1, 'Статус не изменился')
 
+    def test_command_send_messages(self):
+        media_id = '12345678'
+        media_title = 'Тест 1'
+
+        self.test_context.add_test_film(
+            self.db.session,
+            **{
+                'client_id': self.test_context.admin_id,
+                'kinopoisk_id': media_id,
+                'label': media_title,
+                'year': 1999,
+                'url': 'http://test1'
+            }
+        )
+
+        data = {
+            'client_id': self.test_context.admin_id,
+            'message_text': media_title,
+            'choices': []
+        }
+        comm_message = command_message(
+            app_enums.ComponentType.MAIN_APP,
+            app_enums.ClientCommands.SEND_MESSAGES,
+            data,
+            self.test_context.admin_id
+        )
+        self.test_handler.handle_message(comm_message)
+
+    def test_command_send_messages_by_media(self):
+        media_id = '12345678'
+        media_title = 'Тест 1'
+
+        self.test_context.add_test_film(
+            self.db.session,
+            **{
+                'client_id': self.test_context.admin_id,
+                'kinopoisk_id': media_id,
+                'label': media_title,
+                'year': 1999,
+                'url': 'http://test1'
+            }
+        )
+
+        data = {
+            'media_id': media_id,
+            'message_text': media_title,
+            'choices': []
+        }
+        comm_message = command_message(
+            app_enums.ComponentType.MAIN_APP,
+            app_enums.ClientCommands.SEND_MESSAGES_BY_MEDIA,
+            data,
+            self.test_context.admin_id
+        )
+        self.test_handler.handle_message(comm_message)
+
     def test_command_add_serial(self):
 
         self.mediator.start()

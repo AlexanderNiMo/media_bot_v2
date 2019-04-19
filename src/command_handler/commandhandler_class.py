@@ -427,6 +427,71 @@ class PlexServerHandler(AbstractHandler):
         server.library.update()
 
 
+class SendMessageHandler(AbstractHandler):
+
+    @classmethod
+    def get_command_list(cls):
+        return {
+            ClientCommands.SEND_MESSAGES.value: cls.send_message,
+            ClientCommands.SEND_MESSAGES_BY_MEDIA.value: cls.send_message_by_media,
+        }
+
+    @classmethod
+    def send_message_by_media(cls, data: CommandData, db_manager: DbManager, config):
+        messages = []
+        media_id = data.command_data['media_id']
+        recips = db_manager.get_users_for_notification(media_id)
+        for recip in recips:
+            messages.append(
+                cls.construct_send_message(recip, data.command_data['message_text'], data.command_data['choices'])
+            )
+        return messages
+
+    @classmethod
+    def send_message(cls, data: CommandData, db_manager: DbManager, config):
+        messages = []
+        client_id = data.client_id
+        recips = cls.get_recipients(client_id, db_manager)
+        for recip in recips:
+            messages.append(
+                cls.construct_send_message(recip, data.command_data['message_text'], data.command_data['choices'])
+            )
+        return messages
+
+    @classmethod
+    def construct_send_message(cls, user_id, message_text, choices):
+        return send_message(
+            ComponentType.COMMAND_HANDLER,
+            {
+                'user_id': user_id,
+                'message_text': message_text,
+                'choices': choices,
+            }
+        )
+
+    @classmethod
+    def get_recipients(cls, client_id, db_manager)-> []:
+
+        if client_id is None:
+            return []
+        ids = []
+
+        if client_id == 0:
+            return db_manager.get_all_users()
+
+        if isinstance(client_id, int):
+            ids.append(client_id)
+        if isinstance(client_id, list):
+            ids = client_id
+        result = []
+        for id in ids:
+            user = db_manager.find_user(id)
+            if user is not None:
+                result.append(id)
+        return result
+
+
+
 def get_command_handlers():
     mods = inspect.getmembers(
         sys.modules[__name__],

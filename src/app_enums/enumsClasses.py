@@ -42,6 +42,7 @@ class ActionType(MyEnum):
     ADD_TORRENT_TO_TORRENT_CLIENT = 8
     ADD_TORRENT_WATCHER = 9
     RETURNED_DATA = 10
+    DOWNLOAD_TORRENT = 11
 
 
 class ClientCommands(MyEnum):
@@ -53,8 +54,12 @@ class ClientCommands(MyEnum):
     ADD_FILM = 1
     ADD_SERIAL = 2
     ADD_SERIAL_BY_THEAN = 3
+
     AUTHENTICATION = 5
-    SEND_MESSAGES_ALL_USERS = 6
+
+    SEND_MESSAGES_BY_MEDIA = 6
+    SEND_MESSAGES = 14
+
     EDIT_SETTINGS = 7
 
     ADD_DATA_FILM = 8

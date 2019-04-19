@@ -116,7 +116,7 @@ def send_message(
         client_from: app_enums.ComponentType,
         message_data: dict) -> MediatorMessage:
     """
-    Send message to command handler
+    Send message to client handler
 
     :param client_from:
     :param message_data: dict :{user_id, message_text, choices}
