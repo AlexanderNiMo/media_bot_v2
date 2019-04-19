@@ -192,6 +192,16 @@ class DbManager:
                 data = self.add_user(client_id, session)
         return data
 
+    def get_all_users(self, session: session = None) -> list:
+        """
+        Return all users id in db
+        :param session:
+        """
+        if session is None:
+            session = self.session
+        data = session.query(self.User).all()
+        return data
+
     def is_admin(self, client_id):
         return client_id == int(self.config.TELEGRAMM_BOT_USER_ADMIN)
 
@@ -311,6 +321,7 @@ class DbManager:
         else:
             user, opt = result
             return opt.value
+
 
 class MediaData:
     """

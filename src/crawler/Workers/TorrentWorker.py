@@ -5,7 +5,7 @@ from queue import Empty
 from src.mediator import send_message, command_message, crawler_message
 from src.app_enums import ComponentType, ClientCommands, LockingStatus, MediaType, ActionType
 from src.crawler.Workers.WorkerABC import Worker
-from src.crawler.Workers.TorrentTrackers import search, download, Torrent
+from src.crawler.Workers.TorrentTrackers import search, Torrent
 
 logger = logging.getLogger(__name__)
 
@@ -84,17 +84,6 @@ class TorrentSearchWorker(Worker):
         else:
             status = LockingStatus.FIND_TORRENT
 
-        if self.job.media.media_type == MediaType.FILMS:
-            message_text = 'Фильм {0} будет скачан, через несколько минут. \n {1}'.format(
-                self.job.text_query,
-                self.job.kinopoisk_url
-            )
-        else:
-            message_text = 'Новая серия {0} () будет скачана, через несколько минут. \n {1}'.format(
-                self.job.text_query,
-                self.job.kinopoisk_url
-            )
-
         messages = []
         cmd_message = command_message(
             ComponentType.CRAWLER,
@@ -108,26 +97,15 @@ class TorrentSearchWorker(Worker):
                     'theam_id': data.theam_url,
                     'torrent_tracker': data.tracker,
                     'exsists_in_plex': True,
-                    'current_series': 0 if self.job.season == '' else data.file_amount
                 },
                 'next_messages': [
                     crawler_message(
                         ComponentType.CRAWLER,
                         self.job.client_id,
                         {
-                            'torrent_id': data.data['id'],
-                            'torrent_data': data.data['data'],
                             'media_id': self.job.media_id
                         },
-                        ActionType.ADD_TORRENT_TO_TORRENT_CLIENT
-                    ),
-                    send_message(
-                        ComponentType.CRAWLER,
-                        {
-                            'user_id': self.job.client_id,
-                            'message_text': message_text,
-                            'choices': []
-                        }
+                        ActionType.DOWNLOAD_TORRENT
                     )
                 ],
             },
@@ -140,11 +118,11 @@ class TorrentSearchWorker(Worker):
 if __name__ == '__main__':
     import time
     from app import config
-    from crawler.crawler_class import Job
+    from crawler.crawler_class import Media_Task
     import logging
 
     t = TorrentSearchWorker(
-        Job(**{
+        Media_Task(**{
             'action_type': None,
             'client_id': 123109378,
             'media_id': 571884,

@@ -1,0 +1,103 @@
+import logging
+from queue import Empty
+
+from src.mediator import send_message, command_message, crawler_message
+from src.app_enums import ComponentType, ClientCommands, MediaType, ActionType
+from src.crawler.Workers.WorkerABC import Worker
+from src.crawler.Workers.TorrentTrackers import download
+
+logger = logging.getLogger(__name__)
+
+
+class DownloadWorker(Worker):
+    """
+    Реализует логику скачивания уже известных торрентов
+
+    """
+
+    def get_target(self):
+        return self.work
+
+    def work(self):
+        logger.debug('Start torrent worker.')
+        torrent_data = []
+
+        media = self.job
+        torrdata = download(self.config, media.download_url)
+
+        if not (media.type == MediaType.SERIALS and torrdata.data.file_amount == media.series):
+            torrent_data.append(
+                {
+                    'media': media,
+                    'torrent_data': torrdata,
+                }
+            )
+
+        self.returned_data.put(torrent_data)
+        logger.debug('Torrent worker ended.')
+
+    @property
+    def result(self):
+
+        try:
+            data = self.returned_data.get(block=False)
+        except Empty:
+            data = None
+
+        if data is None:
+            return []
+
+        messages = []
+
+        for media_data in data:
+            media = media_data['media']
+            torrent_data = media_data['torrent_data']
+            if media.media_type == MediaType.FILMS:
+                message_text = 'Фильм {0} будет скачан, через несколько минут. \n {1}'.format(
+                    media.text_query,
+                    media.kinopoisk_url
+                )
+            else:
+                message_text = 'Новая серия {0} () будет скачана, через несколько минут. \n {1}'.format(
+                    media.text_query,
+                    media.kinopoisk_url
+                )
+            messages.extend([
+                command_message(
+                    ComponentType.CRAWLER,
+                    ClientCommands.UPDATE_MEDIA,
+                    {
+                        'media_id': media.media_id,
+                        'media_type': MediaType.FILMS if media.season == '' else MediaType.SERIALS,
+                        'upd_data': {
+                            'exsists_in_plex': True,
+                            'current_series': 0 if media.season == '' else data.file_amount
+                        }
+                    },
+                    self.job.client_id
+                ),
+                crawler_message(
+                    ComponentType.CRAWLER,
+                    media.client_id,
+                    {
+                        'torrent_id': torrent_data.data['id'],
+                        'torrent_data': torrent_data.data['data'],
+                        'media_id': media.media_id
+                    },
+                    ActionType.ADD_TORRENT_TO_TORRENT_CLIENT
+                ),
+                command_message(
+                    ComponentType.CRAWLER,
+                    ClientCommands.SEND_MESSAGES_BY_MEDIA,
+                    {
+                        'media_id': media.media_id,
+                        'message_text': message_text,
+                        'choices': []
+                    },
+                    self.job.client_id
+                )
+            ])
+
+        return messages
+
+

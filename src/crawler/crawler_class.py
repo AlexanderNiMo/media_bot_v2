@@ -2,7 +2,7 @@ import logging
 import time
 
 from src.app_enums import ComponentType, ActionType
-from .Workers import TorrentSearchWorker, DelugeWorker
+from .Workers import TorrentSearchWorker, DelugeWorker, DownloadWorker
 from src.database import DbManager, MediaData
 from src.mediator import AppMediatorClient, MediatorActionMessage, CrawlerData
 from multiprocessing import Queue
@@ -10,7 +10,7 @@ from multiprocessing import Queue
 logger = logging.getLogger(__name__)
 
 
-class Job:
+class Media_Task:
     """
     Описывает класс даных со всеми необходимыми
     данными для передачи в процессы воркеров
@@ -25,7 +25,7 @@ class Job:
 
     def __getattr__(self, item):
         if item in self.__dict__:
-            return super(Job, self).__getattribute__(item)
+            return super(Media_Task, self).__getattribute__(item)
         else:
             return getattr(self.media, item)
 
@@ -134,7 +134,7 @@ class Crawler(AppMediatorClient):
         worker.start()
         self.active_workers.append(worker)
 
-    def get_worker(self, job: Job):
+    def get_worker(self, job: Media_Task):
         if job.action_type.value in [
             ActionType.FORCE_CHECK.value,
             ActionType.CHECK_FILMS.value,
@@ -147,6 +147,10 @@ class Crawler(AppMediatorClient):
             ActionType.ADD_TORRENT_TO_TORRENT_CLIENT.value
         ]:
             return DelugeWorker(job, self.config)
+        elif job.action_type.value in [
+            ActionType.DOWNLOAD_TORRENT.value,
+        ]:
+            return DownloadWorker(job, self.config)
 
 
 class CrawlerMessageHandler:
@@ -180,7 +184,7 @@ class CrawlerMessageHandler:
             element.torrent_id = element.torrent_id if data.torrent_id is None else data.torrent_id
 
             result.append(
-                Job(
+                Media_Task(
                     **{
                         'action_type': message.action,
                         'client_id': data.client_id,
