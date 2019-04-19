@@ -11,8 +11,8 @@ class TestEnvCreator:
     def __init__(self):
         self.conf = self.get_test_conf()
         self.admin_id = self.conf.TELEGRAMM_BOT_USER_ADMIN
-        self.mediator_q = multiprocessing.Queue()
 
+        self.mediator_q = None
         self._mediator = None
         self._db = None
         self._parser = None
@@ -28,6 +28,7 @@ class TestEnvCreator:
 
     @property
     def parser(self):
+        m = self.mediator
         if self._parser is None:
             self._parser = self.get_client(src.app_enums.ComponentType.PARSER)
             self.mediator.add_client(self._parser)
@@ -35,6 +36,7 @@ class TestEnvCreator:
 
     @property
     def crawler(self):
+        m = self.mediator
         if self._crawler is None:
             self._crawler = self.get_client(src.app_enums.ComponentType.CRAWLER)
             self.mediator.add_client(self._crawler)
@@ -42,6 +44,7 @@ class TestEnvCreator:
 
     @property
     def command_handler(self):
+        m = self.mediator
         if self._command_handler is None:
             self._command_handler = self.get_client(src.app_enums.ComponentType.COMMAND_HANDLER)
             self.mediator.add_client(self._command_handler)
@@ -49,6 +52,7 @@ class TestEnvCreator:
 
     @property
     def client(self):
+        m = self.mediator
         if self._client is None:
             self._client = self.get_client(src.app_enums.ComponentType.CLIENT)
             self.mediator.add_client(self._client)
@@ -57,6 +61,7 @@ class TestEnvCreator:
     @property
     def mediator(self):
         if self._mediator is None:
+            self.mediator_q = multiprocessing.Queue()
             self._mediator = src.mediator.AppMediator(self.mediator_q, [])
         return self._mediator
 

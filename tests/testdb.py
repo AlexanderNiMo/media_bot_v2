@@ -250,11 +250,11 @@ class TestDB(TestCase):
                         'Не верное колличество настроек у пользователя')
         self.assertTrue(user.options[0].option.value == src.app_enums.UserOptions.NOTIFICATION.value,
                         'Не верно установлен тип опции.')
-        self.assertTrue(user.options[0].value == 0,
+        self.assertTrue(user.options[0].value == 1,
                         'Не верно установлено значение опции.')
 
         self.db.change_user_option(self.client_id, src.app_enums.UserOptions.NOTIFICATION, session=session)
-        self.assertTrue(user.options[0].value == 1,
+        self.assertTrue(user.options[0].value == 0,
                         'Не верно установлено значение опции после изменения.')
 
     def test_add_media_to_user(self):
