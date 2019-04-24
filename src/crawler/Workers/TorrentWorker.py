@@ -76,7 +76,7 @@ class TorrentSearchWorker(Worker):
                 )]
             else:
                 return []
-
+        logger.debug('Получен не пустой результат работы Worker {}'.format(self.__class__.__name__))
         if self.job.season == '':
             status = LockingStatus.ENDED
         elif not self.job.max_series == 0 and data.file_amount == self.job.max_series:

@@ -71,6 +71,8 @@ class ClientCommands(MyEnum):
 
     UPDATE_PLEX_LIB = 13
 
+    ADD_JOB = 14
+
 
 class MediaType(MyEnum):
     """

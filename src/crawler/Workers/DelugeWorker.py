@@ -94,6 +94,8 @@ class DelugeWorker(Worker):
         if data is None:
             return []
 
+        logger.debug('Получен не пустой результат работы Worker {}'.format(self.__class__.__name__))
+
         if 'torrent_id' in data.keys():
             messages.append(self.start_torrent_watcher_message(data))
         if 'torrent_information' in data.keys():

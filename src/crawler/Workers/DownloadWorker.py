@@ -44,6 +44,8 @@ class DownloadWorker(Worker):
 
         messages = []
 
+        logger.debug('Получен не пустой результат работы Worker {}'.format(self.__class__.__name__))
+
         for torrent_data in data:
             media = self.job
             if media.media_type == MediaType.FILMS:

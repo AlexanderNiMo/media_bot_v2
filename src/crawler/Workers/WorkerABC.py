@@ -54,6 +54,9 @@ class AbstractCrawlerWorker(metaclass=ABCMeta):
         """
         pass
 
+    def __str__(self):
+        return 'Worker <{0} {1}>'.format(self.__class__.__name__, self.job)
+
 
 class Worker(AbstractCrawlerWorker):
     def start(self):

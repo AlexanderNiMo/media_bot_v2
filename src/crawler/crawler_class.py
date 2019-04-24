@@ -1,6 +1,8 @@
 import logging
 import time
 
+from cryptography.hazmat.primitives.serialization import load_der_public_key
+
 from src.app_enums import ComponentType, ActionType
 from .Workers import TorrentSearchWorker, DelugeWorker, DownloadWorker
 from src.database import DbManager, MediaData
@@ -36,6 +38,9 @@ class Media_Task:
             self.year,
             'сезон {}'.format(self.season) if not self.season == '' else ''
         )
+
+    def __str__(self):
+        return 'Media_task <{0} {1}>'.format(self.client_id, self.media_id)
 
 
 class Crawler(AppMediatorClient):
@@ -131,6 +136,7 @@ class Crawler(AppMediatorClient):
 
     def add_thread(self, job):
         worker = self.get_worker(job)
+        logger.debug('Запуск worker {}'.format(worker))
         worker.start()
         self.active_workers.append(worker)
 
