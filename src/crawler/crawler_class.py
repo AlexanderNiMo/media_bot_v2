@@ -12,7 +12,7 @@ from multiprocessing import Queue
 logger = logging.getLogger(__name__)
 
 
-class Media_Task:
+class MediaTask:
     """
     Описывает класс даных со всеми необходимыми
     данными для передачи в процессы воркеров
@@ -27,7 +27,7 @@ class Media_Task:
 
     def __getattr__(self, item):
         if item in self.__dict__:
-            return super(Media_Task, self).__getattribute__(item)
+            return super(MediaTask, self).__getattribute__(item)
         else:
             return getattr(self.media, item)
 
@@ -40,7 +40,7 @@ class Media_Task:
         )
 
     def __str__(self):
-        return 'Media_task <{0} {1}>'.format(self.client_id, self.media_id)
+        return 'Media_task <client_id:{0} media_id:{1}>'.format(self.client_id, self.media_id)
 
 
 class Crawler(AppMediatorClient):
@@ -140,7 +140,7 @@ class Crawler(AppMediatorClient):
         worker.start()
         self.active_workers.append(worker)
 
-    def get_worker(self, job: Media_Task):
+    def get_worker(self, job: MediaTask):
         if job.action_type.value in [
             ActionType.FORCE_CHECK.value,
             ActionType.CHECK_FILMS.value,
@@ -190,7 +190,7 @@ class CrawlerMessageHandler:
             element.torrent_id = element.torrent_id if data.torrent_id is None else data.torrent_id
 
             result.append(
-                Media_Task(
+                MediaTask(
                     **{
                         'action_type': message.action,
                         'client_id': data.client_id,

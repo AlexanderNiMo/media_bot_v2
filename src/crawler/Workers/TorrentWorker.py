@@ -28,8 +28,7 @@ class TorrentSearchWorker(Worker):
 
     def get_best_match(self, data: List[Torrent]):
 
-        f_list = []
-        f_list.append(lambda x: not x.kinopoisk_id == '')
+        f_list = [lambda x: not x.kinopoisk_id == '']
         f_data = filter(lambda x: not x.kinopoisk_id == '', data)
 
         if len(list(f_data)) > 5 or len(list(f_data)) >= len(data) / 2:
@@ -59,6 +58,7 @@ class TorrentSearchWorker(Worker):
             data = None
         if data is None:
             if self.ended:
+                logger.debug('Поиск по задаче {0} не дал результата'.format(self.job))
                 if not self.job.action_type.value == ActionType.FORCE_CHECK.value:
                     return []
                 message_text = '{0} по запросу {1} не найден, ' \
@@ -118,11 +118,11 @@ class TorrentSearchWorker(Worker):
 if __name__ == '__main__':
     import time
     from app import config
-    from crawler.crawler_class import Media_Task
+    from crawler.crawler_class import MediaTask
     import logging
 
     t = TorrentSearchWorker(
-        Media_Task(**{
+        MediaTask(**{
             'action_type': None,
             'client_id': 123109378,
             'media_id': 571884,

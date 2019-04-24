@@ -5,7 +5,7 @@ from tests.utils import TestEnvCreator
 
 from src.mediator import CrawlerData, crawler_message
 from src.app_enums import ActionType, ComponentType, MediaType, ClientCommands
-from src.crawler.crawler_class import Media_Task
+from src.crawler.crawler_class import MediaTask
 import src
 
 
@@ -132,7 +132,7 @@ class TestCrawler(TestCase):
             year=1997,
             url='https://www.kinopoisk.ru/film/12198/',
         )
-        job_CHECK = Media_Task(
+        job_CHECK = MediaTask(
             src.app_enums.ActionType.CHECK,
             self.client_id,
             film,
