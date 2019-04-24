@@ -2,7 +2,7 @@ import logging
 from queue import Empty
 
 from src.mediator import send_message, command_message, crawler_message
-from src.app_enums import ComponentType, ClientCommands, MediaType, ActionType
+from src.app_enums import ComponentType, ClientCommands, MediaType, ActionType, LockingStatus
 from src.crawler.Workers.WorkerABC import Worker
 from src.crawler.Workers.TorrentTrackers import download
 
@@ -58,6 +58,13 @@ class DownloadWorker(Worker):
                     media.text_query,
                     media.kinopoisk_url
                 )
+            if self.job.season == '':
+                status = LockingStatus.ENDED
+            elif not self.job.max_series == 0 and data.file_amount == self.job.max_series:
+                status = LockingStatus.ENDED
+            else:
+                status = LockingStatus.FIND_TORRENT
+
             messages.extend([
                 command_message(
                     ComponentType.CRAWLER,
@@ -66,6 +73,7 @@ class DownloadWorker(Worker):
                         'media_id': media.media_id,
                         'media_type': MediaType.FILMS if media.season == '' else MediaType.SERIALS,
                         'upd_data': {
+                            'status': status,
                             'exsists_in_plex': True,
                             'current_series': 0 if media.season == '' else torrent_data.file_amount
                         }

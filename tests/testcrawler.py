@@ -116,8 +116,6 @@ class TestCrawler(TestCase):
 
         self.assertTrue(len(messages) > 0, 'Не получен результат поиска фильма')
 
-
-
     def test_deluge_crawler(self):
         pass
 

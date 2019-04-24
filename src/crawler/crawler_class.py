@@ -51,7 +51,8 @@ class Crawler(AppMediatorClient):
         ActionType.CHECK_SERIALS,
         ActionType.CHECK,
         ActionType.ADD_TORRENT_WATCHER,
-        ActionType.ADD_TORRENT_TO_TORRENT_CLIENT
+        ActionType.ADD_TORRENT_TO_TORRENT_CLIENT,
+        ActionType.DOWNLOAD_TORRENT
     ]
 
     def __init__(self, in_queue: Queue, out_queue: Queue, config, threads):

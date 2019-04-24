@@ -77,12 +77,6 @@ class TorrentSearchWorker(Worker):
             else:
                 return []
         logger.debug('Получен не пустой результат работы Worker {}'.format(self.__class__.__name__))
-        if self.job.season == '':
-            status = LockingStatus.ENDED
-        elif not self.job.max_series == 0 and data.file_amount == self.job.max_series:
-            status = LockingStatus.ENDED
-        else:
-            status = LockingStatus.FIND_TORRENT
 
         messages = []
         cmd_message = command_message(
@@ -92,7 +86,6 @@ class TorrentSearchWorker(Worker):
                 'media_id': self.job.media_id,
                 'media_type': MediaType.FILMS if self.job.season == '' else MediaType.SERIALS,
                 'upd_data': {
-                    'status': status,
                     'download_url': data.url,
                     'theam_id': data.theam_url,
                     'torrent_tracker': data.tracker,

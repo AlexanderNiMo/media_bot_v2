@@ -491,7 +491,6 @@ class SendMessageHandler(AbstractHandler):
         return result
 
 
-
 def get_command_handlers():
     mods = inspect.getmembers(
         sys.modules[__name__],
