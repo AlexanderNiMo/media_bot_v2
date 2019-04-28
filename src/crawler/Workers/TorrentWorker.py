@@ -133,7 +133,7 @@ def serial_success_message(data, job):
         a += 1
 
     choices = {
-        'action': 'download_callback',
+        'action': 'select_torrent',
         'data': choice_list
     }
 

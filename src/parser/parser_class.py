@@ -361,12 +361,17 @@ class KinopoiskParser(BaseParser):
             )
             a += 1
 
+        choices = {
+            'action': 'kinopoisk',
+            'data': choice_list
+        }
+
         self.messages.append(
             send_message(ComponentType.PARSER,
                          {
                              'user_id': data.client_id,
                              'message_text': message_text,
-                             'choices': choice_list
+                             'choices': choices
                          }
                          )
         )

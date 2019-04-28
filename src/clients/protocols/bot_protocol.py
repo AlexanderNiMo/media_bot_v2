@@ -156,7 +156,7 @@ class Bot:
                     reply_markup=keyboard
                 )
 
-    def handle_choice(self, chat_id, choices, action):
+    def handle_choice(self, chat_id, choices, action=''):
 
         if len(choices) == 0:
             return
@@ -164,7 +164,7 @@ class Bot:
         self.send_choice_messages(chat_id, choices)
         if action == 'kinopoisk':
             message_text = 'Выбери номер ссылки на фильм.'
-        else:
+        elif action == 'select_torrent':
             message_text = 'Выбери торрент.'
         keyboard_markup = self.construct_keyboard(choices)
 
