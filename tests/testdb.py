@@ -31,7 +31,7 @@ class TestDB(TestCase):
             year=1988,
             season=1,
             url='ru/kinop',
-            max_series=10
+            series=10
         )
 
     def add_test_user(self, client_id, session):
@@ -82,7 +82,7 @@ class TestDB(TestCase):
             year=self.test_serial['year'],
             season=self.test_serial['season'],
             url=self.test_serial['url'],
-            max_series=self.test_serial['max_series'])
+            series=self.test_serial['series'])
 
         self.assertIsInstance(serial, MediaData, 'Возвращен неверный тип значения!')
 
@@ -94,7 +94,7 @@ class TestDB(TestCase):
                          'Не корректно определено наименование в новом сериале!')
         self.assertEqual(serial.season, self.test_serial['season'],
                          'Не корректно определено сезон в новом сериале!')
-        self.assertEqual(serial.max_series, self.test_serial['max_series'],
+        self.assertEqual(serial.series, self.test_serial['series'],
                          'Не корректно определено максимальное количество серий в новом сериале!')
         self.assertEqual(serial.kinopoisk_url, self.test_serial['url'],
                          'Не корректно определен url в новом сериале!')
@@ -114,7 +114,7 @@ class TestDB(TestCase):
             year=self.test_serial['year'],
             season=self.test_serial['season'],
             url=self.test_serial['url'],
-            max_series=self.test_serial['max_series'])
+            series=self.test_serial['series'])
 
         serial = self.db.find_media(
             self.test_serial['kinopoisk_id'],
@@ -133,7 +133,7 @@ class TestDB(TestCase):
                          'Не корректно определено наименование при поиске сериала!')
         self.assertEqual(serial.season, self.test_serial['season'],
                          'Не корректно определено сезон при поиске сериала!')
-        self.assertEqual(serial.max_series, self.test_serial['max_series'],
+        self.assertEqual(serial.series, self.test_serial['series'],
                          'Не корректно определено максимальное количество серий при поиске сериала!')
         self.assertEqual(serial.kinopoisk_url, self.test_serial['url'],
                          'Не корректно определен url при поиске сериала!')

@@ -84,9 +84,9 @@ class DbManager:
             season = ''
 
         try:
-            max_series = elem.series
+            series = elem.series
         except AttributeError:
-            max_series = 0
+            series = 0
 
         data_dict = {
             'media_id': elem.kinopoisk_id,
@@ -98,7 +98,7 @@ class DbManager:
             'theam_id': elem.theam_id,
             'kinopoisk_url': elem.kinopoisk_url,
             'media_type': media_type,
-            'max_series': max_series,
+            'series': series,
             'season': season,
             'status': elem.status,
         }
@@ -145,7 +145,8 @@ class DbManager:
             session = self.session
         filter_dict = dict(kinopoisk_id=kinopoisk_id)
         data_class = self.Film
-        if media_type == MediaType.SERIALS:
+        if media_type == MediaType.SERIALS or \
+                (media_type == MediaType.BASE_MEDIA and 'season' in filter_dict):
             filter_dict['season'] = season
             data_class = self.Serial
         data = session.query(data_class).filter_by(**filter_dict).first()
@@ -248,7 +249,7 @@ class DbManager:
         res_film = self.construct_media_by_orm_object(film)
         return res_film
 
-    def add_serial(self, client_id, kinopoisk_id, label, year, season, url, max_series=0, session=None)->MediaData:
+    def add_serial(self, client_id, kinopoisk_id, label, year, season, url, series=0, session=None) ->MediaData:
         if session is None:
             session = self.session
         serial = self.Serial(
@@ -256,7 +257,7 @@ class DbManager:
             label=label,
             year=year,
             season=season,
-            series=max_series,
+            series=series,
             kinopoisk_url=url)
         user = self.find_user(client_id, session=session)
         if user is None:
@@ -332,7 +333,7 @@ class MediaData:
     def __init__(self, media_id, title, year,
                  download_url, torrent_tracker,
                  theam_id, kinopoisk_url, torrent_id,
-                 media_type, status, season='', max_series=0):
+                 media_type, status, season='', series=0):
         self.media_id = int(media_id)
         self.title = title
         self.download_url = download_url
@@ -341,7 +342,7 @@ class MediaData:
         self.season = season
         self.year = year
         self.kinopoisk_url = kinopoisk_url
-        self.max_series = max_series
+        self.series = series
         self.torrent_id = torrent_id
         self.media_type = media_type
         self.status = status

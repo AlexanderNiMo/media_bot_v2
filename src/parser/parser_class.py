@@ -341,7 +341,7 @@ class KinopoiskParser(BaseParser):
         return 'query' in data.keys()
 
     def end_chain(self, data: ParserData) -> list:
-
+        action_name = 'kinopoisk'
         if len(self.next_data['choices']) == 0:
             message_text = 'В кинопоиске, по запросу {0}, ' \
                            'ничего не найдено, уточни свой запрос.'.format(data.data['query'])
@@ -356,13 +356,13 @@ class KinopoiskParser(BaseParser):
                 {
                     'message_text': elem['url'],
                     'button_text': str(a),
-                    'call_back_data': elem
+                    'call_back_data': elem.update({'action': action_name})
                 }
             )
             a += 1
 
         choices = {
-            'action': 'kinopoisk',
+            'action': action_name,
             'data': choice_list
         }
 

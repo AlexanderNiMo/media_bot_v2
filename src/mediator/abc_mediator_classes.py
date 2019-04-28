@@ -37,6 +37,10 @@ class MessageData(metaclass=ABCMeta):
 
     """
 
+    def __getitem__(self, item):
+        if item in self.__dict__:
+            return super(self.__class__, self).__getattribute__(item)
+
 
 class MediatorClient(Process, metaclass=ABCMeta):
     """

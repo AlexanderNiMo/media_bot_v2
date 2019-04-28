@@ -48,7 +48,7 @@ class TorrentSearchWorker(Worker):
         res = list(s_data)
         if len(res) == 0:
             return None
-        return res
+        return res[0:3]
 
     @property
     def result(self):
@@ -120,6 +120,8 @@ def film_success_message(data, job):
 
 def serial_success_message(data, job):
 
+    action_name = 'select_torrent'
+
     choice_list = []
     a = 0
     for elem in data:
@@ -127,26 +129,30 @@ def serial_success_message(data, job):
             {
                 'message_text': '{0}'.format(elem.theam_url),
                 'button_text': str(a),
-                'call_back_data': job.media_id
+                'call_back_data': {
+                    'media_id': job.media_id,
+                    'action': action_name,
+                    'download_url': elem.url,
+                    'theam_id': elem.theam_url,
+                    'torrent_tracker': elem.tracker,
+                }
             }
         )
         a += 1
 
     choices = {
-        'action': 'select_torrent',
+        'action': action_name,
         'data': choice_list
     }
 
-    return [
-        send_message(
-            ComponentType.PARSER,
-            {
-             'user_id': data.client_id,
-             'message_text': 'Выбери торрент для скачивания.',
-             'choices': choices
-            }
-        )
-    ]
+    return send_message(
+        ComponentType.PARSER,
+        {
+         'user_id': job.client_id,
+         'message_text': 'Выбери торрент для скачивания.',
+         'choices': choices
+        }
+    )
 
 
 if __name__ == '__main__':

@@ -7,7 +7,7 @@ import json
 import re
 
 from src.mediator import AppMediatorClient, MediatorActionMessage, parser_message
-from src.app_enums import ActionType, ComponentType, ClientCommands, UserOptions
+from src.app_enums import ActionType, ComponentType, ClientCommands, UserOptions, MediaType
 from src.mediator import command_message, crawler_message
 
 from multiprocessing import Process, Queue
@@ -405,8 +405,35 @@ class Bot:
                                       update.callback_query.from_user.id,
                                       cache_data,
                                       ActionType.ADD_TORRENT_WATCHER)
-        elif 'kinopoisk_id' in cache_data.keys():
-            message = parser_message(ComponentType.CLIENT, cache_data, update.callback_query.from_user.id)
+        elif 'action' in cache_data.keys():
+            if cache_data['action'] == '':
+                message = parser_message(ComponentType.CLIENT, cache_data, update.callback_query.from_user.id)
+            elif cache_data['action'] == '':
+                client_id = update.callback_query.from_user.id
+                message = command_message(
+                    ComponentType.CRAWLER,
+                    ClientCommands.UPDATE_MEDIA,
+                    {
+                        'media_id': cache_data['media_id'],
+                        'media_type': MediaType.SERIALS,
+                        'upd_data': {
+                            'download_url': cache_data['download_url'],
+                            'theam_id': cache_data['theam_id'],
+                            'torrent_tracker': cache_data['torrent_tracker'],
+                        },
+                        'next_messages': [
+                            crawler_message(
+                                ComponentType.CRAWLER,
+                                client_id,
+                                {
+                                    'media_id': cache_data['media_id']
+                                },
+                                ActionType.DOWNLOAD_TORRENT
+                            )
+                        ],
+                    },
+                    client_id
+                )
         else:
             return
         self.protocol.send_message(message)

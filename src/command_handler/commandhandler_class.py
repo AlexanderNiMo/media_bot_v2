@@ -341,16 +341,9 @@ class AddDataHandler(AbstractHandler):
     @classmethod
     def add_serial(cls, data: CommandData, db_manager: DbManager, config):
         session = db_manager.get_session()
-        serial = db_manager.add_serial(
-            data.client_id,
-            data.command_data['kinopoisk_id'],
-            data.command_data['title'],
-            data.command_data['year'],
-            data.command_data['season'],
-            data.command_data['url'],
-            data.command_data['series'],
-            session=session,
-        )
+        serial = db_manager.add_serial(data.client_id, data.command_data['kinopoisk_id'], data.command_data['title'],
+                                       data.command_data['year'], data.command_data['season'], data.command_data['url'],
+                                       data.command_data['series'], session=session)
 
         message_text = 'Сериал {0} сезон {1} добавлен к поиску \n {2}'.format(
             data.command_data['title'],

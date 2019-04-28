@@ -256,17 +256,22 @@ class Rutracker(TorrentTracker):
             return []
         search_url = '{}/tracker.php'.format(self.site_domain)
 
+        forums = self.film_forums
+        if re.search(r'сезон', text) is not None:
+            forums = self.serial_forums
+
         params = {
             'nm': text,
-            'f': self.film_forums
+            'f': forums
         }
 
         req = self.connection.get(
             search_url,
             params=params
         )
-        soup = BeautifulSoup(req.text, features='lxml')
-        tr_linse = soup.find_all('tr', {'class', 'tCenter hl-tr'})
+        soup = BeautifulSoup(req.content.decode(req.encoding), features='lxml')
+        reg = re.compile('tCenter hl-tr')
+        tr_linse = soup.find_all('tr', {'class': reg})
         torrents = []
         for tr_line in tr_linse:
             if not tr_line.parent.parent['class'] == ['forumline', 'tablesorter']:
@@ -399,7 +404,8 @@ class Rutor(TorrentTracker):
         return True
 
     def search(self, text):
-        search_url = '{0}/search/0/0/100/0/{1}'.format(self.site_domain, text)
+
+        search_url = '{0}/search/0/0/100/0/{1}'.format(self.site_domain, self.prepare_query(text))
 
         req = self.connection.get(
             search_url
@@ -481,6 +487,14 @@ class Rutor(TorrentTracker):
                 break
 
         return result
+
+    def prepare_query(self, text: str):
+        data = re.search(r'(СЕЗОН)\s+(\d{1,2})', text, re.IGNORECASE)
+
+        if data is None:
+            return text
+        season = data.group(2) if len(data.group(2)) == 2 else f'0{data.group(2)}'
+        return text.replace(data.group(), f'S{season}')
 
     @property
     def site_type(self):

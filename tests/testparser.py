@@ -58,15 +58,8 @@ class TestParser(unittest.TestCase):
         client_id = self.conf.TELEGRAMM_BOT_USER_ADMIN
         session = self.db.get_session()
         user = self.db.add_user(client_id, session=session)
-        serial = self.db.add_serial(
-            client_id,
-            685246,
-            'Рик и Морти',
-            2013,
-            1,
-            'http://www.kinopoisk.ru/film/685246/',
-            session=session
-        )
+        serial = self.db.add_serial(client_id, 685246, 'Рик и Морти', 2013, 1, 'http://www.kinopoisk.ru/film/685246/',
+                                    session=session)
         film = self.db.add_film(
             client_id,
             689,
