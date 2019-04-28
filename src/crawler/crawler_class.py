@@ -123,6 +123,7 @@ class Crawler(AppMediatorClient):
                 self.send_message(elem)
         except Exception as ex:
             ex = ex
+            logger.error('При отправке сообщения {0} произошла ошибка {1}'.format(elem, ex))
         finally:
             self.messages = []
             if ex is not None:
@@ -190,10 +191,15 @@ class CrawlerMessageHandler:
 
             element.torrent_id = element.torrent_id if data.torrent_id is None else data.torrent_id
 
+            if element.download_url is None:
+                action = message.action
+            else:
+                action = ActionType.DOWNLOAD_TORRENT
+
             result.append(
                 MediaTask(
                     **{
-                        'action_type': message.action,
+                        'action_type': action,
                         'client_id': data.client_id,
                         'media': element,
                         'crawler_data': data,
@@ -205,19 +211,4 @@ class CrawlerMessageHandler:
 
 
 if __name__ == '__main__':
-    from multiprocessing import Queue
-    from app import config as conf
-
-    logger = logging.getLogger()
-    consol_hndl = logging.StreamHandler()
-    logger.addHandler(consol_hndl)
-    logger.setLevel(logging.DEBUG)
-
-    c = Crawler(Queue(), Queue(), conf, 10)
-
-    msg = MediatorActionMessage(ComponentType.CRAWLER, ActionType.CHECK, ComponentType.CRAWLER)
-    msg.data = CrawlerData(123109378, 577266)
-
-    c.add_jobs(msg)
-    c.update_jobs()
-    c.start()
+    pass

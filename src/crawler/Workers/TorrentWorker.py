@@ -48,7 +48,7 @@ class TorrentSearchWorker(Worker):
         res = list(s_data)
         if len(res) == 0:
             return None
-        return res[0]
+        return res
 
     @property
     def result(self):
@@ -76,15 +76,27 @@ class TorrentSearchWorker(Worker):
                 )]
             else:
                 return []
-        logger.debug('Получен не пустой результат работы Worker {}'.format(self.__class__.__name__))
 
         messages = []
-        cmd_message = command_message(
+        cmd_message = success_message(data, self.job)
+        messages.append(cmd_message)
+        return messages
+
+
+def success_message(data, job):
+    if job.media_type == MediaType.FILMS or len(data) == 1:
+        return film_success_message(data.pop(), job)
+    else:
+        return serial_success_message(data, job)
+
+
+def film_success_message(data, job):
+    return command_message(
             ComponentType.CRAWLER,
             ClientCommands.UPDATE_MEDIA,
             {
-                'media_id': self.job.media_id,
-                'media_type': MediaType.FILMS if self.job.season == '' else MediaType.SERIALS,
+                'media_id': job.media_id,
+                'media_type': MediaType.FILMS if job.season == '' else MediaType.SERIALS,
                 'upd_data': {
                     'download_url': data.url,
                     'theam_id': data.theam_url,
@@ -94,42 +106,48 @@ class TorrentSearchWorker(Worker):
                 'next_messages': [
                     crawler_message(
                         ComponentType.CRAWLER,
-                        self.job.client_id,
+                        job.client_id,
                         {
-                            'media_id': self.job.media_id
+                            'media_id': job.media_id
                         },
                         ActionType.DOWNLOAD_TORRENT
                     )
                 ],
             },
-            self.job.client_id
+            job.client_id
         )
-        messages.append(cmd_message)
-        return messages
+
+
+def serial_success_message(data, job):
+
+    choice_list = []
+    a = 0
+    for elem in data:
+        choice_list.append(
+            {
+                'message_text': '{0}'.format(elem.theam_url),
+                'button_text': str(a),
+                'call_back_data': job.media_id
+            }
+        )
+        a += 1
+
+    choices = {
+        'action': 'download_callback',
+        'data': choice_list
+    }
+
+    return [
+        send_message(
+            ComponentType.PARSER,
+            {
+             'user_id': data.client_id,
+             'message_text': 'Выбери торрент для скачивания.',
+             'choices': choices
+            }
+        )
+    ]
 
 
 if __name__ == '__main__':
-    import time
-    from app import config
-    from crawler.crawler_class import MediaTask
-    import logging
-
-    t = TorrentSearchWorker(
-        MediaTask(**{
-            'action_type': None,
-            'client_id': 123109378,
-            'media_id': 571884,
-            'title': 'Гарри Поттер и философский камень',
-            'season': '',
-            'year': 2001,
-            'download_url': '',
-            'torrent_tracker': '',
-            'theam_id': '',
-            'kinopoisk_url': 'https://www.kinopoisk.ru/film/571884/',
-            'max_series': 0
-        }), config)
-
-    t.start()
-    while not t.ended:
-        time.sleep(5)
-    print(t.result)
+    pass

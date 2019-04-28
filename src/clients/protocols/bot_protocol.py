@@ -141,8 +141,8 @@ class Bot:
             self.handle_choice(chat_id, choices)
             self.bot.send_message(chat_id=chat_id, text=text)
         if isinstance(choices, dict):
-            if choices['action'] == 'kinopoisk':
-                self.handle_choice(chat_id, choices['data'])
+            if choices['action'] in ['kinopoisk', 'select_torrent']:
+                self.handle_choice(chat_id, choices['data'], choices['action'])
                 self.bot.send_message(chat_id=chat_id, text=text)
             elif choices['action'] == 'download_callback':
                 row_buttons = [telegram.InlineKeyboardButton(
@@ -156,14 +156,16 @@ class Bot:
                     reply_markup=keyboard
                 )
 
-    def handle_choice(self, chat_id, choices):
+    def handle_choice(self, chat_id, choices, action):
 
         if len(choices) == 0:
             return
 
         self.send_choice_messages(chat_id, choices)
-
-        message_text = 'Выбери номер ссылки на фильм.'
+        if action == 'kinopoisk':
+            message_text = 'Выбери номер ссылки на фильм.'
+        else:
+            message_text = 'Выбери торрент.'
         keyboard_markup = self.construct_keyboard(choices)
 
         self.bot.send_message(
@@ -173,10 +175,10 @@ class Bot:
         )
 
     def send_choice_messages(self, chat_id, choices):
-        for i, choise in enumerate(choices):
+        for i, choiсe in enumerate(choices):
             self.bot.send_message(
                     chat_id=chat_id,
-                    text='{1} {0}'.format(choise['message_text'], i)
+                    text='{1} {0}'.format(choiсe['message_text'], i)
                 )
 
     def construct_keyboard(self, choices)-> telegram.InlineKeyboardMarkup:
