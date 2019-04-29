@@ -115,7 +115,6 @@ class FilmHandler(AbstractHandler):
         :return:
         """
         text = data.command_data['text']
-        # TODO add command logic
         logger.debug('Поступил новый запрос на поиск фильма, от {0} c данными:{1}'.format(
             data.client_id,
             text)
