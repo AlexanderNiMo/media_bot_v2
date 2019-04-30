@@ -5,6 +5,7 @@ from src.mediator import send_message, command_message, crawler_message
 from src.app_enums import ComponentType, ClientCommands, MediaType, ActionType, LockingStatus
 from src.crawler.Workers.WorkerABC import Worker
 from src.crawler.Workers.TorrentTrackers import download
+from .utils import construct_upd_data, add_media_keys
 
 logger = logging.getLogger(__name__)
 
@@ -42,28 +43,15 @@ class DownloadWorker(Worker):
         if data is None:
             return []
 
-        messages = []
-
         logger.debug('Получен не пустой результат работы Worker {}'.format(self.__class__.__name__))
 
+        messages = self.construct_messages(data)
+
+        return messages
+
+    def construct_messages(self, data):
         for torrent_data in data:
             media = self.job
-            command_data = {
-                'media_id': media.media_id,
-                'media_type': self.job.media_type,
-            }
-            add_torrent_data = {
-                'torrent_id': torrent_data['id'],
-                'torrent_data': torrent_data['data'],
-                'media_id': media.media_id,
-                'media_type': self.job.media_type,
-            }
-
-            send_data = {
-                'media_id': media.media_id,
-                'media_type': self.job.media_type,
-                'choices': []
-            }
 
             if media.media_type.value == MediaType.FILMS.value:
                 message_text = 'Фильм "{0}" будет скачан, через несколько минут. \n {1}'.format(
@@ -76,10 +64,6 @@ class DownloadWorker(Worker):
                     media.text_query,
                     media.kinopoisk_url
                 )
-                season = {'season': media.season}
-                command_data.update(season)
-                add_torrent_data.update(season)
-                send_data.update(season)
 
                 if self.job.current_series == torrent_data['file_amount']:
                     return []
@@ -88,19 +72,27 @@ class DownloadWorker(Worker):
                     status = LockingStatus.ENDED
                 else:
                     status = LockingStatus.FIND_TORRENT
-            command_data.update(
-                {'upd_data':
-                    {
-                        'status': status,
-                        'exsists_in_plex': True,
-                        'current_series': 0 if media.season == '' else torrent_data['file_amount']
-                    }
-                }
-            )
 
-            send_data.update({'message_text': message_text})
+            upd_data = {
+                'status': status,
+                'exsists_in_plex': True,
+                'current_series': 0 if media.season == '' else torrent_data['file_amount']
+            }
+            command_data = construct_upd_data(media, upd_data)
 
-            messages.extend([
+            send_data = {
+                'choices': [],
+                'message_text': message_text
+            }
+            add_media_keys(media, send_data)
+
+            add_torrent_data = {
+                'torrent_id': torrent_data['id'],
+                'torrent_data': torrent_data['data'],
+            }
+            add_media_keys(media, add_torrent_data)
+
+            return [
                 command_message(
                     ComponentType.CRAWLER,
                     ClientCommands.UPDATE_MEDIA,
@@ -119,8 +111,5 @@ class DownloadWorker(Worker):
                     send_data,
                     self.job.client_id
                 )
-            ])
-
-        return messages
-
+            ]
 

@@ -10,6 +10,8 @@ from src.app_enums import ComponentType, ClientCommands, MediaType, ActionType
 from src.mediator import command_message, crawler_message, send_message, MediatorMessage
 from src.crawler.Workers.WorkerABC import Worker
 
+from .utils import add_media_keys, construct_upd_data
+
 logger = logging.getLogger(__name__)
 
 
@@ -127,12 +129,14 @@ class DelugeWorker(Worker):
             if 'key_board' in self.job.crawler_data.data.keys() and not self.job.crawler_data.data['key_board']:
                 choices = []
             else:
+                data = {}
+                add_media_keys(self.job, data)
+                data.update({
+                        'force': True,
+                })
                 choices = {
                     'action': 'download_callback',
-                    'data': {
-                        'force': True,
-                        'media_id': self.job.media_id
-                    }
+                    'data': data
                 }
         messages.append(
             send_message(
@@ -147,26 +151,24 @@ class DelugeWorker(Worker):
         return messages
 
     def start_torrent_watcher_message(self, data)->MediatorMessage:
+        upd_data ={'torrent_id': data['torrent_id']}
+        command_data = construct_upd_data(self.job, upd_data)
+        command_data.update({
+            'next_messages': [
+                crawler_message(
+                    ComponentType.COMMAND_HANDLER,
+                    self.job.client_id,
+                    {'media_id': self.job.media_id},
+                    ActionType.ADD_TORRENT_WATCHER
+                )
+                ]
+        })
         return command_message(
                 ComponentType.CRAWLER,
                 ClientCommands.UPDATE_MEDIA,
-                {
-                    'media_id': self.job.media_id,
-                    'media_type': MediaType.FILMS if self.job.season == '' else MediaType.SERIALS,
-                    'next_messages': [
-                        crawler_message(
-                            ComponentType.COMMAND_HANDLER,
-                            self.job.client_id,
-                            {'media_id': self.job.media_id},
-                            ActionType.ADD_TORRENT_WATCHER
-                        )
-                    ],
-                    'upd_data': {
-                        'torrent_id': data['torrent_id'],
-                    },
-                },
+                command_data,
                 self.job.client_id
-            )
+        )
 
 
 def convert_size(size_bytes):

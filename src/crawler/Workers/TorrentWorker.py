@@ -6,6 +6,7 @@ from src.mediator import send_message, command_message, crawler_message
 from src.app_enums import ComponentType, ClientCommands, LockingStatus, MediaType, ActionType
 from src.crawler.Workers.WorkerABC import Worker
 from src.crawler.Workers.TorrentTrackers import search, Torrent
+from .utils import add_media_keys, construct_upd_data
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +73,6 @@ class TorrentSearchWorker(Worker):
                         'message_text': message_text,
                         'choices': []
                     }
-
                 )]
             else:
                 return []
@@ -91,31 +91,32 @@ def success_message(data, job):
 
 
 def film_success_message(data, job):
-    dwld_data = {
-        'media_id': job.media_id
+
+    dwld_data = {}
+    add_media_keys(job, dwld_data)
+
+    upd_data = {
+        'download_url': data.url,
+        'theam_id': data.theam_url,
+        'torrent_tracker': data.tracker,
     }
-    if job.media_type.value == MediaType.SERIALS.value:
-            dwld_data.update({'season': job.season})
+    command_data = construct_upd_data(job, upd_data)
+
+    command_data.update({
+       'next_messages': [
+        crawler_message(
+            ComponentType.CRAWLER,
+            job.client_id,
+            dwld_data,
+            ActionType.DOWNLOAD_TORRENT
+        )
+       ],
+    })
+
     return command_message(
             ComponentType.CRAWLER,
             ClientCommands.UPDATE_MEDIA,
-            {
-                'media_id': job.media_id,
-                'media_type': job.media_type,
-                'upd_data': {
-                    'download_url': data.url,
-                    'theam_id': data.theam_url,
-                    'torrent_tracker': data.tracker,
-                },
-                'next_messages': [
-                    crawler_message(
-                        ComponentType.CRAWLER,
-                        job.client_id,
-                        dwld_data,
-                        ActionType.DOWNLOAD_TORRENT
-                    )
-                ],
-            },
+            command_data,
             job.client_id
         )
 
@@ -127,16 +128,14 @@ def serial_success_message(data, job):
     choice_list = []
     a = 0
     for elem in data:
-        call_back_data = {
-            'media_id': job.media_id,
-            'media_type': job.media_type,
+        call_back_data = {}
+        add_media_keys(job, call_back_data)
+        call_back_data.update({
             'action': action_name,
             'download_url': elem.url,
             'theam_id': elem.theam_url,
             'torrent_tracker': elem.tracker,
-        }
-        if job.media_type.value == MediaType.SERIALS.value:
-            call_back_data.update({'season': job.season})
+        })
 
         choice_list.append(
             {
