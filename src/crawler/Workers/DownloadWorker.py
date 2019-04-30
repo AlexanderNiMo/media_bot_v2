@@ -61,6 +61,7 @@ class DownloadWorker(Worker):
 
             send_data = {
                 'media_id': media.media_id,
+                'media_type': self.job.media_type,
                 'choices': []
             }
 
