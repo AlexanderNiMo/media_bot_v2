@@ -55,7 +55,8 @@ class DownloadWorker(Worker):
             add_torrent_data = {
                 'torrent_id': torrent_data['id'],
                 'torrent_data': torrent_data['data'],
-                'media_id': media.media_id
+                'media_id': media.media_id,
+                'media_type': self.job.media_type,
             }
 
             send_data = {
