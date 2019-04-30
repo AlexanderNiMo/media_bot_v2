@@ -244,7 +244,7 @@ class AddDataHandler(AbstractHandler):
             ClientCommands.ADD_DATA_SERIAL.value: cls.add_serial,
             ClientCommands.ADD_DATA_USER.value: cls.add_user,
             ClientCommands.UPDATE_MEDIA.value: cls.update_media_data,
-            ClientCommands.ADD_MEDIA_TO_USER_LIST: cls.add_media_to_user_list,
+            ClientCommands.ADD_MEDIA_TO_USER_LIST.value: cls.add_media_to_user_list,
         }
 
     @classmethod
@@ -433,7 +433,10 @@ class SendMessageHandler(AbstractHandler):
         messages = []
 
         media_id = data.command_data['media_id']
-        recips = db_manager.get_users_for_notification(media_id)
+        media_type = data.command_data['media_type']
+        season = data.command_data['season'] if media_type.value == MediaType.SERIALS.value else 0
+
+        recips = db_manager.get_users_for_notification(media_id, media_type, season=season)
         ids = set([i.client_id for i in recips])
         for recip in ids:
             messages.append(
