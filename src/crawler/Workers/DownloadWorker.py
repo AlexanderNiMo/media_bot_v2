@@ -52,7 +52,7 @@ class DownloadWorker(Worker):
                 'media_id': media.media_id,
                 'media_type': self.job.media_type,
             }
-            torrent_data = {
+            add_torrent_data = {
                 'torrent_id': torrent_data['id'],
                 'torrent_data': torrent_data['data'],
                 'media_id': media.media_id
@@ -76,7 +76,7 @@ class DownloadWorker(Worker):
                 )
                 season = {'season': media.season}
                 command_data.update(season)
-                torrent_data.update(season)
+                add_torrent_data.update(season)
                 send_data.update(season)
 
                 if self.job.series != 0 and torrent_data['file_amount'] == self.job.series:
@@ -105,7 +105,7 @@ class DownloadWorker(Worker):
                 crawler_message(
                     ComponentType.CRAWLER,
                     media.client_id,
-                    torrent_data,
+                    add_torrent_data,
                     ActionType.ADD_TORRENT_TO_TORRENT_CLIENT
                 ),
                 command_message(
