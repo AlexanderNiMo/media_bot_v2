@@ -81,6 +81,9 @@ class DownloadWorker(Worker):
                 add_torrent_data.update(season)
                 send_data.update(season)
 
+                if self.job.current_series == torrent_data['file_amount']:
+                    return []
+
                 if self.job.series != 0 and torrent_data['file_amount'] == self.job.series:
                     status = LockingStatus.ENDED
                 else:
