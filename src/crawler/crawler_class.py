@@ -191,7 +191,10 @@ class CrawlerMessageHandler:
 
             element.torrent_id = element.torrent_id if data.torrent_id is None else data.torrent_id
 
-            if element.download_url is None:
+            if element.download_url is None \
+                    or message.action.value in (
+                    ActionType.ADD_TORRENT_WATCHER.value,
+                    ActionType.ADD_TORRENT_TO_TORRENT_CLIENT.value):
                 action = message.action
             else:
                 action = ActionType.DOWNLOAD_TORRENT

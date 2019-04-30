@@ -91,25 +91,27 @@ def success_message(data, job):
 
 
 def film_success_message(data, job):
+    dwld_data = {
+        'media_id': job.media_id
+    }
+    if job.media_type.value == MediaType.SERIALS.value:
+            dwld_data.update({'season': job.season})
     return command_message(
             ComponentType.CRAWLER,
             ClientCommands.UPDATE_MEDIA,
             {
                 'media_id': job.media_id,
-                'media_type': MediaType.FILMS if job.season == '' else MediaType.SERIALS,
+                'media_type': job.media_type,
                 'upd_data': {
                     'download_url': data.url,
                     'theam_id': data.theam_url,
                     'torrent_tracker': data.tracker,
-                    'exsists_in_plex': True,
                 },
                 'next_messages': [
                     crawler_message(
                         ComponentType.CRAWLER,
                         job.client_id,
-                        {
-                            'media_id': job.media_id
-                        },
+                        dwld_data,
                         ActionType.DOWNLOAD_TORRENT
                     )
                 ],
@@ -125,17 +127,22 @@ def serial_success_message(data, job):
     choice_list = []
     a = 0
     for elem in data:
+        call_back_data = {
+            'media_id': job.media_id,
+            'media_type': job.media_type,
+            'action': action_name,
+            'download_url': elem.url,
+            'theam_id': elem.theam_url,
+            'torrent_tracker': elem.tracker,
+        }
+        if job.media_type.value == MediaType.SERIALS.value:
+            call_back_data.update({'season': job.season})
+
         choice_list.append(
             {
                 'message_text': '{0}'.format(elem.theam_url),
                 'button_text': str(a),
-                'call_back_data': {
-                    'media_id': job.media_id,
-                    'action': action_name,
-                    'download_url': elem.url,
-                    'theam_id': elem.theam_url,
-                    'torrent_tracker': elem.tracker,
-                }
+                'call_back_data': call_back_data
             }
         )
         a += 1
@@ -149,7 +156,8 @@ def serial_success_message(data, job):
         ComponentType.PARSER,
         {
          'user_id': job.client_id,
-         'message_text': 'Выбери торрент для скачивания.',
+         'message_text': f'Уточни какой именно торрент стоит скачать по запросу {job.text_query} '
+                         f'(звук, качество и т.д.).',
          'choices': choices
         }
     )

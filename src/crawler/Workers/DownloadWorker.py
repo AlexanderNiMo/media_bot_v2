@@ -25,7 +25,7 @@ class DownloadWorker(Worker):
         media = self.job.media
         torrdata = download(self.config, media.download_url)
 
-        if not (media.media_type == MediaType.SERIALS and torrdata.data.file_amount == media.series):
+        if not (media.media_type.value == MediaType.SERIALS.value and torrdata['file_amount'] == media.current_series):
             torrent_data.append(torrdata)
 
         self.returned_data.put(torrent_data)
@@ -48,56 +48,70 @@ class DownloadWorker(Worker):
 
         for torrent_data in data:
             media = self.job
-            if media.media_type == MediaType.FILMS:
-                message_text = 'Фильм {0} будет скачан, через несколько минут. \n {1}'.format(
+            command_data = {
+                'media_id': media.media_id,
+                'media_type': self.job.media_type,
+            }
+            torrent_data = {
+                'torrent_id': torrent_data['id'],
+                'torrent_data': torrent_data['data'],
+                'media_id': media.media_id
+            }
+
+            send_data = {
+                'media_id': media.media_id,
+                'choices': []
+            }
+
+            if media.media_type.value == MediaType.FILMS.value:
+                message_text = 'Фильм "{0}" будет скачан, через несколько минут. \n {1}'.format(
                     media.text_query,
                     media.kinopoisk_url
                 )
+                status = LockingStatus.ENDED
             else:
-                message_text = 'Новая серия {0} () будет скачана, через несколько минут. \n {1}'.format(
+                message_text = 'Новая серия "{0}" будет скачана, через несколько минут. \n {1}'.format(
                     media.text_query,
                     media.kinopoisk_url
                 )
-            if self.job.season == '':
-                status = LockingStatus.ENDED
-            elif not self.job.max_series == 0 and data.file_amount == self.job.max_series:
-                status = LockingStatus.ENDED
-            else:
-                status = LockingStatus.FIND_TORRENT
+                season = {'season': media.season}
+                command_data.update(season)
+                torrent_data.update(season)
+                send_data.update(season)
+
+                if self.job.series != 0 and torrent_data['file_amount'] == self.job.series:
+                    status = LockingStatus.ENDED
+                else:
+                    status = LockingStatus.FIND_TORRENT
+            command_data.update(
+                {'upd_data':
+                    {
+                        'status': status,
+                        'exsists_in_plex': True,
+                        'current_series': 0 if media.season == '' else torrent_data['file_amount']
+                    }
+                }
+            )
+
+            send_data.update({'message_text': message_text})
 
             messages.extend([
                 command_message(
                     ComponentType.CRAWLER,
                     ClientCommands.UPDATE_MEDIA,
-                    {
-                        'media_id': media.media_id,
-                        'media_type': MediaType.FILMS if media.season == '' else MediaType.SERIALS,
-                        'upd_data': {
-                            'status': status,
-                            'exsists_in_plex': True,
-                            'current_series': 0 if media.season == '' else torrent_data.file_amount
-                        }
-                    },
+                    command_data,
                     self.job.client_id
                 ),
                 crawler_message(
                     ComponentType.CRAWLER,
                     media.client_id,
-                    {
-                        'torrent_id': torrent_data['id'],
-                        'torrent_data': torrent_data['data'],
-                        'media_id': media.media_id
-                    },
+                    torrent_data,
                     ActionType.ADD_TORRENT_TO_TORRENT_CLIENT
                 ),
                 command_message(
                     ComponentType.CRAWLER,
                     ClientCommands.SEND_MESSAGES_BY_MEDIA,
-                    {
-                        'media_id': media.media_id,
-                        'message_text': message_text,
-                        'choices': []
-                    },
+                    send_data,
                     self.job.client_id
                 )
             ])

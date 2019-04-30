@@ -431,11 +431,16 @@ class SendMessageHandler(AbstractHandler):
     @classmethod
     def send_message_by_media(cls, data: CommandData, db_manager: DbManager, config):
         messages = []
+
         media_id = data.command_data['media_id']
         recips = db_manager.get_users_for_notification(media_id)
-        for recip in recips:
+        ids = set([i.client_id for i in recips])
+        for recip in ids:
             messages.append(
-                cls.construct_send_message(recip, data.command_data['message_text'], data.command_data['choices'])
+                cls.construct_send_message(
+                    recip,
+                    data.command_data['message_text'],
+                    data.command_data['choices'])
             )
         return messages
 
@@ -444,6 +449,7 @@ class SendMessageHandler(AbstractHandler):
         messages = []
         client_id = data.client_id
         recips = cls.get_recipients(client_id, db_manager)
+
         for recip in recips:
             messages.append(
                 cls.construct_send_message(recip, data.command_data['message_text'], data.command_data['choices'])
@@ -466,15 +472,18 @@ class SendMessageHandler(AbstractHandler):
 
         if client_id is None:
             return []
-        ids = []
+        ids = set()
 
         if client_id == 0:
-            return db_manager.get_all_users()
+            result = db_manager.get_all_users()
+            ids = set([i.client_id for i in result])
+            return ids
 
         if isinstance(client_id, int):
-            ids.append(client_id)
+            ids.add(client_id)
         if isinstance(client_id, list):
-            ids = client_id
+            ids.update(client_id)
+
         result = []
         for id in ids:
             user = db_manager.find_user(id)

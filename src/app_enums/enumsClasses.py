@@ -7,9 +7,7 @@ import enum
 
 
 class MyEnum(enum.Enum):
-
-    def __str__(self):
-        return self.name
+    pass
 
 
 class ComponentType(MyEnum):

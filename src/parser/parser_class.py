@@ -352,11 +352,12 @@ class KinopoiskParser(BaseParser):
         choice_list = []
         a = 0
         for elem in self.next_data['choices']:
+            elem.update({'action': action_name})
             choice_list.append(
                 {
                     'message_text': elem['url'],
                     'button_text': str(a),
-                    'call_back_data': elem.update({'action': action_name})
+                    'call_back_data': elem,
                 }
             )
             a += 1
@@ -404,22 +405,28 @@ class PlexParser(BaseParser):
     """
 
     def parse_data(self, data: dict):
-        server = PlexServer(
-            'http://{0}:{1}'.format(self.config.PLEX_HOST, self.config.PLEX_PORT),
-            self.config.PLEX_TOKEN
-        )
+        try:
+            server = PlexServer(
+                'http://{0}:{1}'.format(self.config.PLEX_HOST, self.config.PLEX_PORT),
+                self.config.PLEX_TOKEN
+            )
 
-        plex_data = server.search(data['title'])
-        self.next_data = data.copy()
+            plex_data = server.search(data['title'])
+            self.next_data = data.copy()
 
-        if 'serial' in data.keys() and data['serial']:
-            result = self.check_serials(plex_data, data)
-        else:
-            result = self.check_film(plex_data, data)
+            if 'serial' in data.keys() and data['serial']:
+                result = self.check_serials(plex_data, data)
+            else:
+                result = self.check_film(plex_data, data)
 
-        return len(result) == 0
+            return len(result) == 0
+        except Exception as ex:
+            logger.debug(ex)
+            self.next_data = data.copy()
+            return True
 
     def can_parse(self, data: dict):
+
         return 'title' in data.keys()
 
     def end_chain(self, data):

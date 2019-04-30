@@ -79,9 +79,11 @@ class DbManager:
         media_type = MediaType.FILMS
         try:
             season = elem.season
+            current_series = elem.current_series
             media_type = MediaType.SERIALS
         except AttributeError:
             season = ''
+            current_series = 0
 
         try:
             series = elem.series
@@ -101,6 +103,7 @@ class DbManager:
             'series': series,
             'season': season,
             'status': elem.status,
+            'current_series': current_series,
         }
         return MediaData(**data_dict)
 
@@ -145,8 +148,7 @@ class DbManager:
             session = self.session
         filter_dict = dict(kinopoisk_id=kinopoisk_id)
         data_class = self.Film
-        if media_type == MediaType.SERIALS or \
-                (media_type == MediaType.BASE_MEDIA and 'season' in filter_dict):
+        if media_type == MediaType.SERIALS:
             filter_dict['season'] = season
             data_class = self.Serial
         data = session.query(data_class).filter_by(**filter_dict).first()
@@ -217,7 +219,7 @@ class DbManager:
             'session': session,
         }
 
-        if 'season' in params.keys():
+        if media_type.value == MediaType.SERIALS.value and 'season' in params.keys():
             find_dict.update({
                 'season': params['season']
             })
@@ -333,7 +335,7 @@ class MediaData:
     def __init__(self, media_id, title, year,
                  download_url, torrent_tracker,
                  theam_id, kinopoisk_url, torrent_id,
-                 media_type, status, season='', series=0):
+                 media_type, status, season='', series=0, current_series=0):
         self.media_id = int(media_id)
         self.title = title
         self.download_url = download_url
@@ -343,6 +345,7 @@ class MediaData:
         self.year = year
         self.kinopoisk_url = kinopoisk_url
         self.series = series
+        self.current_series = current_series
         self.torrent_id = torrent_id
         self.media_type = media_type
         self.status = status

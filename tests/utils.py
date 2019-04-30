@@ -123,6 +123,10 @@ class TestEnvCreator:
             os.remove(db_path)
 
 
+def compare_dicts(dict1: dict, dict2: dict)-> bool:
+    return all(dict1[a] == dict2[a] for a in dict1.keys()) and all(dict1[a] == dict2[a] for a in dict2.keys())
+
+
 if __name__ == '__main__':
 
     t = TestEnvCreator()

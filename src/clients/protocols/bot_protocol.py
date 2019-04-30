@@ -7,7 +7,7 @@ import json
 import re
 
 from src.mediator import AppMediatorClient, MediatorActionMessage, parser_message
-from src.app_enums import ActionType, ComponentType, ClientCommands, UserOptions, MediaType
+from src.app_enums import ActionType, ComponentType, ClientCommands, UserOptions, MediaType, TorrentType
 from src.mediator import command_message, crawler_message
 
 from multiprocessing import Process, Queue
@@ -17,6 +17,15 @@ import time
 import uuid
 
 logger = logging.getLogger(__name__)
+
+PUBLIC_ENUMS = {
+        'ActionType': ActionType,
+        'ComponentType': ComponentType,
+        'ClientCommands': ClientCommands,
+        'UserOptions': UserOptions,
+        'MediaType': MediaType,
+        'TorrentType': TorrentType,
+}
 
 
 class BotProtocol(AppMediatorClient):
@@ -186,11 +195,11 @@ class Bot:
         buttons_in_row = 3
         key_board = []
         row_buttons = []
-        a = 1
+        a = 0
         for i, choise in enumerate(choices):
             if a > buttons_in_row:
                 key_board.append(row_buttons.copy())
-                a = 1
+                a = 0
                 row_buttons = []
             row_buttons.append(
                 telegram.InlineKeyboardButton(
@@ -200,7 +209,7 @@ class Bot:
             )
 
             a += 1
-        if a <= buttons_in_row:
+        if a <= buttons_in_row or (len(key_board) == 0 and len(row_buttons) != 0):
             key_board.append(row_buttons.copy())
 
         return telegram.InlineKeyboardMarkup(key_board)
@@ -279,7 +288,7 @@ class Bot:
         call_back_handler = CallbackQueryHandler(callback=self.call_back_handler)
         dispatcher.add_handler(call_back_handler)
 
-    def ipdater_handler(self, bot, update):
+    def updater_handler(self, bot, update):
 
         text = update.message.text.replace('/import', '')
         text.split(':')
@@ -296,11 +305,12 @@ class Bot:
         :return:
         """
         logger.info('Change notification status for user {}'.format(update.message.chat_id))
-        BotCommandParser.start_command(
-            '/notify',
-            {'option': UserOptions.NOTIFICATION},
-            self.protocol,
-            update.message.chat_id
+        self.protocol.send_message(
+            BotCommandParser.get_command_message(
+                '/notify',
+                {'option': UserOptions.NOTIFICATION},
+                update.message.chat_id
+            )
         )
 
     @staticmethod
@@ -353,7 +363,13 @@ class Bot:
         except teleg_error.BadRequest:
             data = {'client_id': client_id, 'name': '', 'last_name': '', 'nick': ''}
 
-        BotCommandParser.start_command('/auth', data, self.protocol, update.message.chat_id)
+        self.protocol.send_message(
+            BotCommandParser.get_command_message(
+                '/auth',
+                data,
+                update.message.chat_id
+            )
+        )
 
     def serial_handler(self, bot, update):
         """
@@ -369,11 +385,12 @@ class Bot:
         text = update.message.text.replace('/serial', '')
         if not len(re.findall(r'\S', text)):
             return
-        BotCommandParser.start_command(
-            '/serial',
-            {'text': text},
-            self.protocol,
-            update.message.chat_id
+        self.protocol.send_message(
+            BotCommandParser.get_command_message(
+                '/serial',
+                {'text': text},
+                update.message.chat_id
+            )
         )
 
     def film_handler(self, bot, update):
@@ -388,53 +405,20 @@ class Bot:
         text = update.message.text.replace('/film', '')
         if not len(re.findall(r'\S', text)):
             return
-        BotCommandParser.start_command(
-            '/film',
-            {'text': text},
-            self.protocol,
-            update.message.chat_id)
+        self.protocol.send_message(
+            BotCommandParser.get_command_message(
+                '/film',
+                {'text': text},
+                update.message.chat_id)
+        )
 
     def call_back_handler(self, bot, update):
         logger.debug('Пришел inline callback с данными {}'.format(update.callback_query.data))
         cache_data = self.cache.get(update.callback_query.data)
         if cache_data is None:
             return
-        if 'force' in cache_data.keys():
-            cache_data['key_board'] = False
-            message = crawler_message(ComponentType.CLIENT,
-                                      update.callback_query.from_user.id,
-                                      cache_data,
-                                      ActionType.ADD_TORRENT_WATCHER)
-        elif 'action' in cache_data.keys():
-            if cache_data['action'] == '':
-                message = parser_message(ComponentType.CLIENT, cache_data, update.callback_query.from_user.id)
-            elif cache_data['action'] == '':
-                client_id = update.callback_query.from_user.id
-                message = command_message(
-                    ComponentType.CRAWLER,
-                    ClientCommands.UPDATE_MEDIA,
-                    {
-                        'media_id': cache_data['media_id'],
-                        'media_type': MediaType.SERIALS,
-                        'upd_data': {
-                            'download_url': cache_data['download_url'],
-                            'theam_id': cache_data['theam_id'],
-                            'torrent_tracker': cache_data['torrent_tracker'],
-                        },
-                        'next_messages': [
-                            crawler_message(
-                                ComponentType.CRAWLER,
-                                client_id,
-                                {
-                                    'media_id': cache_data['media_id']
-                                },
-                                ActionType.DOWNLOAD_TORRENT
-                            )
-                        ],
-                    },
-                    client_id
-                )
-        else:
+        message = BotCommandParser.get_callback_message(cache_data, update)
+        if message is None:
             return
         self.protocol.send_message(message)
 
@@ -450,12 +434,27 @@ class BotCache:
 
     def get(self, key):
         self.base.load(self.dump_name, True)
-        return self.base.get(key)
+        return json.loads(self.base.get(key), object_hook=as_enum)
 
     def set(self, value):
         key = uuid.uuid4().urn
-        self.base.set(key, value)
+        self.base.set(key, json.dumps(value, cls=EnumEncoder))
         return key
+
+
+class EnumEncoder(json.JSONEncoder):
+    def default(self, o):
+        if type(o) in PUBLIC_ENUMS.values():
+            return {"__enum__": str(o)}
+        return json.JSONEncoder.default(self, o)
+
+
+def as_enum(d):
+    if "__enum__" in d:
+        name, member = d["__enum__"].split('.')
+        return getattr(PUBLIC_ENUMS[name], member)
+    else:
+        return d
 
 
 class MyPickledb(pickledb.pickledb):
@@ -478,12 +477,11 @@ class BotCommandParser:
         return [command['command_text'] for command in cls.message_commands()]
 
     @classmethod
-    def start_command(cls, command: str, data: dict, protocol: AppMediatorClient, chat_id: int):
+    def get_command_message(cls, command: str, data: dict, chat_id: int):
         """
         Send message to command exsecuter
         :param command:
         :param data:
-        :param protocol:
         :param chat_id:
         :return:
         """
@@ -495,12 +493,55 @@ class BotCommandParser:
             logging.error('Wrong command for execution {0}'.format(command))
             return
 
-        protocol.send_message(command_message(
+        return command_message(
             ComponentType.CLIENT,
             client_command,
             data,
             chat_id)
-        )
+
+    @classmethod
+    def get_callback_message(cls, cache_data, update):
+        message = None
+        if 'force' in cache_data.keys():
+            cache_data['key_board'] = False
+            message = crawler_message(ComponentType.CLIENT,
+                                      update.callback_query.from_user.id,
+                                      cache_data,
+                                      ActionType.ADD_TORRENT_WATCHER)
+        elif 'action' in cache_data.keys():
+            if cache_data['action'] == 'kinopoisk':
+                message = parser_message(ComponentType.CLIENT, cache_data, update.callback_query.from_user.id)
+            elif cache_data['action'] == 'select_torrent':
+                client_id = update.callback_query.from_user.id
+                upd_data = {
+                    'download_url': cache_data['download_url'],
+                    'theam_id': cache_data['theam_id'],
+                    'torrent_tracker': cache_data['torrent_tracker'],
+                }
+
+                if cache_data['media_type'].value == MediaType.SERIALS.value:
+                    season = {'season': cache_data['season']}
+                    upd_data.update(season)
+
+                message = command_message(
+                    ComponentType.CRAWLER,
+                    ClientCommands.UPDATE_MEDIA,
+                    {
+                        'media_id': cache_data['media_id'],
+                        'media_type': cache_data['media_type'],
+                        'upd_data': upd_data,
+                        'next_messages': [
+                            crawler_message(
+                                ComponentType.CRAWLER,
+                                client_id,
+                                cache_data,
+                                ActionType.DOWNLOAD_TORRENT
+                            )
+                        ],
+                    },
+                    client_id
+                )
+        return message
 
     @classmethod
     def message_commands(cls)->list:
