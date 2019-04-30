@@ -70,7 +70,7 @@ class TestClientCache(TestCase):
 
 
 def suite():
-    return defaultTestLoader.loadTestsFromTestCase(TestClientCache, TestCommandParser)
+    return defaultTestLoader.loadTestsFromTestCase((TestClientCache, TestCommandParser))
 
 
 if __name__ == '__main__':

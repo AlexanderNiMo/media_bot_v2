@@ -2,7 +2,8 @@ from unittest import TextTestRunner, defaultTestLoader
 from tests.testmediator import TestMediator
 from tests.testdb import TestDB
 from tests.testparser import TestParser
-from tests.testcrawler import TestCrawler
+from tests.testcrawler import TestCrawler, TestCrawlerWeb
+from tests.testclient import TestClientCache, TestCommandParser
 from tests.testcommandhandler import TestCommandHandler
 
 
@@ -12,7 +13,10 @@ def suite():
          TestDB,
          TestParser,
          TestCrawler,
-         TestCommandHandler)
+         TestCommandHandler,
+         # TestCrawlerWeb,
+         TestClientCache,
+         TestCommandParser)
     )
 
 

@@ -86,6 +86,7 @@ class TestCommandHandler(TestCase):
 
         data = {
             'media_id': media_id,
+            'media_type': app_enums.MediaType.FILMS,
             'message_text': media_title,
             'choices': []
         }
@@ -110,6 +111,64 @@ class TestCommandHandler(TestCase):
 
         command_msg = command_message(app_enums.ComponentType.MAIN_APP, command, command_data, self.client_id)
         self.test_handler.handle_message(command_msg)
+
+    def test_update_media_data(self):
+        media_id = '12345678'
+        media_title = 'Тест 1'
+
+        new_label = 'Тест 2'
+
+        command_data = {
+            'client_id': self.test_context.admin_id,
+            'kinopoisk_id': media_id,
+            'label': media_title,
+            'year': 1999,
+            'url': 'http://test1'
+        }
+
+        self.test_context.add_test_film(
+            self.db.session,
+            **command_data
+        )
+
+        data = {
+            'media_id': media_id,
+            'media_type': app_enums.MediaType.FILMS,
+            'upd_data': {
+                'label': new_label
+            }
+        }
+
+        command = app_enums.ClientCommands.UPDATE_MEDIA
+        command_msg = command_message(app_enums.ComponentType.MAIN_APP, command, data, self.client_id)
+        self.test_handler.handle_message(command_msg)
+
+        media = self.db.find_media(media_id, app_enums.MediaType.FILMS)
+
+        self.assertTrue(media.title == new_label, 'Наименование не изменилось.')
+
+    def test_add_user(self):
+        new_user_id = 123
+
+        data = {
+            'client_id': new_user_id,
+            'name': 'Al',
+            'last_name': 'Al',
+            'nick': 'Al'
+        }
+
+        command_msg = command_message(
+            app_enums.ComponentType.CLIENT,
+            app_enums.ClientCommands.ADD_DATA_USER,
+            data,
+            self.client_id
+        )
+
+        self.test_handler.handle_message(command_msg)
+
+        new_user = self.db.find_user(new_user_id)
+
+        self.assertIsNotNone(new_user, 'Новый пользователь не создан.')
 
     def tearDown(self):
         self.test_context.clear_test_db()

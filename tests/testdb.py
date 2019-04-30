@@ -3,6 +3,7 @@ import os
 
 from tests.utils import TestEnvCreator
 from src.database import MediaData
+from src.app_enums import MediaType, UserOptions
 import src
 
 
@@ -279,6 +280,30 @@ class TestDB(TestCase):
         )
 
         self.assertTrue(len(test_user.media.all()) == 1, 'Новый фильм не добавился в список пользователя')
+
+    def test_get_users_by_media_id(self):
+        session = self.db.get_session()
+
+        admin = self.add_test_user(self.client_id, session=session)
+        self.db.change_user_option(self.client_id, UserOptions.NOTIFICATION, 1, session=session)
+
+        test_user = self.add_test_user(self.anather_client_id, session=session)
+        self.db.change_user_option(self.anather_client_id, UserOptions.NOTIFICATION, 1, session=session)
+
+        serial = self.add_test_serial(
+            session=session,
+            client_id=self.client_id,
+            kinopoisk_id=self.test_serial['kinopoisk_id'],
+            label=self.test_serial['title'],
+            year=self.test_serial['year'],
+            season=self.test_serial['season'],
+            url=self.test_serial['url'],
+            series=self.test_serial['series'])
+
+        users = self.db.get_users_for_notification(media_id=1, media_type=MediaType.SERIALS, season=1, session=session)
+
+        self.assertIn(admin, users, 'Не найден пользователь, который должен быть в выборке')
+        self.assertIn(test_user, users, 'Не найден пользователь, который должен быть в выборке')
 
     def tearDown(self):
         self.test_content.clear_test_db()

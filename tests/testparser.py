@@ -192,6 +192,10 @@ class TestParser(unittest.TestCase):
 
     def tearDown(self):
         self.test_content.clear_test_db()
+        self.test_content = None
+        self.parser = None
+        self.component = None
+        self.db = None
 
 
 def suite():
