@@ -56,12 +56,19 @@ class DbManager:
         self.__session.close()
         self.__session = None
 
-    def get_users_for_notification(self, media_id, session=None)->list:
+    def get_users_for_notification(self, media_id, media_type, season=0, session=None)->list:
         if session is None:
             session = self.session
         users = []
-        media_users = session.query(self.User).join(self.User.media). \
-            filter(self.MediaData.kinopoisk_id == media_id).all()
+
+        if media_type.value == MediaType.SERIALS:
+            media_users = session.query(self.User).join(self.User.media). \
+                filter(self.Serial.kinopoisk_id == media_id).\
+                filter(self.Serial.season == season).all()
+        else:
+            media_users = session.query(self.User).join(self.User.media). \
+                filter(self.Film.kinopoisk_id == media_id).all()
+
         for i in media_users:
             users.append(i)
 
