@@ -148,7 +148,7 @@ class TestCommandHandler(TestCase):
         self.assertTrue(media.title == new_label, 'Наименование не изменилось.')
 
     def test_add_user(self):
-        new_user_id = 123
+        new_user_id = 12345
 
         data = {
             'client_id': new_user_id,
@@ -169,6 +169,42 @@ class TestCommandHandler(TestCase):
         new_user = self.db.find_user(new_user_id)
 
         self.assertIsNotNone(new_user, 'Новый пользователь не создан.')
+
+    def test_add_media_to_user(self):
+        media_id = '12345678'
+        media_title = 'Тест 1'
+        client_id = 1225
+
+        film = self.test_context.add_test_film(
+            self.db.session,
+            **{
+                'client_id': self.test_context.admin_id,
+                'kinopoisk_id': media_id,
+                'label': media_title,
+                'year': 1999,
+                'url': 'http://test1'
+            }
+        )
+
+        user = self.db.add_user(client_id, '', '', '')
+
+        data = {
+            'kinopoisk_id': media_id,
+            'media_type': app_enums.MediaType.FILMS,
+            'season': 0
+        }
+
+        command_msg = command_message(
+            app_enums.ComponentType.CLIENT,
+            app_enums.ClientCommands.ADD_MEDIA_TO_USER_LIST,
+            data,
+            client_id
+        )
+
+        self.test_handler.handle_message(command_msg)
+
+        self.assertIn(str(film.kinopoisk_id), [a.kinopoisk_id for a in user.media.all()], 'Фильм не добавлен пользователю')
+
 
     def tearDown(self):
         self.test_context.clear_test_db()

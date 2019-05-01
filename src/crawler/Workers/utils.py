@@ -1,5 +1,5 @@
-from database import MediaData
-from mediator import CrawlerData
+from src.database import MediaData
+from src.mediator import CrawlerData
 from src.app_enums import MediaType
 
 

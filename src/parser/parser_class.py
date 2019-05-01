@@ -303,16 +303,18 @@ class KinopoiskParser(BaseParser):
             exact_match = self.check_title_match_query_data(element, data)
 
             series = 0
+            year = element.year
             if len(element.seasons) >= data['season']:
                 season = element.seasons[data['season'] - 1]
                 series = len(season.episodes)
+                year = season.year
 
             if exact_match:
                 self.next_data['choices'].clear()
             choise = {
                 'kinopoisk_id': element.id,
                 'title': self._normalize_query_text(element.title),
-                'year': element.year,
+                'year': year,
                 'kinopoisk_url': element.get_url('main_page'),
                 'url': element.get_url('main_page'),
                 'season': data['season'],

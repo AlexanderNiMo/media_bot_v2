@@ -493,6 +493,7 @@ class Rutor(TorrentTracker):
 
         if data is None:
             return text
+
         season = data.group(2) if len(data.group(2)) == 2 else f'0{data.group(2)}'
         return text.replace(data.group(), f'S{season}')
 
