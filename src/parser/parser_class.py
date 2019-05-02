@@ -519,7 +519,8 @@ class DataBaseParser(BaseParser):
             media = db.find_media_by_label(data['label'], data['year'], media_type, session=session)
         else:
             media = None
-        if media is not None and media.status == LockingStatus.ENDED:
+        if media is not None:
+            data.update({'media_status': media.status, 'media_type': media_type})
             result = False
         session.close()
         self.next_data = data.copy()
@@ -530,10 +531,12 @@ class DataBaseParser(BaseParser):
         return 'kinopoisk_id' in data.keys() or all(key in data.keys() for key in ('label', 'year'))
 
     def end_chain(self, data):
-        message_text = '{1} {0} уже ищется.'.format(data.data['title'],
-                                                    'Фильм' if 'serial' in data.data.keys()
-                                                               and not data.data['serial'] else 'Сериал'
-                                                    )
+        text_type = 'Фильм' if data.data['media_type'].value == MediaType.FILMS.value else 'Сериал'
+        title = data.data['title']
+        if data.data['media_status'] != LockingStatus.ENDED:
+            message_text = f'{text_type} {title} уже ищется.'
+        else:
+            message_text = f'Поиск {text_type}а по запросу {title} завершен.'
 
         self.messages.append(
             send_message(ComponentType.PARSER,
