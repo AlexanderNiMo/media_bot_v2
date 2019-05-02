@@ -153,12 +153,14 @@ class DelugeWorker(Worker):
     def start_torrent_watcher_message(self, data)->MediatorMessage:
         upd_data ={'torrent_id': data['torrent_id']}
         command_data = construct_upd_data(self.job, upd_data)
+        data = {}
+        add_media_keys(self.job, data)
         command_data.update({
             'next_messages': [
                 crawler_message(
                     ComponentType.COMMAND_HANDLER,
                     self.job.client_id,
-                    {'media_id': self.job.media_id},
+                    data,
                     ActionType.ADD_TORRENT_WATCHER
                 )
                 ]
