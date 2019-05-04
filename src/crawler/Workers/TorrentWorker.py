@@ -39,6 +39,7 @@ class TorrentSearchWorker(Worker):
         if self.job.season == '':
             f_list.append(lambda x: x.file_amount < 4)
             f_list.append(lambda x: x.size <= float(15))
+            f_list.append(lambda x: x.size >= float(4))
 
         result = data
         for filter_func in f_list:
