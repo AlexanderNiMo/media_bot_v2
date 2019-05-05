@@ -122,6 +122,18 @@ class TestEnvCreator:
         if os.path.exists(db_path):
             os.remove(db_path)
 
+        if self.mediator.is_alive():
+            self.mediator.terminate()
+
+        if self.client.is_alive():
+            self.client.terminate()
+
+        if self.parser.is_alive():
+            self.parser.terminate()
+
+        if self.crawler.is_alive():
+            self.crawler.terminate()
+
 
 def compare_dicts(dict1: dict, dict2: dict)-> bool:
     return all(dict1[a] == dict2[a] for a in dict1.keys()) and all(dict1[a] == dict2[a] for a in dict2.keys())

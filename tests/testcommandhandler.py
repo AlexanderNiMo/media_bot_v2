@@ -205,7 +205,6 @@ class TestCommandHandler(TestCase):
 
         self.assertIn(str(film.kinopoisk_id), [a.kinopoisk_id for a in user.media.all()], 'Фильм не добавлен пользователю')
 
-
     def tearDown(self):
         self.test_context.clear_test_db()
 
