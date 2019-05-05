@@ -378,9 +378,7 @@ class AddDataHandler(AbstractHandler):
         com_data = data.command_data
         session = db_manager.get_session()
         db_manager.update_media_params(
-            com_data['media_id'],
-            com_data['upd_data'],
-            com_data['media_type'],
+            **com_data,
             session=session
         )
 

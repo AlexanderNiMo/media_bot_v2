@@ -215,8 +215,8 @@ class TestDB(TestCase):
         )
 
         self.db.update_media_params(
-            self.test_film['kinopoisk_id'],
-            {
+            media_id=self.test_film['kinopoisk_id'],
+            upd_data={
                 'label': '',
                 'year': 1988,
                 'kinopoisk_url': 'rutr',
@@ -224,7 +224,7 @@ class TestDB(TestCase):
                 'torrent_id': '2',
                 'kinopoisk_id': 2
             },
-            src.app_enums.MediaType.FILMS,
+            media_type=src.app_enums.MediaType.FILMS,
             session=session)
 
         film = self.db.find_media(
@@ -239,6 +239,37 @@ class TestDB(TestCase):
         self.assertEqual(film.status, src.app_enums.LockingStatus.ENDED, 'Не изменилось значение статуса.')
         self.assertEqual(film.torrent_id, '2', 'Не изменилось значение torrent_id.')
         self.assertEqual(film.media_id, 2, 'Не изменилось значение media_id.')
+
+        self.add_test_serial(
+            session=session,
+            client_id=self.client_id,
+            kinopoisk_id=self.test_serial['kinopoisk_id'],
+            label=self.test_serial['title'],
+            year=self.test_serial['year'],
+            season=self.test_serial['season'],
+            url=self.test_serial['url'],
+            series=self.test_serial['series'])
+
+        current_series = 10
+        self.db.update_media_params(
+            media_id=self.test_serial['kinopoisk_id'],
+            upd_data={
+                'current_series': current_series
+            },
+            season=self.test_serial['season'],
+            media_type=src.app_enums.MediaType.SERIALS,
+            session=session)
+
+        serial = self.db.find_media(
+            kinopoisk_id=self.test_serial['kinopoisk_id'],
+            media_type=src.app_enums.MediaType.SERIALS,
+            season=self.test_serial['season'],
+            session=session
+        )
+
+        self.assertTrue(serial.current_series == current_series, 'Не изменились данные сериала.')
+
+
 
     def test_user_options(self):
         session = self.db.get_session()

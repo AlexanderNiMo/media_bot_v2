@@ -196,9 +196,9 @@ class TestCrawlerWeb(TestCase):
         )
 
         self.test_context.db.update_media_params(
-            film_id,
-            {'download_url': 'http://d.rutor.info/download/193221'},
-            MediaType.FILMS
+            media_id=film_id,
+            upd_data={'download_url': 'http://d.rutor.info/download/193221'},
+            media_type=MediaType.FILMS
         )
 
         message = crawler_message(

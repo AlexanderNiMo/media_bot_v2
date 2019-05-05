@@ -215,7 +215,7 @@ class DbManager:
     def is_admin(self, client_id):
         return client_id == int(self.config.TELEGRAMM_BOT_USER_ADMIN)
 
-    def update_media_params(self, media_id: int, params: dict, media_type, session=None):
+    def update_media_params(self, media_id: int, upd_data: dict, media_type, season: int=0, session=None):
         close = False
         if session is None:
             close = True
@@ -226,9 +226,9 @@ class DbManager:
             'session': session,
         }
 
-        if media_type.value == MediaType.SERIALS.value and 'season' in params.keys():
+        if season != 0:
             find_dict.update({
-                'season': params['season']
+                'season': season
             })
 
         media = self._find_media(**find_dict)
@@ -236,8 +236,8 @@ class DbManager:
         if media is None:
             raise AttributeError('По kinopoisk_id {} не существует медиа для обновления.'.format(media_id))
 
-        for key in params.keys():
-            setattr(media, key, params[key])
+        for key in upd_data.keys():
+            setattr(media, key, upd_data[key])
 
         session.add(media)
         session.commit()
