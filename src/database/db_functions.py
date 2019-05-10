@@ -215,7 +215,8 @@ class DbManager:
     def is_admin(self, client_id):
         return client_id == int(self.config.TELEGRAMM_BOT_USER_ADMIN)
 
-    def update_media_params(self, media_id: int, upd_data: dict, media_type, season: int=0, session=None):
+    def update_media_params(self, media_id: int, upd_data: dict, media_type, season: int=0, session=None,
+                            *args, **kwargs):
         close = False
         if session is None:
             close = True
