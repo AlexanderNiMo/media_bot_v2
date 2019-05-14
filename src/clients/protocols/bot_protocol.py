@@ -513,6 +513,10 @@ class BotCommandParser:
                 message = parser_message(ComponentType.CLIENT, cache_data, update.callback_query.from_user.id)
             elif cache_data['action'] == 'select_torrent':
                 client_id = update.callback_query.from_user.id
+                command_data = {
+                        'media_id': cache_data['media_id'],
+                        'media_type': cache_data['media_type'],
+                }
                 upd_data = {
                     'download_url': cache_data['download_url'],
                     'theam_id': cache_data['theam_id'],
@@ -521,24 +525,23 @@ class BotCommandParser:
 
                 if cache_data['media_type'].value == MediaType.SERIALS.value:
                     season = {'season': cache_data['season']}
-                    upd_data.update(season)
+                    command_data.update(season)
 
+                command_data.update({
+                    'upd_data': upd_data,
+                    'next_messages': [
+                        crawler_message(
+                            ComponentType.CRAWLER,
+                            client_id,
+                            cache_data,
+                            ActionType.DOWNLOAD_TORRENT
+                        )
+                    ]
+                })
                 message = command_message(
                     ComponentType.CRAWLER,
                     ClientCommands.UPDATE_MEDIA,
-                    {
-                        'media_id': cache_data['media_id'],
-                        'media_type': cache_data['media_type'],
-                        'upd_data': upd_data,
-                        'next_messages': [
-                            crawler_message(
-                                ComponentType.CRAWLER,
-                                client_id,
-                                cache_data,
-                                ActionType.DOWNLOAD_TORRENT
-                            )
-                        ],
-                    },
+                    command_data,
                     client_id
                 )
         return message
