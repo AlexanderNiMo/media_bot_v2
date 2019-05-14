@@ -575,7 +575,7 @@ def get_torrent_details(data_dict):
     if torrent_ditails is None:
         file_amount = 0
     elif 'files' in torrent_ditails['info'].keys():
-        file_amount = len(torrent_ditails['info']['files'])
+        file_amount = len([i for i in torrent_ditails['info']['files'] if get_ext(i.get('path')[-1]) in media_ext()])
     elif 'name' in torrent_ditails['info'].keys():
         file_amount = 1
     torrent_ditails.update({'file_amount': file_amount})
@@ -583,3 +583,44 @@ def get_torrent_details(data_dict):
 
     return torrent_ditails
 
+
+def get_ext(path):
+    path_part = path.split('.')
+    return path_part[-1]
+
+
+def media_ext():
+    return [
+        '3g2',
+        '3gp',
+        '3gp2',
+        '3gpp',
+        'avi',
+        'dat',
+        'drv',
+        'f4v',
+        'flv',
+        'gtp',
+        'h264',
+        'm4v',
+        'mkv',
+        'mod',
+        'moov',
+        'mov',
+        'mp4',
+        'mpeg',
+        'mpg',
+        'mts',
+        'rmvb',
+        'spl',
+        'stl',
+        'ts',
+        'vcd',
+        'vid',
+        'vid',
+        'vid',
+        'vob',
+        'webm',
+        'wmv',
+        'yuv',
+    ]
