@@ -7,6 +7,7 @@ from .Workers import TorrentSearchWorker, DelugeWorker, DownloadWorker
 from src.database import DbManager
 from src.mediator import AppMediatorClient, MediatorActionMessage
 from multiprocessing import Queue
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ class Crawler(AppMediatorClient):
             try:
                 self.update_jobs()
             except Exception as ex:
-                logging.error('При обновлении обработчиков произошла ощибка {}'.format(ex))
+                logging.error('При обновлении обработчиков произошла ощибка {}'.format(traceback.print_exc()))
 
     def handle_message(self, message: MediatorActionMessage):
         logger.info(
