@@ -186,7 +186,7 @@ class QBitTorrent(TorrentWorker):
         from requests import ConnectionError
 
         try:
-            q_bit = Client(f'{config.DELUGE_HOST}:{int(config.DELUGE_PORT)}')
+            q_bit = Client(f'http://{config.DELUGE_HOST}:{int(config.DELUGE_PORT)}')
             res = q_bit.login(username=config.DELUGE_USER, password=config.DELUGE_PASS)
             if res == 'Fails.':
                 logger.error('Неверный пароль или логин для подключения к qBitTorrent')
