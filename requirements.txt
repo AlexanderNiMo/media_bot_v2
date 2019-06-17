@@ -10,3 +10,5 @@ mysql
 pysocks
 deluge_client
 transmissionrpc
+qbittorrent
+bencoding

@@ -3,7 +3,7 @@ import time
 
 from src.crawler.Workers.utils import MediaTask
 from src.app_enums import ComponentType, ActionType
-from .Workers import TorrentSearchWorker, DelugeWorker, DownloadWorker, TransmissionWorker
+from .Workers import TorrentSearchWorker, DelugeWorker, DownloadWorker, TransmissionWorker, QBitTorrent
 from src.database import DbManager
 from src.mediator import AppMediatorClient, MediatorActionMessage
 from multiprocessing import Queue
@@ -123,7 +123,7 @@ class Crawler(AppMediatorClient):
             ActionType.ADD_TORRENT_WATCHER.value,
             ActionType.ADD_TORRENT_TO_TORRENT_CLIENT.value
         ]:
-            return TransmissionWorker(job, self.config)
+            return QBitTorrent(job, self.config)
         elif job.action_type.value in [
             ActionType.DOWNLOAD_TORRENT.value,
         ]:
