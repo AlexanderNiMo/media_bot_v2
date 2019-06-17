@@ -9,3 +9,4 @@ torrent_parser
 mysql
 pysocks
 deluge_client
+transmissionrpc
