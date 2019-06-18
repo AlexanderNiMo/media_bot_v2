@@ -57,6 +57,7 @@ class ClientCommands(MyEnum):
 
     SEND_MESSAGES_BY_MEDIA = 6
     SEND_MESSAGES = 14
+    SEND_MESSAGES_TO_ALL = 15
 
     EDIT_SETTINGS = 7
 

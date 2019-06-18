@@ -424,6 +424,7 @@ class SendMessageHandler(AbstractHandler):
         return {
             ClientCommands.SEND_MESSAGES.value: cls.send_message,
             ClientCommands.SEND_MESSAGES_BY_MEDIA.value: cls.send_message_by_media,
+            ClientCommands.SEND_MESSAGES_TO_ALL.value: cls.send_message_to_all,
         }
 
     @classmethod
@@ -455,6 +456,23 @@ class SendMessageHandler(AbstractHandler):
             messages.append(
                 cls.construct_send_message(recip, data.command_data['message_text'], data.command_data['choices'])
             )
+        return messages
+
+    @classmethod
+    def send_message_to_all(cls, data: CommandData, db_manager: DbManager, config):
+        messages = []
+        client_id = data.client_id
+        if not db_manager.is_admin(client_id):
+            messages.append(
+                    cls.construct_send_message(client_id, "У тебя нет на это прав!", data.command_data['choices'])
+                )
+        else:
+            recips = cls.get_recipients(0, db_manager)
+
+            for recip in recips:
+                messages.append(
+                    cls.construct_send_message(recip, data.command_data['message_text'], data.command_data['choices'])
+                )
         return messages
 
     @classmethod

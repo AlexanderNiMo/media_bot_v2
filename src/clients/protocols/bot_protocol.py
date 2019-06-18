@@ -285,6 +285,12 @@ class Bot:
         )
         dispatcher.add_handler(cmd_handler)
 
+        cmd_handler = CommandHandler(
+            command='send_messages_to_all',
+            callback=self.send_messages_to_all_handler
+        )
+        dispatcher.add_handler(cmd_handler)
+
         call_back_handler = CallbackQueryHandler(callback=self.call_back_handler)
         dispatcher.add_handler(call_back_handler)
 
@@ -409,6 +415,20 @@ class Bot:
             BotCommandParser.get_command_message(
                 '/film',
                 {'text': text},
+                update.message.chat_id)
+        )
+
+    def send_messages_to_all_handler(self, bot, update):
+        text = update.message.text.replace('/send_messages_to_all', '')
+        if not len(re.findall(r'\S', text)):
+            return
+        self.protocol.send_message(
+            BotCommandParser.get_command_message(
+                '/send_messages_to_all',
+                {
+                    'message_text': text,
+                    'choices': [],
+                 },
                 update.message.chat_id)
         )
 
@@ -553,6 +573,7 @@ class BotCommandParser:
             {'command_text': '/serial', 'command': ClientCommands.ADD_SERIAL},
             {'command_text': '/auth', 'command': ClientCommands.AUTHENTICATION},
             {'command_text': '/notify', 'command': ClientCommands.EDIT_SETTINGS},
+            {'command_text': '/send_messages_to_all', 'command': ClientCommands.SEND_MESSAGES_TO_ALL},
         ]
 
 

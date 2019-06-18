@@ -217,7 +217,7 @@ class QBitTorrent(TorrentWorker):
         return hashlib.sha1(bencoding.bencode(bencode_dict[b"info"])).hexdigest()
 
 
-def get_torrent_worker(job, data_config):
+def get_torrent_worker(job, data_config)-> TorrentWorker:
 
     torrent_client_type = int(data_config.TORRENT_TYPE)
 
@@ -227,6 +227,9 @@ def get_torrent_worker(job, data_config):
         return TransmissionWorker(job, data_config)
     elif torrent_client_type == 2:
         return QBitTorrent(job, data_config)
+    else:
+        logger.error('Не удалось определить тип торрент клиента.')
+        raise ValueError
 
 
 def watcher_messages(job, data):
