@@ -17,6 +17,10 @@ class TorrentSearchWorker(Worker):
 
     """
 
+    def __init__(self, job, config):
+        super(TorrentSearchWorker, self).__init__(job, config)
+        self.serial_torrents = 10
+
     def get_target(self):
 
         return self.work
@@ -50,7 +54,7 @@ class TorrentSearchWorker(Worker):
         res = list(s_data)
         if len(res) == 0:
             return None
-        return res[0:3]
+        return res[0:self.serial_torrents]
 
     @property
     def result(self):
