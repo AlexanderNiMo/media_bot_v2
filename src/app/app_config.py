@@ -53,7 +53,8 @@ def create_default_config(parser: configparser.ConfigParser):
 
     parser['logger'] = {'logger_level': 'info'}
 
-    parser['deluge'] = {
+    parser['torrent_client'] = {
+        'type': 0,
         'host': '',
         'port': 0,
         'user': '',
@@ -119,10 +120,11 @@ class Config:
             'TORRENT_FILM_PATH': ['Torrents_folders', 'film_folder'],
             'TORRENT_SERIAL_PATH': ['Torrents_folders', 'serial_folder'],
             'LOGGER_LEVEL': ['logger', 'logger_level'],
-            'DELUGE_HOST': ['deluge', 'host'],
-            'DELUGE_PORT': ['deluge', 'port'],
-            'DELUGE_USER': ['deluge', 'user'],
-            'DELUGE_PASS': ['deluge', 'password'],
+            'TORRENT_TYPE': ['torrent_client', 'type'],
+            'TORRENT_HOST': ['torrent_client', 'host'],
+            'TORRENT_PORT': ['torrent_client', 'port'],
+            'TORRENT_USER': ['torrent_client', 'user'],
+            'TORRENT_PASS': ['torrent_client', 'password'],
         }
 
         if item in data_dict.keys():

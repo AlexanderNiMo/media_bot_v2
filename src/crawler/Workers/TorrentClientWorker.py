@@ -42,23 +42,64 @@ class TorrentWorker(Worker):
         return messages
 
     def add_torrent(self):
-        pass
+        client = self.get_client()
+        if client is None:
+            return
+        if self.job.season == '':
+            dir_path = self.config.TORRENT_FILM_PATH
+        else:
+            dir_path = self.config.TORRENT_SERIAL_PATH
+
+        torrent_id = self._add_torrent(client, dir_path)
+
+        self.returned_data.put({'torrent_id': torrent_id})
 
     def work(self):
+        client = self.get_client()
+        if client is None:
+            return
+        do = True
+        start_time = time.time()
+        first_time = True
+        while do:
+
+            torrent_information = self._get_torrent_information(client)
+
+            if self.job.crawler_data.force:
+                self.returned_data.put({'torrent_information': torrent_information})
+                break
+            if first_time:
+                self.returned_data.put({'torrent_information': torrent_information})
+                first_time = False
+            if torrent_information['progress'] == 100:
+                self.returned_data.put({'torrent_information': torrent_information})
+                break
+            if time.time() - start_time == 60 * 60:
+                break
+            time.sleep(60 * 5)
+
+    def _get_torrent_information(self, client):
+        pass
+
+    @staticmethod
+    def get_client():
+        pass
+
+    def _add_torrent(self, client, dir_path):
         pass
 
 
 class DelugeWorker(TorrentWorker):
 
     @staticmethod
-    def get_deluge_client():
+    def get_client():
         from deluge_client import DelugeRPCClient, FailedToReconnectException
         try:
             deluge = DelugeRPCClient(
-                config.DELUGE_HOST,
-                int(config.DELUGE_PORT),
-                config.DELUGE_USER,
-                config.DELUGE_PASS)
+                config.TORRENT_HOST,
+                int(config.TORRENT_PORT),
+                config.TORRENT_USER,
+                config.TORRENT_PASS)
             deluge.connect()
             if not deluge.connected:
                 raise FailedToReconnectException
@@ -67,116 +108,63 @@ class DelugeWorker(TorrentWorker):
             return None
         return deluge
 
-    def add_torrent(self):
-        deluge = self.get_deluge_client()
-        if deluge is None:
-            return
-        if self.job.season == '':
-            dir_path = self.config.TORRENT_FILM_PATH
-        else:
-            dir_path = self.config.TORRENT_SERIAL_PATH
+    def _add_torrent(self, client, dir_path):
+
         torrent_options = {'download_location': dir_path}
 
         torrend_data = base64.encodebytes(self.job.crawler_data.torrent_data)
         torrent_file_name = '{}.torrent'.format(self.job.torrent_id)
-        torrent_id = deluge.call('core.add_torrent_file', torrent_file_name, torrend_data, torrent_options)
-        self.returned_data.put({'torrent_id': torrent_id})
+        torrent_id = client.call('core.add_torrent_file', torrent_file_name, torrend_data, torrent_options)
+        return torrent_id
 
-    def work(self):
-        deluge = self.get_deluge_client()
-        if deluge is None:
-            return
-        do = True
-        start_time = time.time()
-        first_time = True
-        while do:
-            data = deluge.call('core.get_torrents_status', {'id': self.job.torrent_id}, [
+    def _get_torrent_information(self, client):
+        data = client.call('core.get_torrents_status', {'id': self.job.torrent_id}, [
                 'progress',
                 'total_done',
                 'total_size'
             ])
-            torr_dict = data[bytes(self.job.torrent_id, 'utf-8')]
-            torrent_information = {
-                'progress': int(torr_dict[b'progress']),
-                'total_done': torr_dict[b'total_done'],
-                'total_size': torr_dict[b'total_size'],
-            }
-            if self.job.crawler_data.force:
-                self.returned_data.put({'torrent_information': torrent_information})
-                break
-            if first_time:
-                self.returned_data.put({'torrent_information': torrent_information})
-                first_time = False
-            if torrent_information['progress'] == 100:
-                self.returned_data.put({'torrent_information': torrent_information})
-                break
-            if time.time() - start_time == 60 * 60:
-                break
-            time.sleep(60 * 5)
+        torr_dict = data[bytes(self.job.torrent_id, 'utf-8')]
+        return {
+            'progress': int(torr_dict[b'progress']),
+            'total_done': torr_dict[b'total_done'],
+            'total_size': torr_dict[b'total_size'],
+        }
 
 
 class TransmissionWorker(TorrentWorker):
 
-    def get_transmission_client(self):
+    def get_client(self):
         import transmissionrpc
 
         try:
             transmission = transmissionrpc.Client(
-                config.DELUGE_HOST,
-                int(config.DELUGE_PORT),
-                config.DELUGE_USER,
-                config.DELUGE_PASS)
+                config.TORRENT_HOST,
+                int(config.TORRENT_PORT),
+                config.TORRENT_USER,
+                config.TORRENT_PASS)
         except transmissionrpc.TransmissionError:
             logger.error('Не удалось соединиться с торрент торрент клиентом')
             return None
         return transmission
 
-    def add_torrent(self):
-        transmission = self.get_transmission_client()
-        if transmission is None:
-            return
-
-        if self.job.season == '':
-            dir_path = self.config.TORRENT_FILM_PATH
-        else:
-            dir_path = self.config.TORRENT_SERIAL_PATH
+    def _add_torrent(self, client, dir_path):
 
         torrent_options = {'download_dir': dir_path}
 
-        torrent = transmission.add_torrent(base64.encodebytes(self.job.crawler_data.torrent_data), *torrent_options)
+        torrent = client.add_torrent(base64.encodebytes(self.job.crawler_data.torrent_data), *torrent_options)
         torrent.update()
 
-        self.returned_data.put({'torrent_id': torrent.id})
+        return torrent.id
 
-    def work(self):
+    def _get_torrent_information(self, client):
+        torrent = client.get_torrent(self.job.torrent_id)
+        torrent.update()
 
-        transmission = self.get_transmission_client()
-        if transmission is None:
-            return
-        do = True
-        start_time = time.time()
-        first_time = True
-        while do:
-            torrent = transmission.get_torrent(self.job.torrent_id)
-            torrent.update()
-
-            torrent_information = {
-                'progress': int(torrent.progress),
-                'total_done': torrent._fields['sizeWhenDone'].value,
-                'total_size': torrent._fields['leftUntilDone'].value,
-            }
-            if self.job.crawler_data.force:
-                self.returned_data.put({'torrent_information': torrent_information})
-                break
-            if first_time:
-                self.returned_data.put({'torrent_information': torrent_information})
-                first_time = False
-            if torrent_information['progress'] == 100:
-                self.returned_data.put({'torrent_information': torrent_information})
-                break
-            if time.time() - start_time == 60 * 60:
-                break
-            time.sleep(60 * 5)
+        return {
+            'progress': int(torrent.progress),
+            'total_done': torrent._fields['sizeWhenDone'].value,
+            'total_size': torrent._fields['leftUntilDone'].value,
+        }
 
 
 class QBitTorrent(TorrentWorker):
@@ -186,8 +174,8 @@ class QBitTorrent(TorrentWorker):
         from requests import ConnectionError
 
         try:
-            q_bit = Client(f'http://{config.DELUGE_HOST}:{int(config.DELUGE_PORT)}')
-            res = q_bit.login(username=config.DELUGE_USER, password=config.DELUGE_PASS)
+            q_bit = Client(f'http://{config.TORRENT_HOST}:{int(config.TORRENT_PORT)}')
+            res = q_bit.login(username=config.TORRENT_USER, password=config.TORRENT_PASS)
             if res == 'Fails.':
                 logger.error('Неверный пароль или логин для подключения к qBitTorrent')
                 raise ConnectionError
@@ -197,67 +185,48 @@ class QBitTorrent(TorrentWorker):
 
         return q_bit
 
-    def add_torrent(self):
+    def _add_torrent(self, client, dir_path):
         import io
-        q_bit = self.get_client()
-        if q_bit is None:
-            return
 
         torrent_hash = self.get_torr_info_hash(self.job.crawler_data.torrent_data)
         torrent_io = io.BytesIO(self.job.crawler_data.torrent_data)
 
-        if self.job.season == '':
-            dir_path = self.config.TORRENT_FILM_PATH
-        else:
-            dir_path = self.config.TORRENT_SERIAL_PATH
+        client.download_from_file(torrent_io, savepath=dir_path)
 
-        q_bit.download_from_file(torrent_io, savepath=dir_path)
+        return torrent_hash
 
-        self.returned_data.put({'torrent_id': torrent_hash})
+    def _get_torrent_information(self, client):
+        torrent = client.get_torrent(self.job.torrent_id)
 
-    def work(self):
-        q_bit = self.get_client()
-        if q_bit is None:
-            return
-        do = True
-        start_time = time.time()
-        first_time = True
-        while do:
-            torrent = q_bit.get_torrent(self.job.torrent_id)
+        total_downloaded = torrent['total_downloaded']
+        size = torrent['total_size']
+        left = size - total_downloaded
 
-            total_downloaded = torrent['total_downloaded']
-            size = torrent['total_size']
-            left = size - total_downloaded
+        progress = 100.0 * (size - left) / float(size)
 
-            progress = 100.0 * (size - left) / float(size)
+        return {
+            'progress': int(progress),
+            'total_done': total_downloaded,
+            'total_size': size,
+        }
 
-            torrent_information = {
-                'progress': int(progress),
-                'total_done': total_downloaded,
-                'total_size': size,
-            }
-
-            if self.job.crawler_data.force:
-                self.returned_data.put({'torrent_information': torrent_information})
-                break
-            if first_time:
-                self.returned_data.put({'torrent_information': torrent_information})
-                first_time = False
-            if torrent_information['progress'] == 100:
-                self.returned_data.put({'torrent_information': torrent_information})
-                break
-            if time.time() - start_time == 60 * 60:
-                break
-            time.sleep(60 * 5)
-
-    def get_torr_info_hash(self, data):
+    @staticmethod
+    def get_torr_info_hash(data):
         import hashlib, bencoding
         bencode_dict = bencoding.bdecode(data)
         return hashlib.sha1(bencoding.bencode(bencode_dict[b"info"])).hexdigest()
 
-    def save_torrent_to_file(self, data):
-        import tempfile
 
+def get_torrent_worker(job, data_config):
+
+    torrent_client_type = data_config.TORRENT_TYPE
+
+    if torrent_client_type == 0:
+        return DelugeWorker(job, data_config)
+    elif torrent_client_type == 1:
+        return TransmissionWorker(job, data_config)
+    elif torrent_client_type == 2:
+        return QBitTorrent(job, data_config)
 
 
 def watcher_messages(job, data):

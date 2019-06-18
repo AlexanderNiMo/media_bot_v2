@@ -1,3 +1,3 @@
 from .TorrentWorker import TorrentSearchWorker
-from .DelugeWorker import DelugeWorker, TransmissionWorker, QBitTorrent
+from .TorrentClientWorker import get_torrent_worker
 from .DownloadWorker import DownloadWorker
