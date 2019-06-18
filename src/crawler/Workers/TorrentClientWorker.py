@@ -219,7 +219,7 @@ class QBitTorrent(TorrentWorker):
 
 def get_torrent_worker(job, data_config):
 
-    torrent_client_type = data_config.TORRENT_TYPE
+    torrent_client_type = int(data_config.TORRENT_TYPE)
 
     if torrent_client_type == 0:
         return DelugeWorker(job, data_config)
