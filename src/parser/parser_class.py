@@ -261,9 +261,11 @@ class KinopoiskParser(BaseParser):
             if exact_match:
                 self.next_data['choices'].clear()
 
+            title = data['query'] if element.title == '' else element.title
+
             choise = {
                 'kinopoisk_id': element.id,
-                'title': self._normalize_query_text(element.title),
+                'title': self._normalize_query_text(title),
                 'year': element.year,
                 'url': element.get_url('main_page'),
                 'kinopoisk_url': element.get_url('main_page'),
@@ -302,6 +304,8 @@ class KinopoiskParser(BaseParser):
 
             exact_match = self.check_title_match_query_data(element, data)
 
+            title = data['query'] if element.title == '' else element.title
+
             series = 0
             year = element.year
             if len(element.seasons) >= data['season']:
@@ -313,7 +317,7 @@ class KinopoiskParser(BaseParser):
                 self.next_data['choices'].clear()
             choise = {
                 'kinopoisk_id': element.id,
-                'title': self._normalize_query_text(element.title),
+                'title': self._normalize_query_text(title),
                 'year': year,
                 'kinopoisk_url': element.get_url('main_page'),
                 'url': element.get_url('main_page'),
