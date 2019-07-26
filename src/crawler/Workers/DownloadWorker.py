@@ -53,6 +53,7 @@ class DownloadWorker(Worker):
         return messages
 
     def construct_messages(self, data):
+        messages = []
         for torrent_data in data:
             media = self.job
 
@@ -95,7 +96,7 @@ class DownloadWorker(Worker):
             }
             add_media_keys(media, add_torrent_data)
 
-            return [
+            messages += [
                 command_message(
                     ComponentType.CRAWLER,
                     ClientCommands.UPDATE_MEDIA,
@@ -115,4 +116,5 @@ class DownloadWorker(Worker):
                     self.job.client_id
                 )
             ]
+        return messages
 
