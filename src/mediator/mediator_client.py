@@ -62,7 +62,7 @@ class AppMediatorClient(MediatorClient):
         return self.__in_queue
 
     def __str__(self):
-        return '{} {}'.format(self.CLIENT_TYPE, ' '.join(str(action) for action in self.CLIENT_ACTIONS))
+        return '{}'.format(self.CLIENT_TYPE)
 
 
 def parser_message(

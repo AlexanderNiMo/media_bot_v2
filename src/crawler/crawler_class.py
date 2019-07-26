@@ -81,7 +81,10 @@ class Crawler(AppMediatorClient):
         logger.debug('Проверка статуса заданий.')
 
         for worker in self.active_workers:
-            self.messages += worker.result
+            try:
+                self.messages += worker.result
+            except Exception as ex:
+                logger.error('При обработке результата воркера {0} произошла ошибка {1}'.format(worker, ex))
         self.active_workers = list((i for i in self.active_workers if not i.ended))
 
     def handle_worker_results(self):

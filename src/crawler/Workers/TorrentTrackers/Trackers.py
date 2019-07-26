@@ -521,6 +521,8 @@ def search(conf, text):
     :param text:
     :return:
     """
+    logger.debug(f'Начало поиска по запросу {text}')
+
     trackers = get_trackers(conf)
     result = []
     for tracker in trackers:
