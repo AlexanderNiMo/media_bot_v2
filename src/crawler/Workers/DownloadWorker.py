@@ -43,6 +43,9 @@ class DownloadWorker(Worker):
         if data is None:
             return []
 
+        if not isinstance(data, list):
+            return []
+
         logger.debug('Получен не пустой результат работы Worker {}'.format(self.__class__.__name__))
 
         messages = self.construct_messages(data)
