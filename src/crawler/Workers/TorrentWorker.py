@@ -20,7 +20,7 @@ class TorrentSearchWorker(Worker):
 
     def __init__(self, job, config):
         super(TorrentSearchWorker, self).__init__(job, config)
-        self.serial_torrents = 10
+        self.serial_torrents = 8
 
     def get_target(self):
 
