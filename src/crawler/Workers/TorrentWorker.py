@@ -100,7 +100,7 @@ class TorrentSearchWorker(Worker):
 
 
 def success_message(data, job):
-    if job.media_type.value == MediaType.FILMS.value or len(data) == 1:
+    if len(data) == 1:
         return film_success_message(data.pop(), job)
     else:
         return serial_success_message(data, job)
