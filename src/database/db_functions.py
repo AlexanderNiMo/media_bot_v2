@@ -333,6 +333,20 @@ class DbManager:
             user, opt = result
             return opt.value
 
+    def delete_media(self, kinopoisk_id, season, media_type: MediaType, session=None):
+
+        if session is None:
+            session = self.session
+        filter_dict = dict(kinopoisk_id=kinopoisk_id)
+        data_class = self.Film
+        if media_type == MediaType.SERIALS:
+            filter_dict['season'] = season
+            data_class = self.Serial
+        data = session.query(data_class).filter_by(**filter_dict).first()
+
+        session.delete(data)
+        session.commit()
+        self.close_session()
 
 class MediaData:
     """
