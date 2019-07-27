@@ -1,6 +1,7 @@
 import logging
 from typing import List
 from queue import Empty
+import time
 
 from src.mediator import send_message, command_message, crawler_message
 from src.app_enums import ComponentType, ClientCommands, LockingStatus, MediaType, ActionType
@@ -33,6 +34,9 @@ class TorrentSearchWorker(Worker):
 
     def get_best_match(self, data: List[Torrent]):
 
+        if len(data) == 0:
+            return None
+
         f_list = [lambda x: not x.kinopoisk_id == '']
         f_data = filter(lambda x: not x.kinopoisk_id == '', data)
 
@@ -50,10 +54,17 @@ class TorrentSearchWorker(Worker):
             new_data = list(filter(filter_func, result))
             result = new_data
 
+        if len(list(result)) == 0:
+            current_year = int(time.asctime().split(' ')[-1])
+            # Если это старый фильм\сериал возможно, что нет стандартного качества, будем предлагать выбор
+            if self.job.year < current_year - 5:
+                result = data
+            else:
+                return None
+
         s_data = sorted(list(result), key=lambda x: x.pier, reverse=True)
         res = list(s_data)
-        if len(res) == 0:
-            return None
+
         return res[0:self.serial_torrents]
 
     @property
