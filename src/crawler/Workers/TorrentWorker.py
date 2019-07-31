@@ -58,7 +58,7 @@ class TorrentSearchWorker(Worker):
             return None
             current_year = int(time.asctime().split(' ')[-1])
             # Если это старый фильм\сериал возможно, что нет стандартного качества, будем предлагать выбор
-            if self.job.year < current_year - 5:
+            if self.job.year < current_year - 15:
                 result = data
             else:
                 return None
