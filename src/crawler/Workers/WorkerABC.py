@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 
 from multiprocessing import Process, Queue
 from threading import Thread
+from .utils import MediaTask
 
 
 class AbstractCrawlerWorker(metaclass=ABCMeta):
@@ -11,7 +12,7 @@ class AbstractCrawlerWorker(metaclass=ABCMeta):
 
     """
 
-    def __init__(self, job, config):
+    def __init__(self, job: MediaTask, config):
         self.process = None
         self.returned_data = Queue()
         self.job = job

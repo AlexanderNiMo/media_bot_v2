@@ -5,7 +5,7 @@ import math
 from queue import Empty
 
 from src.app.app_config import default_conf as config
-from src.app_enums import ComponentType, ClientCommands, ActionType
+from src.app_enums import ComponentType, ClientCommands, ActionType, MediaType
 from src.mediator import command_message, crawler_message, send_message, MediatorMessage
 from src.crawler.Workers.WorkerABC import Worker
 
@@ -44,6 +44,7 @@ class TorrentWorker(Worker):
     def add_torrent(self):
         client = self.get_client()
         if client is None:
+            self.save_file_to_folder()
             return
         if self.job.season == '':
             dir_path = self.config.TORRENT_FILM_PATH
@@ -77,6 +78,15 @@ class TorrentWorker(Worker):
             if time.time() - start_time == 60 * 60:
                 break
             time.sleep(60 * 5)
+
+    def save_file_to_folder(self):
+
+        dir_path = '/data/ftp/pub/Torrents/films/'
+        if self.job.media.media_type == MediaType.SERIALS:
+            dir_path = '/data/ftp/pub/Torrents/serials/'
+
+        with open(f'{dir_path}{self.job.torrent_id}', 'wb') as file:
+            file.write(self.job.crawler_data.torrent_data)
 
     def _get_torrent_information(self, client):
         pass
