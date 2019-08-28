@@ -48,7 +48,9 @@ def create_default_config(parser: configparser.ConfigParser):
 
     parser['Torrents_folders'] = {
         'film_folder': '',
-        'serial_folder': ''
+        'serial_folder': '',
+        'film_torrent_folder': '',
+        'serial_torrent_folder': '',
     }
 
     parser['logger'] = {'logger_level': 'info'}
@@ -119,6 +121,8 @@ class Config:
             'DATABASE_NAME': ['database', 'base_name'],
             'TORRENT_FILM_PATH': ['Torrents_folders', 'film_folder'],
             'TORRENT_SERIAL_PATH': ['Torrents_folders', 'serial_folder'],
+            'TORRENT_DOWNLOAD_FILM_PATH': ['Torrents_folders', 'film_torrent_folder'],
+            'TORRENT_DOWNLOAD_SERIAL_PATH': ['Torrents_folders', 'serial_torrent_folder'],
             'LOGGER_LEVEL': ['logger', 'logger_level'],
             'TORRENT_TYPE': ['torrent_client', 'type'],
             'TORRENT_HOST': ['torrent_client', 'host'],

@@ -81,9 +81,9 @@ class TorrentWorker(Worker):
 
     def save_file_to_folder(self):
 
-        dir_path = '/data/ftp/pub/Torrents/films/'
+        dir_path = self.config.TORRENT_DOWNLOAD_FILM_PATH
         if self.job.media.media_type == MediaType.SERIALS:
-            dir_path = '/data/ftp/pub/Torrents/serials/'
+            dir_path = self.config.TORRENT_DOWNLOAD_SERIAL_PATH
 
         with open(f'{dir_path}{self.job.torrent_id}', 'wb') as file:
             file.write(self.job.crawler_data.torrent_data)
