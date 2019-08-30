@@ -7,4 +7,4 @@
 
 """
 
-from .protocols import BotProtocol
+from .protocols import BotProtocol, console_protocol
