@@ -55,7 +55,6 @@ class TorrentSearchWorker(Worker):
             result = new_data
 
         if len(list(result)) == 0:
-            return None
             current_year = int(time.asctime().split(' ')[-1])
             # Если это старый фильм\сериал возможно, что нет стандартного качества, будем предлагать выбор
             if self.job.year < current_year - 15:
@@ -131,11 +130,11 @@ def film_success_message(data, job):
     })
 
     return command_message(
-            ComponentType.CRAWLER,
-            ClientCommands.UPDATE_MEDIA,
-            command_data,
-            job.client_id
-        )
+        ComponentType.CRAWLER,
+        ClientCommands.UPDATE_MEDIA,
+        command_data,
+        job.client_id
+    )
 
 
 def serial_success_message(data, job):
@@ -147,12 +146,14 @@ def serial_success_message(data, job):
     for elem in data:
         call_back_data = {}
         add_media_keys(job, call_back_data)
-        call_back_data.update({
-            'action': action_name,
-            'download_url': elem.url,
-            'theam_id': elem.theam_url,
-            'torrent_tracker': elem.tracker,
-        })
+        call_back_data.update(
+            {
+                'action': action_name,
+                'download_url': elem.url,
+                'theam_id': elem.theam_url,
+                'torrent_tracker': elem.tracker,
+            }
+        )
 
         choice_list.append(
             {

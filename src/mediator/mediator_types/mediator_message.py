@@ -33,7 +33,12 @@ class MediatorActionMessage(MediatorMessage):
         self.__data = None
 
     def __repr__(self):
-        return 'Сообщение от {2} для {0} на выполнение {1}'.format(self.component, self.action, self.from_component)
+        return 'Сообщение от {2} для {0} на выполнение {1} с данными {3}'.format(
+            self.component,
+            self.action,
+            self.from_component,
+            self.data,
+        )
 
     def __bool__(self):
         return self.__component_type is not None and self.__data is not None and self.__action is not None

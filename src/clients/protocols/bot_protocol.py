@@ -54,7 +54,7 @@ class BotProtocol(AppMediatorClient):
         self.__bot.send_message(user_id, text, choices)
 
     def handle_message(self, message: MediatorActionMessage):
-        logger.debug('Полученно новое сообщение. {}'.format(message))
+        logger.info('Полученно новое сообщение. {}'.format(message))
         self.send_bot_message(message.data.message_text, message.data.user_id, message.data.choices)
 
     def create_bot(self):
