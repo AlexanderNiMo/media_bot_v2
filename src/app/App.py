@@ -14,10 +14,9 @@ import logging
 import time
 
 
-def create_app_test():
+def configure_logger():
 
     log_file_name = 'main.log'
-
     logger = logging.getLogger()
 
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
@@ -37,6 +36,20 @@ def create_app_test():
     elif config.LOGGER_LEVEL == 'debug':
         logger.setLevel(logging.DEBUG)
         logger.addHandler(consol_hndl)
+
+    log_file_name = 'telegramm.log'
+
+    telegramm_logger = logging.getLogger('telegram')
+    telegramm_logger.setLevel(logging.ERROR)
+
+    file_hndl = logging.FileHandler(log_file_name)
+    file_hndl.setFormatter(formatter)
+
+    logger.addHandler(file_hndl)
+
+def create_app_test():
+
+    configure_logger()
 
     mediator_q = Queue()
 
