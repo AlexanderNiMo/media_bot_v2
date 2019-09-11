@@ -11,6 +11,7 @@ from src.command_handler import CommandMessageHandler
 from src.app.app_config import default_conf as config
 
 import logging
+from logging.handlers import RotatingFileHandler
 import time
 
 
@@ -24,7 +25,7 @@ def configure_logger():
     consol_hndl = logging.StreamHandler()
     consol_hndl.setFormatter(formatter)
 
-    file_hndl = logging.FileHandler(log_file_name)
+    file_hndl = RotatingFileHandler(log_file_name, maxBytes=500, backupCount=3)
     file_hndl.setFormatter(formatter)
 
     logger.addHandler(file_hndl)
@@ -42,7 +43,7 @@ def configure_logger():
     telegramm_logger = logging.getLogger('telegram')
     telegramm_logger.setLevel(logging.ERROR)
 
-    file_hndl = logging.FileHandler(log_file_name)
+    file_hndl = RotatingFileHandler(log_file_name, maxBytes=200, backupCount=1)
     file_hndl.setFormatter(formatter)
 
     logger.addHandler(file_hndl)
