@@ -49,6 +49,8 @@ class TorrentSearchWorker(Worker):
             f_list.append(lambda x: x.size <= float(15))
             f_list.append(lambda x: x.size >= float(4))
 
+        f_list.append(lambda x: ' UKR' not in x.title.label.upper() >= float(4))
+
         result = data
         for filter_func in f_list:
             new_data = list(filter(filter_func, result))

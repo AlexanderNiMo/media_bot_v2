@@ -14,11 +14,12 @@ import logging
 from logging.handlers import RotatingFileHandler
 import time
 
+logger = logging.getLogger()
+
 
 def configure_logger():
 
     log_file_name = 'main.log'
-    logger = logging.getLogger()
 
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
 
@@ -48,9 +49,11 @@ def configure_logger():
 
     logger.addHandler(file_hndl)
 
+    return file_hndl
+
 def create_app_test():
 
-    configure_logger()
+    file_hndl = configure_logger()
 
     mediator_q = Queue()
 
