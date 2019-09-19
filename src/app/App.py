@@ -26,10 +26,14 @@ def configure_logger():
     consol_hndl = logging.StreamHandler()
     consol_hndl.setFormatter(formatter)
 
-    file_hndl = RotatingFileHandler(log_file_name, maxBytes=500, backupCount=3)
+    file_hndlrs = []
+
+    file_hndl = RotatingFileHandler(log_file_name, maxBytes=15000, backupCount=3)
     file_hndl.setFormatter(formatter)
 
     logger.addHandler(file_hndl)
+
+    file_hndlrs.append(file_hndl)
 
     if config.LOGGER_LEVEL == 'info':
         logger.setLevel(logging.INFO)
@@ -49,11 +53,13 @@ def configure_logger():
 
     logger.addHandler(file_hndl)
 
-    return file_hndl
+    file_hndlrs.append(file_hndl)
+
+    return file_hndlrs
 
 def create_app_test():
 
-    file_hndl = configure_logger()
+    file_hndlrs = configure_logger()
 
     mediator_q = Queue()
 
@@ -83,7 +89,8 @@ def create_app_test():
                 mediator.start()
             mediator.check_clients()
     finally:
-        file_hndl.close()
+        for file_hndl in file_hndlrs:
+            file_hndl.close()
 
 
 def reglament_work(mediator: AppMediator):
