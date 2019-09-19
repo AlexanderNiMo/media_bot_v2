@@ -15,10 +15,11 @@ logger = logging.getLogger(__name__)
 
 HEADERS = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    'Connection': 'keep-alive',
+    'Proxy-Connection': 'keep-alive',
     'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
     'Accept-Encoding': 'gzip, deflate, lzma, sdch',
     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36',
+
 }
 
 

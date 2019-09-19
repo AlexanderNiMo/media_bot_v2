@@ -88,15 +88,15 @@ class TestCrawlerWeb(TestCase):
         return self.crawler.messages
 
     def test_find_film_crawler(self):
-        return
-        film_id = 12198
+
+        film_id = 4199
         self.test_context.add_test_film(
             session=self.db.get_session(),
             client_id=self.client_id,
             kinopoisk_id=film_id,
-            label='Игра',
+            label='Лучше не бывает',
             year=1997,
-            url='https://www.kinopoisk.ru/film/12198/',
+            url='https://www.kinopoisk.ru/film/4199/',
         )
 
         message = crawler_message(
