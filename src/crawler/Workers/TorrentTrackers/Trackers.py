@@ -577,6 +577,8 @@ def get_torrent_details(data_dict):
 
     if torrent_ditails is None:
         file_amount = 0
+        torrent_ditails = {}
+
     elif 'files' in torrent_ditails['info'].keys():
         file_amount = len([i for i in torrent_ditails['info']['files'] if get_ext(i.get('path')[-1]) in media_ext()])
     elif 'name' in torrent_ditails['info'].keys():
