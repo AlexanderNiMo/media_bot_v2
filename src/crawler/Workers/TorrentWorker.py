@@ -50,7 +50,7 @@ class TorrentSearchWorker(Worker):
             f_list.append(lambda x: x.size >= float(4))
 
         sound_f = lambda x: 'RUSSIAN' in x.sound
-        if len(list(filter(sound_f, data))) != 0:
+        if len(list(filter(sound_f, data))) != 0 or len(data) == 1:
             f_list.append(sound_f)
 
         result = data
