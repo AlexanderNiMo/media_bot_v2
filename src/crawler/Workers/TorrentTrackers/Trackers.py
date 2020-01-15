@@ -27,7 +27,7 @@ class Torrent:
 
     def __init__(self, label, url, size, data, file_name,
                  pier, resolution, theam_url, file_amount,
-                 kinopoisk_id, tracker):
+                 kinopoisk_id, tracker, sound, sub):
         self.label = label
         self.url = url
         self.size = size
@@ -39,6 +39,8 @@ class Torrent:
         self.file_amount = file_amount
         self.kinopoisk_id = int(kinopoisk_id) if not kinopoisk_id == '' else 0
         self.tracker = tracker
+        self.sound = sound
+        self.sub = sub
 
     def __repr__(self):
         return '<torrent label:{0}, pier:{3}, kinopoisk_id:{1}, files:{2}>'.format(
@@ -151,16 +153,16 @@ class TorrentTracker(AbcTorrentTracker):
             'id': torr_id
         }
 
-    def get_resolution(self, url, title):
+    def get_resolution(self, page_soup, title):
         resolutions = ['720', '1080']
         for res in resolutions:
             if res in title:
                 result = res
                 return result
-        result = self.get_resolution_from_page(url)
+        result = self.get_resolution_from_page(page_soup)
         return result
 
-    def get_resolution_from_page(self, url):
+    def get_resolution_from_page(self, page_soup):
         pass
 
     def test_login_status(self):
@@ -285,7 +287,8 @@ class Rutracker(TorrentTracker):
     def create_torrent(self, search_line) -> Torrent or None:
         tor_dict = dict(
             label='', url='', size=0, data='', file_name='',
-            pier=0, resolution=None, theam_url='', file_amount=0, kinopoisk_id='', tracker=''
+            pier=0, resolution=None, theam_url='', file_amount=0, kinopoisk_id='', tracker='',
+            sound=[], sub=[]
         )
         for row in search_line.find_all('td'):
             try:
@@ -305,20 +308,20 @@ class Rutracker(TorrentTracker):
                 return None
             except NameError:
                 return None
+        resp = self.connection.get(tor_dict['theam_url'])
+        theam_soup = BeautifulSoup(resp.text, features='lxml')
 
-        tor_dict['resolution'] = self.get_resolution(tor_dict['theam_url'], tor_dict['label'])
+        tor_dict['resolution'] = self.get_resolution(theam_soup, tor_dict['label'])
         if tor_dict['resolution'] is None:
             return None
 
-        tor_dict['kinopoisk_id'] = self.get_kinopoisk_id(tor_dict['theam_url'])
+        tor_dict['kinopoisk_id'] = self.get_kinopoisk_id(theam_soup)
 
         tor_dict['tracker'] = self.site_type
 
         return Torrent(**tor_dict)
 
-    def get_kinopoisk_id(self, url):
-        resp = self.connection.get(url)
-        soup = BeautifulSoup(resp.text, features='lxml')
+    def get_kinopoisk_id(self, soup):
         data = soup.find_all('a', {'class', 'postLink'})
         result = ''
         for elem in data:
@@ -331,10 +334,8 @@ class Rutracker(TorrentTracker):
                 break
         return result
 
-    def get_resolution_from_page(self, url):
-        resp = self.connection.get(url)
-        if 'Видео:' not in resp.text:
-            return None
+    def get_resolution_from_page(self, page_soup):
+        pass
 
     def _get_sub_forum(self, forum_list):
         res = []
@@ -423,8 +424,9 @@ class Rutor(TorrentTracker):
 
     def create_torrent(self, search_line) -> Torrent or None:
         tor_dict = dict(
-            label='', url='', size=0, data='', file_name='', pier=0,
-            resolution=None, theam_url='', file_amount=0, kinopoisk_id='', tracker=''
+            label='', url='', size=0, data='', file_name='',
+            pier=0, resolution=None, theam_url='', file_amount=0, kinopoisk_id='', tracker='',
+            sound=[], sub=[]
         )
         rows = search_line.find_all('td')
         if len(rows) == 4:
@@ -464,18 +466,31 @@ class Rutor(TorrentTracker):
         except NameError:
             return None
 
-        tor_dict['resolution'] = self.get_resolution(tor_dict['theam_url'], tor_dict['label'])
+        resp = self.connection.get(tor_dict['theam_url'])
+        theam_soup = BeautifulSoup(resp.text, features='lxml')
+
+        tor_dict['resolution'] = self.get_resolution(theam_soup, tor_dict['label'])
         if tor_dict['resolution'] is None:
             return None
 
-        tor_dict['kinopoisk_id'] = self.get_kinopoisk_id(tor_dict['theam_url'])
+        tor_dict['kinopoisk_id'] = self.get_kinopoisk_id(theam_soup)
         tor_dict['tracker'] = self.site_type
+
+        details = theam_soup.select('#details')
+        if len(details) > 0:
+            details = details[0].text
+
+            sounds_re = re.findall(r'^(Language|Язык)\s*:\s*(\w*).*$', details, re.MULTILINE)
+            for s_re in sounds_re:
+                tor_dict['sound'].append(s_re[1].upper())
+
+            sub = re.findall(r'^Субтитры\s*: (\w*).*$', details, re.MULTILINE)
+            for s_re in sub:
+                tor_dict['sub'].append(s_re.upper())
 
         return Torrent(**tor_dict)
 
-    def get_kinopoisk_id(self, url):
-        resp = self.connection.get(url)
-        soup = BeautifulSoup(resp.text, features='lxml')
+    def get_kinopoisk_id(self, soup):
         data = soup.find_all('a')
         result = ''
         for elem in data:
