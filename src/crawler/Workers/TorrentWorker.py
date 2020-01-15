@@ -49,7 +49,9 @@ class TorrentSearchWorker(Worker):
             f_list.append(lambda x: x.size <= float(15))
             f_list.append(lambda x: x.size >= float(4))
 
-        f_list.append(lambda x: ' UKR' not in x.label.upper())
+        sound_f = lambda x: 'РУССКИЙ' in x.sound
+        if len(list(filter(sound_f, data))) != 0:
+            f_list.append(sound_f)
 
         result = data
         for filter_func in f_list:
