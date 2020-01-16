@@ -53,6 +53,8 @@ class TorrentSearchWorker(Worker):
         if len(list(filter(sound_f, data))) != 0 or len(data) == 1:
             f_list.append(sound_f)
 
+        f_list.append(lambda x: not x.with_advertising)
+
         result = data
         for filter_func in f_list:
             new_data = list(filter(filter_func, result))

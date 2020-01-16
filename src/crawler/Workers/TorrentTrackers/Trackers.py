@@ -27,7 +27,7 @@ class Torrent:
 
     def __init__(self, label, url, size, data, file_name,
                  pier, resolution, theam_url, file_amount,
-                 kinopoisk_id, tracker, sound, sub):
+                 kinopoisk_id, tracker, sound, sub, with_advertising=False):
         self.label = label
         self.url = url
         self.size = size
@@ -41,6 +41,7 @@ class Torrent:
         self.tracker = tracker
         self.sound = sound
         self.sub = sub
+        self.with_advertising = with_advertising
 
     def __repr__(self):
         return '<torrent label:{0}, pier:{3}, kinopoisk_id:{1}, files:{2}>'.format(
@@ -426,7 +427,7 @@ class Rutor(TorrentTracker):
         tor_dict = dict(
             label='', url='', size=0, data='', file_name='',
             pier=0, resolution=None, theam_url='', file_amount=0, kinopoisk_id='', tracker='',
-            sound=[], sub=[]
+            sound=[], sub=[], with_advertising=False
         )
         rows = search_line.find_all('td')
         if len(rows) == 4:
@@ -487,6 +488,7 @@ class Rutor(TorrentTracker):
             sub = re.findall(r'^Субтитры\s*: (\w*).*$', details, re.MULTILINE)
             for s_re in sub:
                 tor_dict['sub'].append(s_re.upper())
+            tor_dict['with_advertising'] = 'реклама'.upper() in details.upper()
 
         return Torrent(**tor_dict)
 
