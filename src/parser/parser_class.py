@@ -242,8 +242,6 @@ class KinopoiskParser(BaseParser):
         return sucsess
 
     def find_film(self, data: dict) -> [bool, list]:
-        # Корректировка xpath для URL
-        movie.MovieLink.xpath['url'] = './/p[@class="name"]/a/@data-url'
         result = movie.Movie.objects.search(data['query'])
 
         if len(result) == 0:
