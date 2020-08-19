@@ -102,7 +102,7 @@ class TestParser(unittest.TestCase):
             needed_data,
             {
                 'media_type': src.app_enums.MediaType.FILMS,
-                'query': 'Гарри поттер'.upper(),
+                'query': 'Гарри Поттер и философский камень'.upper(),
                 'year': 2001
             }
         )
@@ -113,6 +113,15 @@ class TestParser(unittest.TestCase):
         self.assertEqual(target_message.data.data['kinopoisk_url'],
                          'http://www.kinopoisk.ru/film/689/',
                          'не верено определен url')
+
+        target_message = self.parse_data(
+            needed_data,
+            {
+                'media_type': src.app_enums.MediaType.FILMS,
+                'query': 'Бетховен'.upper(),
+                'year': 1992
+            }
+        )
 
     def test_get_data_telegramm(self):
         needed_data = ['nick', 'name', 'last_name']
@@ -146,7 +155,7 @@ class TestParser(unittest.TestCase):
                         'media_type': src.app_enums.MediaType.SERIALS,
                         'title': 'Игра престолов',
                         'season': 1,
-                        'year': 2011
+                        'year': 2010
                     }
         )
 

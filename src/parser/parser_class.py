@@ -666,7 +666,7 @@ class TextQueryParser(BaseParser):
                         ComponentType.PARSER, {
                             'user_id': data.client_id,
                             'message_text': 'Для поиска сериала, необходимо указать сезон!'
-                                            ' Пример: Название сериала сезон НомерСезона',
+                                            ' Пример: /serial Игра престолов 2011 сезон 1',
                             'choices': []
                         }
                     )
