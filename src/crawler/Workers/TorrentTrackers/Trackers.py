@@ -8,6 +8,7 @@ import requests
 import torrent_parser
 import inspect
 import sys
+from time import sleep
 
 from src.app_enums import TorrentType
 
@@ -195,6 +196,7 @@ class TorrentTracker(AbcTorrentTracker):
 
     @property
     def connection(self):
+        sleep(0.5)
         if self._connection is None:
             self._connection = self.get_connection()
         return self._connection
@@ -293,7 +295,7 @@ class Rutracker(TorrentTracker):
         )
         for row in search_line.find_all('td'):
             try:
-                if 't-title' in row['class']:
+                if 't-title-col' in row['class']:
                     tor_dict['label'] = row.a.text
                     tor_dict['theam_url'] = '{1}/{0}'.format(row.a['href'], self.site_domain)
                 elif 'tor-size' in row['class']:
@@ -544,8 +546,10 @@ def search(conf, text):
     trackers = get_trackers(conf)
     result = []
     for tracker in trackers:
-        result += tracker.search(text)
-
+        try:
+            result += tracker.search(text)
+        except Exception as ex:
+            logger.error(f'При поиске по трекеру {tracker.site_name} произошла ошибка: {ex}')
     return result
 
 
