@@ -47,7 +47,7 @@ class TorrentSearchWorker(Worker):
         if self.job.season == '':
             f_list.append(lambda x: x.file_amount < 4)
             f_list.append(lambda x: x.size <= float(15))
-            f_list.append(lambda x: x.size >= float(4))
+            f_list.append(lambda x: x.size >= float(3.5))
 
         sound_f = lambda x: 'RUSSIAN' in x.sound
         if len(list(filter(sound_f, data))) != 0 or len(data) == 1:
