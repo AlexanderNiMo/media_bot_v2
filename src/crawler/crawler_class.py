@@ -78,7 +78,6 @@ class Crawler(AppMediatorClient):
 
         :return:
         """
-        logger.debug('Проверка статуса заданий.')
 
         for worker in self.active_workers:
             try:
@@ -88,7 +87,6 @@ class Crawler(AppMediatorClient):
         self.active_workers = list((i for i in self.active_workers if not i.ended))
 
     def handle_worker_results(self):
-        logger.debug('Обработка результатов работы.')
         ex = None
         try:
             for elem in self.messages:

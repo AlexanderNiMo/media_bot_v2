@@ -76,12 +76,9 @@ class BotProtocol(AppMediatorClient):
     def check_bot_instanse(self):
         while True:
             time.sleep(60)
-            logger.debug('Начало проверки состояния процесса bot.')
             if self.bot_process is None or not self.bot_process.is_alive():
                 logger.error('Bot мертв, перезапускаю.')
                 self.start_bot_process()
-            else:
-                logger.debug('Bot жив-здоров.')
 
 
 class Bot:

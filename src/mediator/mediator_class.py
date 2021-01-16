@@ -119,7 +119,6 @@ class AppMediator(Mediator):
         Выполняет проверку живы ли клиенты и перезапускает из при необходимости
         :return:
         """
-        logger.debug('Начало проверки состояния процессов клиентов')
         for d_client in self.__clients:
             client = d_client['client']
 
