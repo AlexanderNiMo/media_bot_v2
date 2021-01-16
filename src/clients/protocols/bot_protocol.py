@@ -232,7 +232,7 @@ class Bot:
     def updater(self):
         if self.__updater is None:
             r_kw = {}
-            if not self.__config.PROXY_URL == '':
+            if not self.__config.PROXY_URL == '' and False:
                 r_kw.update({
                     'proxy_url': self.__config.PROXY_URL,
                     'urllib3_proxy_kwargs': {"username": self.__config.PROXY_USER, "password": self.__config.PROXY_PASS}

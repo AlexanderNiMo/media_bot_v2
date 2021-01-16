@@ -5,7 +5,7 @@ from tests.utils import TestEnvCreator
 
 from src.mediator import CrawlerData, crawler_message
 from src.app_enums import ActionType, ComponentType, MediaType, ClientCommands
-from crawler.Workers.utils import MediaTask
+from src.crawler.Workers.utils import MediaTask
 import src
 
 
@@ -89,14 +89,24 @@ class TestCrawlerWeb(TestCase):
 
     def test_find_film_crawler(self):
 
-        film_id = 4199
+        # film_id = 4199
+        # self.test_context.add_test_film(
+        #     session=self.db.get_session(),
+        #     client_id=self.client_id,
+        #     kinopoisk_id=film_id,
+        #     label='Лучше не бывает',
+        #     year=1997,
+        #     url='https://www.kinopoisk.ru/film/4199/',
+        # )
+
+        film_id = 1053352
         self.test_context.add_test_film(
             session=self.db.get_session(),
             client_id=self.client_id,
             kinopoisk_id=film_id,
-            label='Лучше не бывает',
-            year=1997,
-            url='https://www.kinopoisk.ru/film/4199/',
+            label='Мальчик, который обуздал ветер',
+            year=2019,
+            url='https://www.kinopoisk.ru/film/1053352/',
         )
 
         message = crawler_message(

@@ -1,3 +1,4 @@
+from logging import LogRecord
 from multiprocessing import Queue
 from threading import Thread
 
@@ -17,7 +18,22 @@ import time
 logger = logging.getLogger()
 
 
+class TelegramBotFilter(logging.Filter):
+
+    def filter(self, record: LogRecord) -> int:
+
+        return 'telegram' in record.processName
+
+
+class MediatorMessagesFilter(logging.Filter):
+
+    def filter(self, record: LogRecord) -> int:
+        return super().filter(record)
+
+
 def configure_logger():
+
+    file_handlers = []
 
     log_file_name = 'main.log'
 
@@ -26,14 +42,13 @@ def configure_logger():
     consol_hndl = logging.StreamHandler()
     consol_hndl.setFormatter(formatter)
 
-    file_hndlrs = []
+    logger.addHandler(consol_hndl)
 
-    file_hndl = RotatingFileHandler(log_file_name, maxBytes=15000, backupCount=3)
+    file_hndl = RotatingFileHandler(log_file_name, maxBytes=150000, backupCount=3)
     file_hndl.setFormatter(formatter)
 
     logger.addHandler(file_hndl)
-
-    file_hndlrs.append(file_hndl)
+    file_handlers.append(file_hndl)
 
     if config.LOGGER_LEVEL == 'info':
         logger.setLevel(logging.INFO)
@@ -48,14 +63,14 @@ def configure_logger():
     telegramm_logger = logging.getLogger('telegram')
     telegramm_logger.setLevel(logging.ERROR)
 
-    file_hndl = RotatingFileHandler(log_file_name, maxBytes=200, backupCount=1)
+    file_hndl = RotatingFileHandler(log_file_name, maxBytes=150000, backupCount=1)
     file_hndl.setFormatter(formatter)
 
     logger.addHandler(file_hndl)
+    file_handlers.append(file_hndl)
 
-    file_hndlrs.append(file_hndl)
+    return file_handlers
 
-    return file_hndlrs
 
 def create_app_test():
 
@@ -80,7 +95,6 @@ def create_app_test():
     try:
         while True:
             time.sleep(30)
-            logger.debug('Проверка активности медиатора....')
             if not mediator.is_alive():
                 logger.error('Медиатор умер, пеерзапускаю...')
                 mediator = AppMediator(mediator_q, mediator.clients)
