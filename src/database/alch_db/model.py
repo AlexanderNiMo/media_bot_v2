@@ -93,6 +93,7 @@ class MediaData(Base):
     kinopoisk_url = Column(Unicode(400))
 
     torrent_id = Column(Unicode(100))
+    img_link = Column(Unicode(500))
 
     __mapper_args__ = {
         'polymorphic_identity': MediaType.BASE_MEDIA,

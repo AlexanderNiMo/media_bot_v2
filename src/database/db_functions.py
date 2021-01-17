@@ -1,5 +1,6 @@
 from src.database.alch_db import get_session, get_scorp_session, init_db, OperationalError, create_db, StaticPool
 from src.app_enums import UserRule, UserOptions, MediaType, LockingStatus
+from typing import List, Union, Optional
 
 
 class DbManager:
@@ -32,7 +33,7 @@ class DbManager:
         else:
             connection_str = self.__get_connection_str()
             args['encoding'] = 'utf-8'
-            args['connect_args'] ={'check_same_thread':False}
+            args['connect_args'] ={'check_same_thread': False}
             args['poolclass'] = StaticPool
         try:
             enj = init_db(connection_str, **args)
@@ -56,7 +57,7 @@ class DbManager:
         self.__session.close()
         self.__session = None
 
-    def get_users_for_notification(self, media_id, media_type, season=0, session=None)->list:
+    def get_users_for_notification(self, media_id, media_type, season=0, session=None) -> list:
         if session is None:
             session = self.session
         users = []
@@ -80,7 +81,7 @@ class DbManager:
         return users
 
     @staticmethod
-    def construct_media_by_orm_object(elem):
+    def construct_media_by_orm_object(elem: Union[Film, Serial]) -> Optional[MediaData]:
         if elem is None:
             return None
         media_type = MediaType.FILMS
@@ -111,10 +112,11 @@ class DbManager:
             'season': season,
             'status': elem.status,
             'current_series': current_series,
+            'img_link': elem.img_link,
         }
         return MediaData(**data_dict)
 
-    def find_all_media(self, media_type, session=None)->MediaData:
+    def find_all_media(self, media_type, session=None) -> List[MediaData]:
         result = []
         data = self._find_all_media(media_type, session)
         for elem in data:
@@ -138,7 +140,7 @@ class DbManager:
         data = session.query(data_class).filter(data_class.status != LockingStatus.ENDED).all()
         return data
 
-    def find_media(self, kinopoisk_id, media_type, season=None, session=None)->MediaData:
+    def find_media(self, kinopoisk_id, media_type, season=None, session=None) -> MediaData:
         data = self._find_media(kinopoisk_id, media_type, season, session)
         return self.construct_media_by_orm_object(data)
 
@@ -159,10 +161,9 @@ class DbManager:
             filter_dict['season'] = season
             data_class = self.Serial
         data = session.query(data_class).filter_by(**filter_dict).first()
-        self.close_session()
         return data
 
-    def find_media_by_label(self, label, year, media_type, season=None, session=None)->MediaData:
+    def find_media_by_label(self, label, year, media_type, season=None, session=None) -> MediaData:
         data = self._find_media_by_label(label, year, media_type, season, session)
         return self.construct_media_by_orm_object(data)
 
@@ -215,7 +216,7 @@ class DbManager:
     def is_admin(self, client_id):
         return client_id == int(self.config.TELEGRAMM_BOT_USER_ADMIN)
 
-    def update_media_params(self, media_id: int, upd_data: dict, media_type, season: int=0, session=None,
+    def update_media_params(self, media_id: int, upd_data: dict, media_type, season: int = 0, session=None,
                             *args, **kwargs):
         close = False
         if session is None:
@@ -245,10 +246,10 @@ class DbManager:
         if close:
             session.close()
 
-    def add_film(self, client_id, kinopoisk_id, label, year, url, session=None)->MediaData:
+    def add_film(self, client_id, kinopoisk_id, label, year, url, session=None, cover_url='') -> MediaData:
         if session is None:
             session = self.session
-        film = self.Film(kinopoisk_id=kinopoisk_id, label=label, year=year, kinopoisk_url=url)
+        film = self.Film(kinopoisk_id=kinopoisk_id, label=label, year=year, kinopoisk_url=url, img_link=cover_url)
         user = self.find_user(client_id, session=session)
         user.media.append(film)
         if user is None:
@@ -259,7 +260,8 @@ class DbManager:
         res_film = self.construct_media_by_orm_object(film)
         return res_film
 
-    def add_serial(self, client_id, kinopoisk_id, label, year, season, url, series=0, session=None) ->MediaData:
+    def add_serial(self, client_id, kinopoisk_id, label, year, season,
+                   url, series=0, session=None, cover_url='') -> MediaData:
         if session is None:
             session = self.session
         serial = self.Serial(
@@ -268,7 +270,9 @@ class DbManager:
             year=year,
             season=season,
             series=series,
-            kinopoisk_url=url)
+            kinopoisk_url=url,
+            img_link=cover_url,
+        )
         user = self.find_user(client_id, session=session)
         if user is None:
             raise EnvironmentError(f'No user by id {client_id}')
@@ -299,12 +303,7 @@ class DbManager:
         session.commit()
 
     def change_user_option(self, client_id, option_name: UserOptions, value=0, session=None):
-        if session is None:
-            session = self.session
-        result = session.query(self.User, self.UserOptionsT). \
-            filter(self.User.id == self.UserOptionsT.user_id). \
-            filter(self.User.client_id == client_id). \
-            filter(self.UserOptionsT.option == option_name).first()
+        result = self._get_user_options(client_id, option_name, session)
         if result is None:
             opt = self.UserOptionsT(option=option_name, value=1)
             user = self.find_user(client_id, session)
@@ -320,13 +319,17 @@ class DbManager:
         session.commit()
         return new_value
 
-    def get_user_option(self, client_id, option_name: UserOptions, session=None):
+    def _get_user_options(self, client_id, option_name, session):
         if session is None:
             session = self.session
         result = session.query(self.User, self.UserOptionsT). \
             filter(self.User.id == self.UserOptionsT.user_id). \
             filter(self.User.client_id == client_id). \
             filter(self.UserOptionsT.option == option_name).first()
+        return result
+
+    def get_user_option(self, client_id, option_name: UserOptions, session=None):
+        result = self._get_user_options(client_id, option_name, session)
         if result is None:
             return 0
         else:
@@ -335,18 +338,11 @@ class DbManager:
 
     def delete_media(self, kinopoisk_id, season, media_type: MediaType, session=None):
 
-        if session is None:
-            session = self.session
-        filter_dict = dict(kinopoisk_id=kinopoisk_id)
-        data_class = self.Film
-        if media_type == MediaType.SERIALS:
-            filter_dict['season'] = season
-            data_class = self.Serial
-        data = session.query(data_class).filter_by(**filter_dict).first()
-
+        data = self._find_media(kinopoisk_id=kinopoisk_id, media_type=media_type, season=season, session=session)
         session.delete(data)
         session.commit()
         self.close_session()
+
 
 class MediaData:
     """
@@ -357,7 +353,7 @@ class MediaData:
     def __init__(self, media_id, title, year,
                  download_url, torrent_tracker,
                  theam_id, kinopoisk_url, torrent_id,
-                 media_type, status, season='', series=0, current_series=0):
+                 media_type, status, season='', series=0, current_series=0, img_link=''):
         self.media_id = int(media_id)
         self.title = title
         self.download_url = download_url
@@ -371,6 +367,7 @@ class MediaData:
         self.torrent_id = torrent_id
         self.media_type = media_type
         self.status = status
+        self.img_link = img_link
 
     @property
     def kinopoisk_id(self):

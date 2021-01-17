@@ -35,8 +35,10 @@ class TestCommandParser(TestCase):
             res = {'option': UserOptions.NOTIFICATION}
         elif command == '/serial':
             res = {'text': 'Игра престолов 2011 сезон 1'}
+        elif command == '/send_messages_to_all':
+            res = {}
         else:
-            raise Exception('Неизвестный идентификатор команды!')
+            raise Exception(f'Неизвестный идентификатор команды! {command}')
 
         return res
 

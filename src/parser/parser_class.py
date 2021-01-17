@@ -324,7 +324,7 @@ class MovieDBParser(BaseParser):
                     if series > 0:
                         year = episodes[1].data['year']
             except IMDbDataAccessError as ex:
-                logger.error(f'Ошибка получения данных о сериях {ex}')
+                logger.warning(f'Ошибка получения данных о сериях {ex}')
 
             cover_url = element.get('cover url')
 

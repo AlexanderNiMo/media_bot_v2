@@ -97,6 +97,10 @@ class TestParser(unittest.TestCase):
         self.assertEqual(target_message.data.data['kinopoisk_url'],
                          'https://www.imdb.com/title/tt2861424/',
                          'не верено определен url')
+        self.assertEqual(target_message.data.data['cover_url'],
+                         'https://m.media-amazon.com/images/M/MV5BZjRjOTFkOTktZWUzMi00YzMyLThkMmYtM'
+                         'jEwNmQyNzliYTNmXkEyXkFqcGdeQXVyNzQ1ODk3MTQ@._V1_UX32_CR0,0,32,44_AL_.jpg',
+                         'не верено определен url изображения')
 
         target_message = self.parse_data(
             needed_data,
