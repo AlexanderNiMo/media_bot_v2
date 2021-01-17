@@ -93,9 +93,9 @@ class TestParser(unittest.TestCase):
         )
 
         self.assertEqual(target_message.data.data['title'], 'Рик и Морти', 'Наименвоание определено не верно!')
-        self.assertEqual(target_message.data.data['kinopoisk_id'], 685246, 'Id определен не верно!')
+        self.assertEqual(target_message.data.data['kinopoisk_id'], '2861424', 'Id определен не верно!')
         self.assertEqual(target_message.data.data['kinopoisk_url'],
-                         'http://www.kinopoisk.ru/film/685246/',
+                         'https://www.imdb.com/title/tt2861424/',
                          'не верено определен url')
 
         target_message = self.parse_data(
@@ -109,9 +109,9 @@ class TestParser(unittest.TestCase):
 
         self.assertEqual(target_message.data.data['title'], 'Гарри Поттер и философский камень',
                          'Наименвоание определено не верно!')
-        self.assertEqual(target_message.data.data['kinopoisk_id'], 689, 'Id определен не верно!')
+        self.assertEqual(target_message.data.data['kinopoisk_id'], '0241527', 'Id определен не верно!')
         self.assertEqual(target_message.data.data['kinopoisk_url'],
-                         'http://www.kinopoisk.ru/film/689/',
+                         'https://www.imdb.com/title/tt0241527/',
                          'не верено определен url')
 
         target_message = self.parse_data(
@@ -119,7 +119,8 @@ class TestParser(unittest.TestCase):
             {
                 'media_type': src.app_enums.MediaType.SERIALS,
                 'query': 'Полуночная проповедь'.upper(),
-                'year': 1992
+                'season': 1,
+                'year': 2020
             }
         )
 

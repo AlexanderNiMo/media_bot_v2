@@ -5,7 +5,7 @@ import re
 from multiprocessing import Queue
 from abc import ABC, abstractmethod
 from plexapi.server import PlexServer
-from kinopoisk import movie
+from imdb import IMDb
 from telegram.ext import Updater
 from telegram import error as teleg_error
 
@@ -72,7 +72,7 @@ class TargetParser:
         self.parser_class_list = [
             TextQueryParser(None, self.config),
             PlexParser(None, self.config),
-            KinopoiskParser(None, self.config),
+            MovieDBParser(None, self.config),
             TextQueryParser(None, self.config),
             ParseTrackerThread(None, self.config),
             TelegrammParser(None, self.config),
@@ -224,11 +224,15 @@ class BaseParser(AbstractParser):
         return []
 
 
-class KinopoiskParser(BaseParser):
+class MovieDBParser(BaseParser):
     """
     Производит поиск данных по базе кинопоиска
 
     """
+
+    def __init__(self, base: AbstractParser, conf):
+        super(MovieDBParser, self).__init__(base, conf)
+        self.ia = IMDb()
 
     def parse_data(self, data: dict) -> bool:
 
@@ -247,7 +251,7 @@ class KinopoiskParser(BaseParser):
         return sucsess
 
     def find_film(self, data: dict) -> [bool, list]:
-        result = movie.Movie.objects.search(data['query'])
+        result = self.ia.search_movie(data['query'])
 
         if len(result) == 0:
             self.next_data = data.copy()
@@ -255,23 +259,25 @@ class KinopoiskParser(BaseParser):
             self.next_data = {'choices': []}
 
         for element in result:
+            tittle = self._get_ru_tittle(element)
+            year = element.data['year']
 
-            if 'year' in data.keys() and not element.year == data['year']:
+            if 'year' in data.keys() and not year == data['year']:
                 continue
 
-            exact_match = self.check_title_match_query_data(element, data)
+            exact_match = self.check_title_match_query_data(tittle, year, data)
 
             if exact_match:
                 self.next_data['choices'].clear()
 
-            title = data['query'] if element.title == '' else element.title
+            title = data['query'] if tittle == '' else tittle
 
             choise = {
-                'kinopoisk_id': element.id,
+                'kinopoisk_id': element.getID(),
                 'title': self._normalize_query_text(title),
-                'year': element.year,
-                'url': element.get_url('main_page'),
-                'kinopoisk_url': element.get_url('main_page'),
+                'year': year,
+                'url': self.ia.get_imdbURL(element),
+                'kinopoisk_url': self.ia.get_imdbURL(element),
                 'serial': False
             }
             self.next_data['choices'].append(choise)
@@ -286,7 +292,7 @@ class KinopoiskParser(BaseParser):
         return 'choices' not in self.next_data.keys()
 
     def find_serial(self, data: dict) -> [bool, list]:
-        result = movie.Movie.objects.search(data['query'])
+        result = self.ia.search_movie(data['query'])
 
         if len(result) == 0:
             self.next_data = data.copy()
@@ -295,33 +301,35 @@ class KinopoiskParser(BaseParser):
 
         for element in result:
 
-            if 'year' in data.keys() and not element.year == data['year']:
+            tittle = self._get_ru_tittle(element)
+            year = element.data['year']
+            media_id = element.getID()
+
+            if 'year' in data.keys() and not year == data['year']:
                 continue
-            try:
-                element.get_content('series')
-            except UnboundLocalError:
-                pass
 
-            exact_match = self.check_title_match_query_data(element, data)
+            exact_match = self.check_title_match_query_data(tittle, year, data)
 
-            title = data['query'] if element.title == '' else element.title
+            title = data['query'] if tittle == '' else tittle
 
             series = 0
-            year = element.year
-            if len(element.seasons) >= data['season']:
-                season = element.seasons[data['season'] - 1]
-                series = len(season.episodes)
-                year = season.year
+            season = data['season']
+            s = self.ia.get_movie_episodes(media_id)
+            episodes = s['data']['episodes'].get(data['season'])
+            if episodes is not None:
+                series = len(episodes)
+                if series > 0:
+                    year = episodes[1].data['year']
 
             if exact_match:
                 self.next_data['choices'].clear()
             choise = {
-                'kinopoisk_id': element.id,
+                'kinopoisk_id': media_id,
                 'title': self._normalize_query_text(title),
                 'year': year,
-                'kinopoisk_url': element.get_url('main_page'),
-                'url': element.get_url('main_page'),
-                'season': data['season'],
+                'kinopoisk_url': self.ia.get_imdbURL(element),
+                'url': self.ia.get_imdbURL(element),
+                'season': season,
                 'serial': True,
                 'series': series
             }
@@ -336,12 +344,22 @@ class KinopoiskParser(BaseParser):
 
         return 'choices' not in self.next_data.keys()
 
-    def check_title_match_query_data(self, element, data):
-
-        title_match = self._normalize_query_text(element.title.upper()) == self._normalize_query_text(data['query'])
-        year_match = ('year' in data.keys() and element.year == data['year']) or 'year' not in data.keys()
+    def check_title_match_query_data(self, tittle: str, year, data):
+        title_match = self._normalize_query_text(tittle.upper()) == self._normalize_query_text(data['query'])
+        year_match = ('year' in data.keys() and year == data['year']) or 'year' not in data.keys()
 
         return title_match and year_match
+
+    def _get_ru_tittle(self, imdb_obj, lang: str = 'Russia') -> str:
+        titles = self.ia.get_movie_akas(imdb_obj.getID())
+        ru_tittle = next(
+            map(
+                lambda x: x['title'],
+                filter(lambda x:  x['countries'] == lang, titles['data']['raw akas'])
+            ),
+            imdb_obj.data['title']
+        )
+        return ru_tittle
 
     def can_parse(self, data: dict):
         return 'query' in data.keys()
@@ -848,7 +866,7 @@ def get_parser_chain(config) -> BaseParser:
         BaseParser,
         DataBaseParser,
         PlexParser,
-        KinopoiskParser,
+        MovieDBParser,
         TextQueryParser,
         ParseTrackerThread,
     ]
@@ -870,7 +888,7 @@ if __name__ == '__main__':
     _class_list = [
         BaseParser,
         PlexParser,
-        KinopoiskParser,
+        MovieDBParser,
         TextQueryParser,
     ]
 

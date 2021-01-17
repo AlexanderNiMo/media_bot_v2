@@ -2,7 +2,7 @@ requests
 python-telegram-bot
 SQLAlchemy
 pickledb
-kinopoiskpy
+IMDbPY
 plexapi
 beautifulsoup4
 torrent_parser
