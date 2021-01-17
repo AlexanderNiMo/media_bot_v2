@@ -124,6 +124,16 @@ class TestParser(unittest.TestCase):
             }
         )
 
+        target_message = self.parse_data(
+            needed_data,
+            {
+                'media_type': src.app_enums.MediaType.SERIALS,
+                'query': 'WANDAVISION'.upper(),
+                'season': 1,
+                'year': 2021
+            }
+        )
+
 
     def test_get_data_telegramm(self):
         needed_data = ['nick', 'name', 'last_name']

@@ -352,6 +352,8 @@ class MovieDBParser(BaseParser):
 
     def _get_ru_tittle(self, imdb_obj, lang: str = 'Russia') -> str:
         titles = self.ia.get_movie_akas(imdb_obj.getID())
+        if 'raw akas' not in  titles['data']:
+            return imdb_obj.data['title']
         ru_tittle = next(
             map(
                 lambda x: x['title'],
