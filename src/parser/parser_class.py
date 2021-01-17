@@ -5,7 +5,7 @@ import re
 from multiprocessing import Queue
 from abc import ABC, abstractmethod
 from plexapi.server import PlexServer
-from imdb import IMDb
+from imdb import IMDb, IMDbDataAccessError
 from telegram.ext import Updater
 from telegram import error as teleg_error
 
@@ -314,12 +314,15 @@ class MovieDBParser(BaseParser):
 
             series = 0
             season = data['season']
-            s = self.ia.get_movie_episodes(media_id)
-            episodes = s['data']['episodes'].get(data['season'])
-            if episodes is not None:
-                series = len(episodes)
-                if series > 0:
-                    year = episodes[1].data['year']
+            try:
+                s = self.ia.get_movie_episodes(media_id)
+                episodes = s['data']['episodes'].get(data['season'])
+                if episodes is not None:
+                    series = len(episodes)
+                    if series > 0:
+                        year = episodes[1].data['year']
+            except IMDbDataAccessError as ex:
+                logger.error(f'Ошибка получения данных о сериях {ex}')
 
             if exact_match:
                 self.next_data['choices'].clear()
