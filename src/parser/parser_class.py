@@ -271,6 +271,7 @@ class MovieDBParser(BaseParser):
                 self.next_data['choices'].clear()
 
             title = data['query'] if tittle == '' else tittle
+            cover_url = element.get('cover url')
 
             choise = {
                 'kinopoisk_id': element.getID(),
@@ -278,7 +279,8 @@ class MovieDBParser(BaseParser):
                 'year': year,
                 'url': self.ia.get_imdbURL(element),
                 'kinopoisk_url': self.ia.get_imdbURL(element),
-                'serial': False
+                'serial': False,
+                'cover_url': cover_url
             }
             self.next_data['choices'].append(choise)
             if exact_match:
@@ -324,6 +326,8 @@ class MovieDBParser(BaseParser):
             except IMDbDataAccessError as ex:
                 logger.error(f'Ошибка получения данных о сериях {ex}')
 
+            cover_url = element.get('cover url')
+
             if exact_match:
                 self.next_data['choices'].clear()
             choise = {
@@ -334,7 +338,8 @@ class MovieDBParser(BaseParser):
                 'url': self.ia.get_imdbURL(element),
                 'season': season,
                 'serial': True,
-                'series': series
+                'cover_url': cover_url,
+                'series': series,
             }
             self.next_data['choices'].append(choise)
             if exact_match:
