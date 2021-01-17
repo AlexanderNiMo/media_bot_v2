@@ -271,7 +271,7 @@ class MovieDBParser(BaseParser):
                 self.next_data['choices'].clear()
 
             title = data['query'] if tittle == '' else tittle
-            cover_url = element.get('cover url')
+            cover_url = element.get_fullsizeURL()
 
             choise = {
                 'kinopoisk_id': element.getID(),
@@ -326,7 +326,7 @@ class MovieDBParser(BaseParser):
             except IMDbDataAccessError as ex:
                 logger.warning(f'Ошибка получения данных о сериях {ex}')
 
-            cover_url = element.get('cover url')
+            cover_url = element.get_fullsizeURL()
 
             if exact_match:
                 self.next_data['choices'].clear()
@@ -360,7 +360,7 @@ class MovieDBParser(BaseParser):
 
     def _get_ru_tittle(self, imdb_obj, lang: str = 'Russia') -> str:
         titles = self.ia.get_movie_akas(imdb_obj.getID())
-        if 'raw akas' not in  titles['data']:
+        if 'raw akas' not in titles['data']:
             return imdb_obj.data['title']
         ru_tittle = next(
             map(
