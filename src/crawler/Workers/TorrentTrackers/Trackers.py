@@ -328,7 +328,7 @@ class Rutracker(TorrentTracker):
         data = soup.find_all('a', {'class', 'postLink'})
         result = ''
         for elem in data:
-            if 'kinopoisk.ru' in elem['href']:
+            if 'www.imdb.com' in elem['href']:
                 result = re.search(r'\d+', elem['href'])
                 if result is not None:
                     result = result.group()
@@ -498,7 +498,7 @@ class Rutor(TorrentTracker):
         data = soup.find_all('a')
         result = ''
         for elem in data:
-            if 'kinopoisk.ru' in elem['href']:
+            if 'www.imdb.com' in elem['href']:
                 result = re.search(r'\d{3,}', elem['href'])
                 if result is not None:
                     result = result.group()
