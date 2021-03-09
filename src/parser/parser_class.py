@@ -371,7 +371,7 @@ class MovieDBParser(BaseParser):
         ru_tittle = next(
             map(
                 lambda x: x['title'],
-                filter(lambda x:  x['countries'] == lang, titles['data']['raw akas'])
+                filter(lambda x:  x.get('countries', None) == lang, titles['data']['raw akas'])
             ),
             imdb_obj.data['title']
         )
