@@ -259,6 +259,10 @@ class MovieDBParser(BaseParser):
             self.next_data = {'choices': []}
 
         for element in result:
+
+            if 'episode' in element.get('kind'):
+                continue
+
             tittle = self._get_ru_tittle(element)
             year = element.data['year']
 
@@ -302,6 +306,9 @@ class MovieDBParser(BaseParser):
             self.next_data = {'choices': []}
 
         for element in result:
+
+            if 'episode' in element.get('kind'):
+                continue
 
             tittle = self._get_ru_tittle(element)
             year = element.data['year']
