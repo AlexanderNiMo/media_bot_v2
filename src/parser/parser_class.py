@@ -152,9 +152,8 @@ class BaseParser(AbstractParser):
             try:
                 sucsess = self.parse_data(data.data)
             except Exception as ex:
-                logger.error(f'Error while parsing by {self.__class__.__name__}')
+                logger.error(f'Error while parsing by {self.__class__.__name__} , {ex}')
                 raise ex
-
 
         if sucsess:
             data.data = self.next_data
