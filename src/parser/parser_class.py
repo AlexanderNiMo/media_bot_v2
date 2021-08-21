@@ -263,7 +263,9 @@ class MovieDBParser(BaseParser):
                 continue
 
             tittle = self._get_ru_tittle(element)
-            year = element.data['year']
+            year = element.data.get('year')
+            if year is None:
+                continue
 
             if 'year' in data.keys() and not year == data['year']:
                 continue
@@ -301,6 +303,7 @@ class MovieDBParser(BaseParser):
 
         if len(result) == 0:
             self.next_data = data.copy()
+            return False
         else:
             self.next_data = {'choices': []}
 
@@ -310,7 +313,9 @@ class MovieDBParser(BaseParser):
                 continue
 
             tittle = self._get_ru_tittle(element)
-            year = element.data['year']
+            year = element.data.get('year')
+            if year is None:
+                continue
             media_id = element.getID()
 
             if 'year' in data.keys() and not year == data['year']:
@@ -327,7 +332,7 @@ class MovieDBParser(BaseParser):
                 episodes = s['data']['episodes'].get(data['season'])
                 if episodes is not None:
                     series = len(episodes)
-                    if series > 0:
+                    if series > 0 and 'year' in  episodes[1].data.keys() :
                         year = episodes[1].data['year']
             except IMDbDataAccessError as ex:
                 logger.warning(f'Ошибка получения данных о сериях {ex}')
@@ -350,8 +355,9 @@ class MovieDBParser(BaseParser):
             self.next_data['choices'].append(choise)
             if exact_match:
                 break
-
-        if len(self.next_data['choices']) == 1:
+        if self.next_data.get('choices') is None:
+            return False 
+        if len(self.next_data.get('choices')) == 1:
             data_to_add = self.next_data['choices'][0]
             self.next_data = data.copy()
             self.next_data.update(data_to_add)
@@ -382,9 +388,10 @@ class MovieDBParser(BaseParser):
 
     def end_chain(self, data: ParserData) -> list:
         action_name = 'kinopoisk'
-        if len(self.next_data['choices']) == 0:
+        if self.next_data.get('choices') is None or len(self.next_data['choices']) == 0:
             message_text = 'В кинопоиске, по запросу {0}, ' \
                            'ничего не найдено, уточни свой запрос.'.format(data.data['query'])
+            self.next_data['choices'] = []
         else:
             message_text = 'В кинопоиске, по запросу {0}, ' \
                            'найдено более одного совпадения, выбери, что скачать.'.format(data.data['query'])
