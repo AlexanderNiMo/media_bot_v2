@@ -39,7 +39,7 @@ class AppMediatorClient(MediatorClient):
             except Empty:
                 pass
             except Exception as ex:
-                logger.error('Error while listning for new message! {}'.format(ex))
+                logger.error('Error while listning for new message! %s', ex, exc_info=True)
 
     def send_message(self, message: MediatorMessage):
         logger.debug('Отправка сообщения. {}'.format(str(message)))

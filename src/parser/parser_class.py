@@ -5,7 +5,7 @@ import re
 from multiprocessing import Queue
 from abc import ABC, abstractmethod
 from plexapi.server import PlexServer
-from imdb import IMDb, IMDbDataAccessError
+import imdb
 from telegram.ext import Updater
 from telegram import error as teleg_error
 
@@ -231,7 +231,9 @@ class MovieDBParser(BaseParser):
 
     def __init__(self, base: AbstractParser, conf):
         super(MovieDBParser, self).__init__(base, conf)
-        self.ia = IMDb()
+        self.ia = imdb.Cinemagoer(
+        #     's3', 'postgresql://postgres:qwerty@localhost/imdb'
+        )
 
     def parse_data(self, data: dict) -> bool:
 
@@ -253,7 +255,10 @@ class MovieDBParser(BaseParser):
         result = self.ia.search_movie(data['query'])
 
         if len(result) == 0:
+            logger.warning('No info on query %s', data['query'])
             self.next_data = data.copy()
+            if not 'choices' in self.next_data:
+                self.next_data['choices'] = []
         else:
             self.next_data = {'choices': []}
 
@@ -334,7 +339,7 @@ class MovieDBParser(BaseParser):
                     series = len(episodes)
                     if series > 0 and 'year' in  episodes[1].data.keys() :
                         year = episodes[1].data['year']
-            except IMDbDataAccessError as ex:
+            except imdb.IMDbDataAccessError as ex:
                 logger.warning(f'Ошибка получения данных о сериях {ex}')
 
             cover_url = element.get_fullsizeURL()
