@@ -143,6 +143,7 @@ class TorrentTracker(AbcTorrentTracker):
         if not self._is_loggining_in:
             self.login()
         req = self.connection.get(url)
+        req.raise_for_status()
         if not req.status_code == 200:
             return None
         torr_id = re.search(r'\d+', url)
@@ -400,7 +401,7 @@ class Rutracker(TorrentTracker):
         return 'https://rutracker.org/forum'
 
 
-class Rutor(TorrentTracker):
+class Rutor:
 
     def login(self):
         pass
@@ -553,7 +554,7 @@ def search(conf, text):
     return result
 
 
-def download(conf, url):
+def download(conf, _url):
     """
     Скачивает с трекера torrent файл
 
@@ -561,12 +562,20 @@ def download(conf, url):
     :param url:
     :return:
     """
-
+    url = fix_shema(_url)
     trackers = get_trackers(conf)
     for tracker in trackers:
         if tracker.site_domain in url or tracker.site_download in url:
             data = get_torrent_details(tracker.get_torrent_data(url))
             return data
+
+
+def fix_shema(url):
+    if url.startswith('//'):
+        return f'https:{url}'
+    if not 'https://' in url:
+        return 'https://{url}'
+    return url
 
 
 def get_trackers(conf) -> list:

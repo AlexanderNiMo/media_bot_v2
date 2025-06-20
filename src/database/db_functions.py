@@ -29,10 +29,10 @@ class DbManager:
         args = {}
         if not self.test:
             connection_str = '{0}/{1}?charset=utf8'.format(self.__get_connection_str(), self.config.DATABASE_NAME)
-            args['encoding'] = 'utf-8'
+            # args['encoding'] = 'utf-8'
         else:
             connection_str = self.__get_connection_str()
-            args['encoding'] = 'utf-8'
+            # args['encoding'] = 'utf-8'
             args['connect_args'] ={'check_same_thread': False}
             args['poolclass'] = StaticPool
         try:

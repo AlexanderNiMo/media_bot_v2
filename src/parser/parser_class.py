@@ -232,7 +232,7 @@ class MovieDBParser(BaseParser):
     def __init__(self, base: AbstractParser, conf):
         super(MovieDBParser, self).__init__(base, conf)
         self.ia = imdb.Cinemagoer(
-        #     's3', 'postgresql://postgres:qwerty@localhost/imdb'
+             's3', 'postgresql+psycopg2://imdb_user:pg_password@localhost:6432/imdb'
         )
 
     def parse_data(self, data: dict) -> bool:
@@ -262,18 +262,18 @@ class MovieDBParser(BaseParser):
         else:
             self.next_data = {'choices': []}
 
-        for element in result:
-
+        for e in result:
+            element = self.ia.get_movie(e.data.get('movieID'))
             if 'episode' in element.get('kind'):
                 continue
-
+            logger.info('got %s', element.data)
             tittle = self._get_ru_tittle(element)
             year = element.data.get('year')
             if year is None:
                 continue
 
-            if 'year' in data.keys() and not year == data['year']:
-                continue
+            # if 'year' in data.keys() and not year == data['year']:
+            #    continue
 
             exact_match = self.check_title_match_query_data(tittle, year, data)
 
@@ -312,29 +312,41 @@ class MovieDBParser(BaseParser):
         else:
             self.next_data = {'choices': []}
 
-        for element in result:
-
+        for e in result:
+            element = self.ia.get_movie(e.data.get('movieID'))
+            logger.debug(f"Get element: {element}")
             if 'episode' in element.get('kind'):
+                logger.debug(f"Skip element {element} kind episode ")
                 continue
 
             tittle = self._get_ru_tittle(element)
             year = element.data.get('year')
             if year is None:
+                logger.debug(f"Skip element {element} (no year)")
                 continue
             media_id = element.getID()
 
             if 'year' in data.keys() and not year == data['year']:
-                continue
+                logger.debug(f"Skip element {element} (year != )")
+                continue 
 
             exact_match = self.check_title_match_query_data(tittle, year, data)
 
             title = data['query'] if tittle == '' else tittle
 
             series = 0
-            season = data['season']
+            season = data.get('season',1)
             try:
                 s = self.ia.get_movie_episodes(media_id)
-                episodes = s['data']['episodes'].get(data['season'])
+                if 'data' not in s:
+                    logger.debug(f"Skip element {element} (no data)")
+                    continue
+                s_data = s['data']
+                if 'episodes' not in s_data:
+                    logger.debug(f"Skip element {element} (no episodes) s:{s} s_data:{s_data}")
+                    continue
+                e_data = s_data['episodes']   
+                episodes = e_data.get(data['season'])
                 if episodes is not None:
                     series = len(episodes)
                     if series > 0 and 'year' in  episodes[1].data.keys() :
@@ -375,14 +387,14 @@ class MovieDBParser(BaseParser):
 
         return title_match and year_match
 
-    def _get_ru_tittle(self, imdb_obj, lang: str = 'Russia') -> str:
-        titles = self.ia.get_movie_akas(imdb_obj.getID())
-        if 'raw akas' not in titles['data']:
+    def _get_ru_tittle(self, imdb_obj, lang: str = 'RU') -> str:
+        titles = self.ia.get_movie_main(imdb_obj.getID())
+        if 'akas' not in titles['data']:
             return imdb_obj.data['title']
         ru_tittle = next(
             map(
                 lambda x: x['title'],
-                filter(lambda x:  x.get('countries', None) == lang, titles['data']['raw akas'])
+                filter(lambda x:  x.get('region', None) == lang, titles['data']['akas'])
             ),
             imdb_obj.data['title']
         )

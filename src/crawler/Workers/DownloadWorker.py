@@ -22,14 +22,17 @@ class DownloadWorker(Worker):
     def work(self):
         logger.debug('Start torrent worker.')
         torrent_data = []
+        try:
+            media = self.job.media
+            torrdata = download(self.config, media.download_url)
 
-        media = self.job.media
-        torrdata = download(self.config, media.download_url)
+            if not (media.media_type.value == MediaType.SERIALS.value and torrdata['file_amount'] == media.current_series):
+                torrent_data.append(torrdata)
 
-        if not (media.media_type.value == MediaType.SERIALS.value and torrdata['file_amount'] == media.current_series):
-            torrent_data.append(torrdata)
-
-        self.returned_data.put(torrent_data)
+            self.returned_data.put(torrent_data)
+        except Exception:
+            logger.exception('Error on worker!')
+            return    
         logger.debug('Torrent worker ended.')
 
     @property
