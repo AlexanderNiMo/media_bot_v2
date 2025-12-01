@@ -1,5 +1,5 @@
 import unittest
-import src
+import media_bot_v2
 import os
 
 
@@ -13,20 +13,20 @@ class TestParser(unittest.TestCase):
         self.conf = self.test_content.conf
 
         self.parser = self.test_content.parser
-        self.component = src.app_enums.ComponentType.MAIN_APP
+        self.component = media_bot_v2.app_enums.ComponentType.MAIN_APP
         self.db = self.test_content.db
 
     def get_message(self):
-        return src.mediator.MediatorActionMessage(
-            src.app_enums.ComponentType.PARSER,
-            src.app_enums.ActionType.PARSE,
+        return media_bot_v2.mediator.MediatorActionMessage(
+            media_bot_v2.app_enums.ComponentType.PARSER,
+            media_bot_v2.app_enums.ActionType.PARSE,
             self.component
         )
 
     def get_target_message(self, returned_data):
         target_message = None
         for message in returned_data:
-            if message.action == src.app_enums.ActionType.RETURNED_DATA and message.component == self.component:
+            if message.action == media_bot_v2.app_enums.ActionType.RETURNED_DATA and message.component == self.component:
                 target_message = message
         self.assertIsNotNone(target_message, 'В резульата не обнаруженно сообщение с данными возврата')
         return target_message
@@ -42,9 +42,9 @@ class TestParser(unittest.TestCase):
     def parse_data(self, needed_data, data_dict):
         msg = self.get_message()
 
-        msg.data = src.mediator.ParserData(
+        msg.data = media_bot_v2.mediator.ParserData(
             data_dict,
-            self.conf.TELEGRAMM_BOT_USER_ADMIN,
+            self.conf.tg_cfg.admin_user,
             data_needed=needed_data
         )
         returned_data = self.parser.parse(msg)
@@ -55,18 +55,11 @@ class TestParser(unittest.TestCase):
         return target_message
 
     def configure_db_data(self):
-        client_id = self.conf.TELEGRAMM_BOT_USER_ADMIN
+        client_id = self.conf.tg_cfg.admin_user
         session = self.db.get_session()
         user = self.db.add_user(client_id, session=session)
-        serial = self.db.add_serial(
-            client_id,
-            685246,
-            'Рик и Морти',
-            2013,
-            1,
-            'http://www.kinopoisk.ru/film/685246/',
-            session=session
-        )
+        serial = self.db.add_serial(client_id, 685246, 'Рик и Морти', 2013, 1, 'http://www.kinopoisk.ru/film/685246/',
+                                    session=session)
         film = self.db.add_film(
             client_id,
             689,
@@ -86,13 +79,51 @@ class TestParser(unittest.TestCase):
         self.assertEqual(target_message.data.data['query'], 'ИГРА ПРЕСТОЛОВ СЕЗОН 1', 'Запрос определен не верно!')
         self.assertEqual(target_message.data.data['season'], 1, 'Сезон определен не верно!')
 
-    def test_get_data_kinopoisk(self):
+    def test_get_data_kinopoisk_film(self):
 
         needed_data = ['title', 'kinopoisk_id', 'kinopoisk_url']
         target_message = self.parse_data(
             needed_data,
             {
-                'media_type': src.app_enums.MediaType.SERIALS,
+                'media_type': media_bot_v2.app_enums.MediaType.FILMS,
+                'query': "Жизнь Пи",
+                'year': 2012
+            }
+        )
+
+        self.assertEqual(target_message.data.data['title'], 'Жизнь Пи')
+        self.assertEqual(target_message.data.data['kinopoisk_id'], 'tt0454876', 'Id определен не верно!')
+        self.assertEqual(target_message.data.data['kinopoisk_url'],
+                         'https://www.imdb.com/title/tt0454876',
+                         'не верено определен url')
+        self.assertEqual(target_message.data.data['cover_url'],
+                         'https://image.tmdb.org/t/p/w342/iLgRu4hhSr6V1uManX6ukDriiSc.jpg',
+                         'не верено определен url изображения')
+
+        target_message = self.parse_data(
+            needed_data,
+            {
+                'media_type': media_bot_v2.app_enums.MediaType.FILMS,
+                'query': 'Гарри Поттер и философский камень'.upper(),
+                'year': 2001
+            }
+        )
+
+        self.assertEqual(target_message.data.data['title'], 'Гарри Поттер и философский камень',
+                         'Наименвоание определено не верно!')
+        self.assertEqual(target_message.data.data['kinopoisk_id'], 'tt0241527', 'Id определен не верно!')
+        self.assertEqual(target_message.data.data['kinopoisk_url'],
+                         'https://www.imdb.com/title/tt0241527',
+                         'не верено определен url')
+
+
+    def test_get_data_kinopoisk_serial(self):
+
+        needed_data = ['title', 'kinopoisk_id', 'kinopoisk_url']
+        target_message = self.parse_data(
+            needed_data,
+            {
+                'media_type': media_bot_v2.app_enums.MediaType.SERIALS,
                 'query': 'Рик и Морти'.upper(),
                 'season': 1,
                 'year': 2013
@@ -100,33 +131,21 @@ class TestParser(unittest.TestCase):
         )
 
         self.assertEqual(target_message.data.data['title'], 'Рик и Морти', 'Наименвоание определено не верно!')
-        self.assertEqual(target_message.data.data['kinopoisk_id'], 685246, 'Id определен не верно!')
+        self.assertEqual(target_message.data.data['kinopoisk_id'], 'tt2861424', 'Id определен не верно!')
         self.assertEqual(target_message.data.data['kinopoisk_url'],
-                         'http://www.kinopoisk.ru/film/685246/',
+                         'https://www.imdb.com/title/tt2861424',
                          'не верено определен url')
+        self.assertEqual(target_message.data.data['cover_url'],
+                         'https://image.tmdb.org/t/p/w342/8BXUZ0nnR3DZsf30DYMFHfuTxxi.jpg',
+                         'не верено определен url изображения')
 
-        target_message = self.parse_data(
-            needed_data,
-            {
-                'media_type': src.app_enums.MediaType.FILMS,
-                'query': 'Гарри поттер'.upper(),
-                'year': 2001
-            }
-        )
-
-        self.assertEqual(target_message.data.data['title'], 'Гарри Поттер и философский камень',
-                         'Наименвоание определено не верно!')
-        self.assertEqual(target_message.data.data['kinopoisk_id'], 689, 'Id определен не верно!')
-        self.assertEqual(target_message.data.data['kinopoisk_url'],
-                         'http://www.kinopoisk.ru/film/689/',
-                         'не верено определен url')
 
     def test_get_data_telegramm(self):
         needed_data = ['nick', 'name', 'last_name']
         target_message = self.parse_data(
             needed_data,
             {
-                'client_id': self.conf.TELEGRAMM_BOT_USER_ADMIN
+                'client_id': self.conf.tg_cfg.admin_user
             }
         )
 
@@ -139,7 +158,7 @@ class TestParser(unittest.TestCase):
         target_message = self.parse_data(
                     needed_data,
                     {
-                        'media_type': src.app_enums.MediaType.FILMS,
+                        'media_type': media_bot_v2.app_enums.MediaType.FILMS,
                         'title': 'Под покровом ночи',
                         'year': 2007
                     }
@@ -150,10 +169,10 @@ class TestParser(unittest.TestCase):
         target_message = self.parse_data(
                     needed_data,
                     {
-                        'media_type': src.app_enums.MediaType.SERIALS,
+                        'media_type': media_bot_v2.app_enums.MediaType.SERIALS,
                         'title': 'Игра престолов',
                         'season': 1,
-                        'year': 2011
+                        'year': 2010
                     }
         )
 
@@ -166,7 +185,7 @@ class TestParser(unittest.TestCase):
         target_message = self.parse_data(
                     needed_data,
                     {
-                        'media_type': src.app_enums.MediaType.SERIALS,
+                        'media_type': media_bot_v2.app_enums.MediaType.SERIALS,
                         'kinopoisk_id': 685246,
                         'year': 2013,
                         'season': 1
@@ -178,7 +197,7 @@ class TestParser(unittest.TestCase):
         target_message = self.parse_data(
                     needed_data,
                     {
-                        'media_type': src.app_enums.MediaType.FILMS,
+                        'media_type': media_bot_v2.app_enums.MediaType.FILMS,
                         'kinopoisk_id': 685246,
                         'year': 2013
                     }
@@ -189,7 +208,7 @@ class TestParser(unittest.TestCase):
         target_message = self.parse_data(
                     needed_data,
                     {
-                        'media_type': src.app_enums.MediaType.FILMS,
+                        'media_type': media_bot_v2.app_enums.MediaType.FILMS,
                         'kinopoisk_id': 689,
                         'year': 2001
                     }
@@ -199,6 +218,10 @@ class TestParser(unittest.TestCase):
 
     def tearDown(self):
         self.test_content.clear_test_db()
+        self.test_content = None
+        self.parser = None
+        self.component = None
+        self.db = None
 
 
 def suite():
@@ -206,5 +229,6 @@ def suite():
 
 
 if __name__ == '__main__':
+
     runner = unittest.TextTestRunner()
     runner.run(suite())

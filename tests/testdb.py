@@ -2,8 +2,8 @@ from unittest import TestCase, TextTestRunner, defaultTestLoader
 import os
 
 from tests.utils import TestEnvCreator
-from src.database import MediaData
-import src
+from media_bot_v2.database import MediaData
+from media_bot_v2.app_enums import MediaType, UserOptions, LockingStatus
 
 
 class TestDB(TestCase):
@@ -31,7 +31,7 @@ class TestDB(TestCase):
             year=1988,
             season=1,
             url='ru/kinop',
-            max_series=10
+            series=10
         )
 
     def add_test_user(self, client_id, session):
@@ -82,7 +82,7 @@ class TestDB(TestCase):
             year=self.test_serial['year'],
             season=self.test_serial['season'],
             url=self.test_serial['url'],
-            max_series=self.test_serial['max_series'])
+            series=self.test_serial['series'])
 
         self.assertIsInstance(serial, MediaData, 'Возвращен неверный тип значения!')
 
@@ -94,11 +94,11 @@ class TestDB(TestCase):
                          'Не корректно определено наименование в новом сериале!')
         self.assertEqual(serial.season, self.test_serial['season'],
                          'Не корректно определено сезон в новом сериале!')
-        self.assertEqual(serial.max_series, self.test_serial['max_series'],
+        self.assertEqual(serial.series, self.test_serial['series'],
                          'Не корректно определено максимальное количество серий в новом сериале!')
         self.assertEqual(serial.kinopoisk_url, self.test_serial['url'],
                          'Не корректно определен url в новом сериале!')
-        self.assertEqual(serial.media_type, src.app_enums.MediaType.SERIALS,
+        self.assertEqual(serial.media_type, MediaType.SERIALS,
                          'Не корректно определен тип медиа в новом сериале!')
         self.assertEqual(len(user.media.all()), 1, 'Сериал должен был добавиться в список пользователя')
 
@@ -114,11 +114,11 @@ class TestDB(TestCase):
             year=self.test_serial['year'],
             season=self.test_serial['season'],
             url=self.test_serial['url'],
-            max_series=self.test_serial['max_series'])
+            series=self.test_serial['series'])
 
         serial = self.db.find_media(
             self.test_serial['kinopoisk_id'],
-            src.app_enums.MediaType.SERIALS,
+            MediaType.SERIALS,
             self.test_serial['season'],
             session=session
         )
@@ -133,11 +133,11 @@ class TestDB(TestCase):
                          'Не корректно определено наименование при поиске сериала!')
         self.assertEqual(serial.season, self.test_serial['season'],
                          'Не корректно определено сезон при поиске сериала!')
-        self.assertEqual(serial.max_series, self.test_serial['max_series'],
+        self.assertEqual(serial.series, self.test_serial['series'],
                          'Не корректно определено максимальное количество серий при поиске сериала!')
         self.assertEqual(serial.kinopoisk_url, self.test_serial['url'],
                          'Не корректно определен url при поиске сериала!')
-        self.assertEqual(serial.media_type, src.app_enums.MediaType.SERIALS,
+        self.assertEqual(serial.media_type, MediaType.SERIALS,
                          'Не корректно определен тип медиа при поиске сериала!')
         self.assertEqual(len(user.media.all()), 1, 'Сериал должен был добавиться в список пользователя')
 
@@ -164,7 +164,7 @@ class TestDB(TestCase):
                          'Не корректно определено наименование в новом фильме!')
         self.assertEqual(film.kinopoisk_url, self.test_film['url'],
                          'Не корректно определен url в новом фильме!')
-        self.assertEqual(film.media_type, src.app_enums.MediaType.FILMS,
+        self.assertEqual(film.media_type, MediaType.FILMS,
                          'Не корректно определен тип медиа в новом фильме!')
         self.assertEqual(len(user.media.all()), 1, 'Фильм должен был добавиться в список пользователя')
 
@@ -183,7 +183,7 @@ class TestDB(TestCase):
 
         film = self.db.find_media(
             self.test_film['kinopoisk_id'],
-            src.app_enums.MediaType.FILMS,
+            MediaType.FILMS,
             session=session
         )
 
@@ -198,7 +198,7 @@ class TestDB(TestCase):
         self.assertEqual(film.kinopoisk_url, self.test_film['url'],
                          'Не корректно определен url при поиске фильма!')
         self.assertEqual(len(user.media.all()), 1, 'Фильм должен был добавиться в список пользователя')
-        self.assertEqual(film.media_type, src.app_enums.MediaType.FILMS,
+        self.assertEqual(film.media_type, MediaType.FILMS,
                          'Не корректно определен тип медиа при поиске фильма!')
 
     def test_update_media(self):
@@ -214,47 +214,78 @@ class TestDB(TestCase):
         )
 
         self.db.update_media_params(
-            self.test_film['kinopoisk_id'],
-            {
+            media_id=self.test_film['kinopoisk_id'],
+            upd_data={
                 'label': '',
                 'year': 1988,
                 'kinopoisk_url': 'rutr',
-                'status': src.app_enums.LockingStatus.ENDED,
+                'status': LockingStatus.ENDED,
                 'torrent_id': '2',
                 'kinopoisk_id': 2
             },
-            src.app_enums.MediaType.FILMS,
+            media_type=MediaType.FILMS,
             session=session)
 
         film = self.db.find_media(
             2,
-            src.app_enums.MediaType.FILMS,
+            MediaType.FILMS,
             session=session
         )
 
         self.assertEqual(film.title, '', 'Не изменилось значение нименования.')
         self.assertEqual(film.year, 1988, 'Не изменилось значение года.')
         self.assertEqual(film.kinopoisk_url, 'rutr', 'Не изменилось значение kinopoisk_url.')
-        self.assertEqual(film.status, src.app_enums.LockingStatus.ENDED, 'Не изменилось значение статуса.')
+        self.assertEqual(film.status, LockingStatus.ENDED, 'Не изменилось значение статуса.')
         self.assertEqual(film.torrent_id, '2', 'Не изменилось значение torrent_id.')
         self.assertEqual(film.media_id, 2, 'Не изменилось значение media_id.')
+
+        self.add_test_serial(
+            session=session,
+            client_id=self.client_id,
+            kinopoisk_id=self.test_serial['kinopoisk_id'],
+            label=self.test_serial['title'],
+            year=self.test_serial['year'],
+            season=self.test_serial['season'],
+            url=self.test_serial['url'],
+            series=self.test_serial['series'])
+
+        current_series = 10
+        self.db.update_media_params(
+            media_id=self.test_serial['kinopoisk_id'],
+            upd_data={
+                'current_series': current_series
+            },
+            season=self.test_serial['season'],
+            media_type=MediaType.SERIALS,
+            session=session)
+
+        serial = self.db.find_media(
+            kinopoisk_id=self.test_serial['kinopoisk_id'],
+            media_type=MediaType.SERIALS,
+            season=self.test_serial['season'],
+            session=session
+        )
+
+        self.assertTrue(serial.current_series == current_series, 'Не изменились данные сериала.')
+
+
 
     def test_user_options(self):
         session = self.db.get_session()
         self.add_test_user(self.client_id, session=session)
 
-        self.db.change_user_option(self.client_id, src.app_enums.UserOptions.NOTIFICATION, session=session)
+        self.db.change_user_option(self.client_id, UserOptions.NOTIFICATION, session=session)
         user = self.db.find_user(self.client_id, session=session)
 
         self.assertTrue(len(user.options) == 1,
                         'Не верное колличество настроек у пользователя')
-        self.assertTrue(user.options[0].option.value == src.app_enums.UserOptions.NOTIFICATION.value,
+        self.assertTrue(user.options[0].option.value == UserOptions.NOTIFICATION.value,
                         'Не верно установлен тип опции.')
-        self.assertTrue(user.options[0].value == 0,
+        self.assertTrue(user.options[0].value == 1,
                         'Не верно установлено значение опции.')
 
-        self.db.change_user_option(self.client_id, src.app_enums.UserOptions.NOTIFICATION, session=session)
-        self.assertTrue(user.options[0].value == 1,
+        self.db.change_user_option(self.client_id, UserOptions.NOTIFICATION, session=session)
+        self.assertTrue(user.options[0].value == 0,
                         'Не верно установлено значение опции после изменения.')
 
     def test_add_media_to_user(self):
@@ -274,11 +305,35 @@ class TestDB(TestCase):
         self.db.add_media_to_user_list(
             self.anather_client_id,
             self.test_film['kinopoisk_id'],
-            src.app_enums.MediaType.FILMS,
+            MediaType.FILMS,
             session=session
         )
 
         self.assertTrue(len(test_user.media.all()) == 1, 'Новый фильм не добавился в список пользователя')
+
+    def test_get_users_by_media_id(self):
+        session = self.db.get_session()
+
+        admin = self.add_test_user(self.client_id, session=session)
+        self.db.change_user_option(self.client_id, UserOptions.NOTIFICATION, 1, session=session)
+
+        test_user = self.add_test_user(self.anather_client_id, session=session)
+        self.db.change_user_option(self.anather_client_id, UserOptions.NOTIFICATION, 1, session=session)
+
+        serial = self.add_test_serial(
+            session=session,
+            client_id=self.client_id,
+            kinopoisk_id=self.test_serial['kinopoisk_id'],
+            label=self.test_serial['title'],
+            year=self.test_serial['year'],
+            season=self.test_serial['season'],
+            url=self.test_serial['url'],
+            series=self.test_serial['series'])
+
+        users = self.db.get_users_for_notification(media_id=1, media_type=MediaType.SERIALS, season=1, session=session)
+
+        self.assertIn(admin, users, 'Не найден пользователь, который должен быть в выборке')
+        self.assertIn(test_user, users, 'Не найден пользователь, который должен быть в выборке')
 
     def tearDown(self):
         self.test_content.clear_test_db()

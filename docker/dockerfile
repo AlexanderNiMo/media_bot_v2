@@ -1,0 +1,18 @@
+FROM python:3.12.11
+
+RUN mkdir /app
+WORKDIR /app
+
+SHELL ["/bin/bash", "-c"]
+
+RUN apt update && apt install -y curl default-libmysqlclient-dev \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh
+
+COPY ./pyproject.toml ./uv.lock /app/
+ENV PATH="/root/.local/bin:$PATH"
+RUN uv sync
+
+COPY ./src /app/src
+COPY ./README.md ./setup.py /app/
+
+RUN uv pip install .
