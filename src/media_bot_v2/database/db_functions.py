@@ -250,7 +250,7 @@ class DbManager:
 
     def update_media_params(
         self,
-        media_id: int,
+        media_id: str,
         upd_data: dict,
         media_type,
         season: int = 0,
@@ -263,7 +263,7 @@ class DbManager:
             close = True
             session = self.session
         find_dict = {
-            "kinopoisk_id": media_id,
+            "kinopoisk_id": str(media_id),
             "media_type": media_type,
             "session": session,
         }
@@ -440,11 +440,7 @@ class MediaData:
         current_series=0,
         img_link="",
     ):
-        m_id = 0
-        try:
-            m_id = int(media_id)
-        except Exception:
-            m_id = int(media_id[2:])
+        m_id = str(media_id)
         self.media_id = m_id
         self.title = title
         self.download_url = download_url
