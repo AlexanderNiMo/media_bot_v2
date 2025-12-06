@@ -4,7 +4,7 @@ import base64
 import math
 from queue import Empty
 
-from media_bot_v2.app.app_config import default_conf as config
+from media_bot_v2.config import Config
 from media_bot_v2.app_enums import ComponentType, ClientCommands, ActionType, MediaType
 from media_bot_v2.mediator import command_message, crawler_message, send_message, MediatorMessage
 from media_bot_v2.crawler.Workers.WorkerABC import Worker
@@ -21,6 +21,8 @@ class TorrentWorker(Worker):
             return self.add_torrent
         elif self.job.action_type.value == ActionType.ADD_TORRENT_WATCHER.value:
             return self.work
+        else:
+            raise NotImplementedError(f"no target for job type {self.job.action_type}")
 
     @property
     def result(self):
@@ -47,9 +49,9 @@ class TorrentWorker(Worker):
             self.save_file_to_folder()
             return
         if self.job.season == '':
-            dir_path = self.config.TORRENT_FILM_PATH
+            dir_path = self.config.torrent_client.film_path
         else:
-            dir_path = self.config.TORRENT_SERIAL_PATH
+            dir_path = self.config.torrent_client.serial_path
 
         torrent_id = self._add_torrent(client, dir_path)
 
@@ -81,9 +83,9 @@ class TorrentWorker(Worker):
 
     def save_file_to_folder(self):
 
-        dir_path = self.config.TORRENT_DOWNLOAD_FILM_PATH
+        dir_path = self.config.torrent_client.torrent_film_path
         if self.job.media.media_type == MediaType.SERIALS:
-            dir_path = self.config.TORRENT_DOWNLOAD_SERIAL_PATH
+            dir_path = self.config.torrent_client.torrent_serial_path
 
         with open(f'{dir_path}{self.job.torrent_id}', 'wb') as file:
             file.write(self.job.crawler_data.torrent_data)
@@ -101,15 +103,14 @@ class TorrentWorker(Worker):
 
 class DelugeWorker(TorrentWorker):
 
-    @staticmethod
-    def get_client():
+    def get_client(self, ):
         from deluge_client import DelugeRPCClient, FailedToReconnectException
         try:
             deluge = DelugeRPCClient(
-                config.TORRENT_HOST,
-                int(config.TORRENT_PORT),
-                config.TORRENT_USER,
-                config.TORRENT_PASS)
+                self.config.torrent_client.deluge_torrent.host,
+                int(self.config.torrent_client.deluge_torrent.port),
+                self.config.torrent_client.deluge_torrent.user,
+                self.config.torrent_client.deluge_torrent.password)
             deluge.connect()
             if not deluge.connected:
                 raise FailedToReconnectException
@@ -148,10 +149,10 @@ class TransmissionWorker(TorrentWorker):
 
         try:
             transmission = transmissionrpc.Client(
-                config.TORRENT_HOST,
-                int(config.TORRENT_PORT),
-                config.TORRENT_USER,
-                config.TORRENT_PASS)
+                self.config.torrent_client.transmission_client.host,
+                int(self.config.torrent_client.transmission_client.port),
+                self.config.torrent_client.transmission_client.user,
+                self.config.torrent_client.transmission_client.password)
         except transmissionrpc.TransmissionError:
             logger.error('Не удалось соединиться с торрент торрент клиентом')
             return None
@@ -184,8 +185,11 @@ class QBitTorrent(TorrentWorker):
         from requests import ConnectionError
 
         try:
-            q_bit = Client(f'http://{config.TORRENT_HOST}:{int(config.TORRENT_PORT)}')
-            res = q_bit.login(username=config.TORRENT_USER, password=config.TORRENT_PASS)
+            q_bit = Client(f'http://{self.config.torrent_client.qbit_torrent.host}:{int(self.config.torrent_client.qbit_torrent.port)}')
+            res = q_bit.login(
+                username=self.config.torrent_client.qbit_torrent.user,
+                password=self.config.torrent_client.qbit_torrent.password,
+            )
             if res == 'Fails.':
                 logger.error('Неверный пароль или логин для подключения к qBitTorrent')
                 raise ConnectionError
@@ -227,16 +231,16 @@ class QBitTorrent(TorrentWorker):
         return hashlib.sha1(bencoding.bencode(bencode_dict[b"info"])).hexdigest()
 
 
-def get_torrent_worker(job, data_config)-> TorrentWorker:
+def get_torrent_worker(job, worker_config: Config)-> TorrentWorker:
 
-    torrent_client_type = int(data_config.torrent_client_type)
+    torrent_client_type = int(worker_config.torrent_client.type)
 
     if torrent_client_type == 0:
-        return DelugeWorker(job, data_config)
+        return DelugeWorker(job, worker_config)
     elif torrent_client_type == 1:
-        return TransmissionWorker(job, data_config)
+        return TransmissionWorker(job, worker_config)
     elif torrent_client_type == 2:
-        return QBitTorrent(job, data_config)
+        return QBitTorrent(job, worker_config)
     else:
         logger.error('Не удалось определить тип торрент клиента.')
         raise ValueError

@@ -8,4 +8,3 @@
 """
 
 from . import App
-from . import app_config

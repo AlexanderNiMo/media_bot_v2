@@ -104,7 +104,7 @@ class TestEnvCreator:
             )
 
     def get_test_conf(self):
-        conf = read_config(pathlib.Path("./test_config.json"))
+        conf = read_config(pathlib.Path("./tests/test_config.json").absolute())
         return conf
 
     def add_test_user(self, client_id, session, **kwargs):

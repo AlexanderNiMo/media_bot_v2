@@ -58,13 +58,21 @@ class TorrentTrackersConfig(BaseModel):
     credentials: dict[str, AuthCfg]
     proxy_cfg: ProxyConfig | None = None
 
-
-class TorrentClientConfig(BaseModel):
-    type: int
+class HttpApiConfig(BaseModel):
     user: str
     password: str
     host: str
     port: int
+
+class TorrentClientConfig(BaseModel):
+    type: int
+    torrent_film_path: str
+    torrent_serial_path: str
+    film_path: str
+    serial_path: str
+    qbit_torrent: HttpApiConfig | None = None
+    deluge_torrent: HttpApiConfig | None = None
+    transmission_client: HttpApiConfig | None = None
 
 
 class Config(BaseModel):
