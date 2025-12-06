@@ -527,7 +527,7 @@ class Rutor(TorrentTracker):
         return 'http://d.rutor.info'
 
 
-def search(conf, text):
+def search(conf: TorrentTrackersConfig, text):
     """
     Производи поиск по трекерам по запросу
     :param conf:
@@ -546,7 +546,7 @@ def search(conf, text):
     return result
 
 
-def download(conf, _url):
+def download(conf: TorrentTrackersConfig, _url):
     """
     Скачивает с трекера torrent файл
 

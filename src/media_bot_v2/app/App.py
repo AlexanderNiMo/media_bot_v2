@@ -56,8 +56,9 @@ def start_app(cfg: Config):
                 mediator.start()
             mediator.check_clients()
     finally:
-        for file_hndl in file_hndlrs:
-            file_hndl.close()
+        if file_hndlrs:
+            for file_hndl in file_hndlrs:
+                file_hndl.close()
 
 
 def reglament_work(mediator: AppMediator):

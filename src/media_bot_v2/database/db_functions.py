@@ -233,7 +233,7 @@ class DbManager:
         data = session.query(self.User).filter_by(client_id=client_id).first()
         if self.is_admin(client_id):
             if data is None:
-                data = self.add_user(client_id, session)
+                data = self.add_user(client_id, session=session)
         return data
 
     def get_all_users(self, session: session = None) -> list:
@@ -344,11 +344,11 @@ class DbManager:
         res_serial = self.construct_media_by_orm_object(serial)
         return res_serial
 
-    def add_user(self, clien_id, name="", last_name="", nick_name="", session=None):
+    def add_user(self, client_id, name="", last_name="", nick_name="", session=None):
         if session is None:
             session = self.session
         user = self.User(
-            name=name, last_name=last_name, nick_name=nick_name, client_id=clien_id
+            name=name, last_name=last_name, nick_name=nick_name, client_id=client_id
         )
         session.add(user)
         session.commit()

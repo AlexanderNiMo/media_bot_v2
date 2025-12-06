@@ -238,12 +238,12 @@ class MovieDBParser(BaseParser):
     def __init__(self, base: AbstractParser, conf: Config):
         super(MovieDBParser, self).__init__(base, conf)
         tmdbsimple.API_KEY = conf.tmdb_cfg.api_key
-        # sess = requests.session()
-        # sess.proxies = {
-        #     "http": conf.proxy_cfg.build_proxy_str(),
-        #     "https": conf.proxy_cfg.build_proxy_str(),
-        # }
-        # tmdbsimple.REQUESTS_SESSION = sess
+        sess = requests.session()
+        sess.proxies = {
+            "http": conf.proxy_cfg.build_proxy_str(),
+            "https": conf.proxy_cfg.build_proxy_str(),
+        }
+        tmdbsimple.REQUESTS_SESSION = sess
         self.ia = tmdbsimple.Search()
 
     def parse_data(self, data: dict) -> bool:

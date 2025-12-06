@@ -25,9 +25,9 @@ class DownloadWorker(Worker):
         torrent_data = []
         try:
             media = self.job.media
-            torrdata = download(self.config, media.download_url)
+            torrdata = download(self.config.tracker_cfg, media.download_url)
 
-            if not (media.media_type.value == MediaType.SERIALS.value and torrdata['file_amount'] == media.current_series):
+            if torrdata['file_amount'] == 0 or not (media.media_type.value == MediaType.SERIALS.value and (torrdata['file_amount'] == media.current_series)):
                 torrent_data.append(torrdata)
 
             self.returned_data.put(torrent_data)
