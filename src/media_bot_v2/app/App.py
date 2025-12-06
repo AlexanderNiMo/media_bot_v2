@@ -43,7 +43,7 @@ def start_app(cfg: Config):
 
     for client in clients:
         client.start()
-    reglament_thread = Thread(target=reglament_work, args=[mediator])
+    reglament_thread = Thread(target=reglament_work, args=[mediator, cfg])
     reglament_thread.start()
     try:
         while True:
@@ -51,7 +51,7 @@ def start_app(cfg: Config):
             if not mediator.is_alive():
                 logger.error("Медиатор умер, пеерзапускаю...")
                 mediator = AppMediator(mediator_q, mediator.clients)
-                reglament_thread = Thread(target=reglament_work, args=[mediator])
+                reglament_thread = Thread(target=reglament_work, args=[mediator, cfg])
                 reglament_thread.start()
                 mediator.start()
             mediator.check_clients()
@@ -61,14 +61,14 @@ def start_app(cfg: Config):
                 file_hndl.close()
 
 
-def reglament_work(mediator: AppMediator):
+def reglament_work(mediator: AppMediator, config: Config):
     while True:
         if not mediator.is_alive():
             return
         mediator.send_message(
             crawler_message(
                 ComponentType.MAIN_APP,
-                "admin",
+                config.db_cfg.admin_id,
                 {},
                 ActionType.CHECK,
             )
