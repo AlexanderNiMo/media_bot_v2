@@ -59,14 +59,19 @@ class TorrentTrackersConfig(BaseModel):
     proxy_cfg: ProxyConfig | None = None
 
 
-class TorrentClientConfig(BaseModel): ...
+class TorrentClientConfig(BaseModel):
+    type: int
+    user: str
+    password: str
+    host: str
+    port: int
 
 
 class Config(BaseModel):
     log_level: str
     db_cfg: DbConfig
     tg_cfg: TelegrammConfig
-    download_cfg: DownloadConfig
+    torrent_client: TorrentClientConfig
     tracker_cfg: TorrentTrackersConfig
     tmdb_cfg: TMDBConfig
     plex_cfg: PlexConfig
@@ -78,7 +83,6 @@ def read_config(path: pathlib.Path):
         data = json.load(f)
     c = Config(**data)
     c.tg_cfg.proxy_cfg = c.proxy_cfg
-    c.download_cfg.proxy_cfg = c.proxy_cfg
     c.tracker_cfg.proxy_cfg = c.proxy_cfg
 
     return c

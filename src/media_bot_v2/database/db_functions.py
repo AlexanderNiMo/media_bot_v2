@@ -35,7 +35,6 @@ class DbManager:
         args = {}
         connection_str = self.__get_connection_str()
         if "sqlite" not in self.config.dns:
-            args["connect_args"] = {"check_same_thread": False}
             args["poolclass"] = StaticPool
         try:
             enj = init_db(connection_str, **args)
