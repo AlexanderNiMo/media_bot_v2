@@ -127,7 +127,7 @@ class Crawler(AppMediatorClient):
             ActionType.ADD_TORRENT_WATCHER.value,
             ActionType.ADD_TORRENT_TO_TORRENT_CLIENT.value
         ]:
-            return get_torrent_worker(job, self.config.torrent_client)
+            return get_torrent_worker(job, self.config)
         elif job.action_type.value in [
             ActionType.DOWNLOAD_TORRENT.value,
         ]:
