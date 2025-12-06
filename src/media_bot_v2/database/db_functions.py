@@ -185,7 +185,7 @@ class DbManager:
         """
         if session is None:
             session = self.session
-        filter_dict = dict(kinopoisk_id=kinopoisk_id)
+        filter_dict = dict(kinopoisk_id=str(kinopoisk_id))
         data_class = self.Film
         if media_type == MediaType.SERIALS:
             filter_dict["season"] = season
@@ -294,7 +294,7 @@ class DbManager:
         if session is None:
             session = self.session
         film = self.Film(
-            kinopoisk_id=kinopoisk_id,
+            kinopoisk_id=str(kinopoisk_id),
             label=label,
             year=year,
             kinopoisk_url=url,
@@ -325,7 +325,7 @@ class DbManager:
         if session is None:
             session = self.session
         serial = self.Serial(
-            kinopoisk_id=kinopoisk_id,
+            kinopoisk_id=str(kinopoisk_id),
             label=label,
             year=year,
             season=season,
