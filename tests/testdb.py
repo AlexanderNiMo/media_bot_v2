@@ -20,13 +20,13 @@ class TestDB(TestCase):
         self.nick = 'rollboll'
 
         self.test_film = dict(
-            kinopoisk_id=1,
+            kinopoisk_id="1",
             title='Игра',
             year=1988,
             url='ru/kinop',
         )
         self.test_serial = dict(
-            kinopoisk_id=1,
+            kinopoisk_id="1",
             title='Игра',
             year=1988,
             season=1,
@@ -237,7 +237,7 @@ class TestDB(TestCase):
         self.assertEqual(film.kinopoisk_url, 'rutr', 'Не изменилось значение kinopoisk_url.')
         self.assertEqual(film.status, LockingStatus.ENDED, 'Не изменилось значение статуса.')
         self.assertEqual(film.torrent_id, '2', 'Не изменилось значение torrent_id.')
-        self.assertEqual(film.media_id, 2, 'Не изменилось значение media_id.')
+        self.assertEqual(film.media_id, "2", 'Не изменилось значение media_id.')
 
         self.add_test_serial(
             session=session,

@@ -132,8 +132,7 @@ class TestCrawlerWeb(TestCase):
         self.assertFalse(download_url == '', 'Не обновился url для фильма.')
 
     def test_find_serial_crawler(self):
-        return
-        serial_id = 915196
+        serial_id = "tt4574334"
         self.test_context.add_test_serial(
             session=self.db.get_session(),
             client_id = self.client_id,
@@ -183,7 +182,6 @@ class TestCrawlerWeb(TestCase):
         )
 
     def test_download_crawler(self):
-        return
         film_id = 12198
         self.test_context.add_test_film(
             session=self.db.get_session(),
@@ -196,7 +194,7 @@ class TestCrawlerWeb(TestCase):
 
         self.test_context.db.update_media_params(
             media_id=film_id,
-            upd_data={'download_url': 'http://d.rutor.info/download/193221'},
+            upd_data={'download_url': 'https://d.rutor.info/download/193221'},
             media_type=MediaType.FILMS
         )
 
@@ -224,7 +222,7 @@ class TestCrawlerWeb(TestCase):
 def suite():
     return defaultTestLoader.loadTestsFromTestCase((
         TestCrawler,
-        # TestCrawlerWeb
+        TestCrawlerWeb
     )
     )
 

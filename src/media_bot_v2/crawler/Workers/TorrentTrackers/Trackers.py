@@ -566,7 +566,7 @@ def fix_shema(url):
     if url.startswith('//'):
         return f'https:{url}'
     if not 'https://' in url:
-        return 'https://{url}'
+        return f'https://{url}'
     return url
 
 

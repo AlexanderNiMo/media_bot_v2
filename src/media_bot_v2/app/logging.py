@@ -39,4 +39,15 @@ def configure_logger(config: Config):
 
     logger.addHandler(file_hndl)
     logger = logging.getLogger('sqlalchemy.engine')
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.ERROR)
+    info_ls = [
+        'media_bot_v2.mediator.mediator_client',
+        'urllib3.connectionpool',
+        'media_bot_v2.parser',
+        'media_bot_v2.crawler',
+        'media_bot_v2.mediator'
+        'media_bot_v2.command_handler.'
+    ]
+    for l in info_ls:
+        logger = logging.getLogger(l)
+        logger.setLevel(logging.INFO)

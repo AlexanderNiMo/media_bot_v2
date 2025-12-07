@@ -297,7 +297,7 @@ class MovieDBParser(BaseParser):
             imdb_url = "https://www.imdb.com/title/"+film.imdb_id
 
             choise = {
-                'kinopoisk_id': film.imdb_id.replace("tt", ""),
+                'kinopoisk_id': film.imdb_id,
                 'title': self._normalize_query_text(title),
                 'year': year,
                 'url': imdb_url,
@@ -364,7 +364,7 @@ class MovieDBParser(BaseParser):
                 self.next_data['choices'].clear()
 
             self.next_data['choices'].append({
-                'kinopoisk_id': imdb_id.replace("tt", ""),
+                'kinopoisk_id': imdb_id,
                 'title': self._normalize_query_text(title),
                 'year': year,
                 'kinopoisk_url': imdb_url,
@@ -762,19 +762,14 @@ class TextQueryParser(BaseParser):
 
         if 'year' in needed_data:
             year = self._get_year(normal_query)
-            if year is None:
-                errors = True
-            else:
-                result['year'] = year
-                replace_data.append(year)
+            result['year'] = data.get('year', year)
+            replace_data.append(year)
 
         if 'season' in needed_data:
             season = self._get_season(normal_query)
             if season is None:
                 errors = True
             else:
-                year = self._get_year(normal_query)
-                result['year'] = year
                 result['season'] = season
                 replace_data.append('сезон {}'.format(self.season))
 
