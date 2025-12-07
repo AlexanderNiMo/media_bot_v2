@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "beautifulsoup4>=4.13.4",
+    "bencodepy>=0.9.5",
     "bencoding>=0.2.6",
     "deluge-client>=1.10.2",
     "imdbpy>=2022.7.9",
@@ -16,7 +17,7 @@ dependencies = [
     "pydantic>=2.11.7",
     "pysocks>=1.7.1",
     "pytelegrambotapi>=4.27.0",
-    "python-qbittorrent>=0.3.1",
+    "python-qbittorrent==0.3.1",
     "python-telegram-bot[socks]>=22.1",
     "requests>=2.32.4",
     "sqlalchemy>=2.0.41",

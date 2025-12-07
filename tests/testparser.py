@@ -172,7 +172,7 @@ class TestParser(unittest.TestCase):
                         'media_type': media_bot_v2.app_enums.MediaType.SERIALS,
                         'title': 'Игра престолов',
                         'season': 1,
-                        'year': 2010
+                        'year': 2011
                     }
         )
 

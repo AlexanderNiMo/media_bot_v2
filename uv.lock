@@ -48,6 +48,12 @@ wheels = [
 ]
 
 [[package]]
+name = "bencodepy"
+version = "0.9.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/72/e2ee9f8a93c92af1ba2d7ef903fd653ef397564ef7715c6ab3eb462f6e29/bencodepy-0.9.5.zip", hash = "sha256:af472134d73ea58edab3c2cb2f2cf61eb9d783908284c3d2d5b1cfd38df864b8", size = 3598, upload-time = "2015-10-16T21:30:09.066Z" }
+
+[[package]]
 name = "bencoding"
 version = "0.2.6"
 source = { registry = "https://pypi.org/simple" }
@@ -266,6 +272,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "beautifulsoup4" },
+    { name = "bencodepy" },
     { name = "bencoding" },
     { name = "deluge-client" },
     { name = "imdbpy" },
@@ -288,6 +295,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.13.4" },
+    { name = "bencodepy", specifier = ">=0.9.5" },
     { name = "bencoding", specifier = ">=0.2.6" },
     { name = "deluge-client", specifier = ">=1.10.2" },
     { name = "imdbpy", specifier = ">=2022.7.9" },
@@ -298,7 +306,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.11.7" },
     { name = "pysocks", specifier = ">=1.7.1" },
     { name = "pytelegrambotapi", specifier = ">=4.27.0" },
-    { name = "python-qbittorrent", specifier = ">=0.4.3" },
+    { name = "python-qbittorrent", specifier = "==0.3.1" },
     { name = "python-telegram-bot", extras = ["socks"], specifier = ">=22.1" },
     { name = "requests", specifier = ">=2.32.4" },
     { name = "sqlalchemy", specifier = ">=2.0.41" },
@@ -510,15 +518,12 @@ wheels = [
 
 [[package]]
 name = "python-qbittorrent"
-version = "0.4.3"
+version = "0.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/86/25/a5ad35ad229c8016a8c98327495e649cb795be2fda63f8cace6c9a739af7/python-qbittorrent-0.4.3.tar.gz", hash = "sha256:4e22cf89890628b054a60aa4bd1161a68c2b0fad48ef0886fa4d325e69d3828a", size = 9732, upload-time = "2022-09-30T05:55:47.07Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/83/9dd55e6c916b1dc6ce1fdd373c1c0c4aa1635bbc5f2e1c8770987625631f/python_qbittorrent-0.4.3-py3-none-any.whl", hash = "sha256:dc2583226b69916ab96735537abd7696acc52e02e2d4d7afd10fa976f10d3aaa", size = 9758, upload-time = "2022-09-30T05:55:45.378Z" },
-]
+sdist = { url = "https://files.pythonhosted.org/packages/2a/39/a0781dd5698f42a6eec513c1226ce6793f2c8fa67c2cc3d1f37e459291ae/python-qbittorrent-0.3.1.tar.gz", hash = "sha256:63887903561217650ef2c7167935cdd6abe17d17106c88272e2b7864eb970e41", size = 8166, upload-time = "2017-03-22T19:33:01.489Z" }
 
 [[package]]
 name = "python-telegram-bot"

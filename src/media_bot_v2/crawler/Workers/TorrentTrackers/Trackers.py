@@ -1,18 +1,16 @@
 from abc import ABCMeta, abstractmethod
+
+import bencodepy
 from bs4 import BeautifulSoup
 from http import cookiejar
 from os import path
 import re
 import logging
 import requests
-import torrent_parser
-import inspect
-import sys
 from time import sleep
 
 from media_bot_v2.app_enums import TorrentType
 from media_bot_v2.config import TorrentTrackersConfig
-from .jasket_tracker import Jacker
 
 logger = logging.getLogger(__name__)
 
@@ -586,8 +584,8 @@ def get_trackers(conf: TorrentTrackersConfig) -> list:
 def get_torrent_details(data_dict):
 
     try:
-        torrent_ditails = torrent_parser.decode(data_dict['data'])
-    except torrent_parser.InvalidTorrentDataException:
+        torrent_ditails = bencodepy.decode(data_dict['data'])
+    except bencodepy.exceptions.DecodingError:
         torrent_ditails = None
     except TypeError:
         torrent_ditails = None
@@ -598,9 +596,9 @@ def get_torrent_details(data_dict):
         file_amount = 0
         torrent_ditails = {}
 
-    elif 'files' in torrent_ditails['info'].keys():
-        file_amount = len([i for i in torrent_ditails['info']['files'] if get_ext(i.get('path')[-1]) in media_ext()])
-    elif 'name' in torrent_ditails['info'].keys():
+    elif b'files' in torrent_ditails[b'info'].keys():
+        file_amount = len([i for i in torrent_ditails.get(b"info", {}).get(b"files", {}) if get_ext(i.get(b'path')[-1]) in media_ext()])
+    elif b'name' in torrent_ditails[b'info'].keys():
         file_amount = 1
     torrent_ditails.update({'file_amount': file_amount})
     torrent_ditails.update(data_dict)
@@ -609,7 +607,10 @@ def get_torrent_details(data_dict):
 
 
 def get_ext(path):
-    path_part = path.split('.')
+    p = path
+    if isinstance(path, bytes):
+        p = path.decode('utf-8')
+    path_part = p.split('.')
     return path_part[-1]
 
 
