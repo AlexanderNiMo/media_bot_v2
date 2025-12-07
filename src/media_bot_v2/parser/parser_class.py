@@ -352,7 +352,8 @@ class MovieDBParser(BaseParser):
                 logger.debug(f"Skip element {element} (no season)")
                 continue
             series = season_info.get('episode_count')
-            cover_url = 'https://image.tmdb.org/t/p/w342' + season_info.get('poster_path', serial_info.get("poster_path", ""))
+            p_path = season_info.get('poster_path', serial_info.get("poster_path", ""))
+            cover_url = 'https://image.tmdb.org/t/p/w342' + p_path if p_path else ''
             s_year = season_info.get('air_date')
             if s_year:
                 year = int(s_year[:4])
