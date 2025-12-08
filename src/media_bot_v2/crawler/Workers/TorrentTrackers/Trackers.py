@@ -308,7 +308,7 @@ class Rutracker(TorrentTracker):
         tor_dict['resolution'] = self.get_resolution(theam_soup, tor_dict['label'])
         if tor_dict['resolution'] is None:
             return None
-
+        tor_dict['sound'] = self.get_sound(theam_soup)
         tor_dict['kinopoisk_id'] = self.get_kinopoisk_id(theam_soup)
 
         tor_dict['tracker'] = self.site_type
@@ -327,6 +327,32 @@ class Rutracker(TorrentTracker):
                     result = ''
                 break
         return result
+
+    def get_sound(self, page_soup: BeautifulSoup):
+        media_info_text = page_soup.find_all(text=re.compile(r"Format\/Info"))
+        if len(media_info_text)==0:
+            return []
+        media_info = self.parse_media_info(media_info_text)
+        return [
+            info.get('Language', 'none').upper()
+            for info in media_info if 'AUDIO' in info.get('Format/Info', '').upper()
+        ]
+
+    def parse_media_info(self, media_info_text) -> list:
+        media_info_text = media_info_text[0].parent.text
+        ids = re.split(pattern=r'^ID.*$', string=media_info_text, flags=re.MULTILINE)
+        media_info = []
+        for id in ids:
+            if not id.startswith('\n'):
+                continue
+            m = {}
+            for line in id.split('\n'):
+                if not line:
+                    continue
+                k, v = line.split(" : ")
+                m[k.strip()] = v.strip()
+            media_info.append(m)
+        return media_info
 
     def get_resolution_from_page(self, page_soup):
         pass

@@ -358,6 +358,8 @@ class MovieDBParser(BaseParser):
             if s_year:
                 year = int(s_year[:4])
             imdb_id = serial.external_ids().get('imdb_id')
+            if not imdb_id:
+                continue
             imdb_url = "https://www.imdb.com/title/" + imdb_id
 
             exact_match = self.check_title_match_query_data(title, year, data)

@@ -416,10 +416,10 @@ class PlexServerHandler(AbstractHandler):
         }
 
     @classmethod
-    def update_plex_libraries(cls, data: CommandData, db_manager: DbManager, config):
+    def update_plex_libraries(cls, data: CommandData, db_manager: DbManager, config: Config):
         server = PlexServer(
-            'http://{0}:{1}'.format(config.PLEX_HOST, config.PLEX_PORT),
-            config.PLEX_TOKEN
+            'http://{0}:{1}'.format(config.plex_cfg.host, config.plex_cfg.port),
+            config.plex_cfg.token
         )
         server.library.update()
 
