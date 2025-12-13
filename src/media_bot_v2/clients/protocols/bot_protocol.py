@@ -298,7 +298,7 @@ class Bot:
                 "last_name": client_data.last_name,
                 "nick": client_data.username,
             }
-        except requests.exceptions.HTTPError:
+        except Exception:
             data = {"client_id": client_id, "name": "", "last_name": "", "nick": ""}
         msg = BotCommandParser.get_command_message("/auth", data, message.chat.id)
         assert msg is not None
