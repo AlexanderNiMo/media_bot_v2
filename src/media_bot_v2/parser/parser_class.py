@@ -304,8 +304,9 @@ class MovieDBParser(BaseParser):
 
             if exact_match:
                 self.next_data['choices'].clear()
-
-            cover_url = 'https://image.tmdb.org/t/p/w342' + film_info.get('poster_path', "")
+            poster_path = film_info.get('poster_path')
+            poster_path = "" if poster_path is None else poster_path
+            cover_url = 'https://image.tmdb.org/t/p/w342' + poster_path
 
             imdb_url = "https://www.imdb.com/title/"+film.imdb_id
 
