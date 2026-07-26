@@ -349,7 +349,11 @@ class Rutracker(TorrentTracker):
             for line in id.split('\n'):
                 if not line:
                     continue
-                k, v = line.split(" : ")
+                line_vals = line.split('=')
+                if len(line_vals) == 2:
+                    k, v = line_vals
+                else:
+                    k, v = line,line
                 m[k.strip()] = v.strip()
             media_info.append(m)
         return media_info
