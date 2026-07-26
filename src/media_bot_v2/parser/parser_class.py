@@ -239,6 +239,7 @@ class MovieDBParser(BaseParser):
         super(MovieDBParser, self).__init__(base, conf)
         tmdbsimple.API_KEY = conf.tmdb_cfg.api_key
         sess = requests.session()
+        session.verify = False
         sess.proxies = {
             "http": conf.proxy_cfg.build_proxy_str(),
             "https": conf.proxy_cfg.build_proxy_str(),
