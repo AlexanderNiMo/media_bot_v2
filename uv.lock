@@ -276,7 +276,6 @@ dependencies = [
     { name = "bencoding" },
     { name = "deluge-client" },
     { name = "imdbpy" },
-    { name = "mysql" },
     { name = "pickledb" },
     { name = "plexapi" },
     { name = "psycopg2-binary" },
@@ -299,7 +298,6 @@ requires-dist = [
     { name = "bencoding", specifier = ">=0.2.6" },
     { name = "deluge-client", specifier = ">=1.10.2" },
     { name = "imdbpy", specifier = ">=2022.7.9" },
-    { name = "mysql", specifier = ">=0.0.3" },
     { name = "pickledb", specifier = ">=1.3.2" },
     { name = "plexapi", specifier = ">=4.17.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.11" },
@@ -313,28 +311,6 @@ requires-dist = [
     { name = "tmdbsimple", specifier = ">=2.9.1" },
     { name = "torrent-parser", specifier = ">=0.4.1" },
     { name = "transmissionrpc", specifier = ">=0.11" },
-]
-
-[[package]]
-name = "mysql"
-version = "0.0.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "mysqlclient" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/8d/3c/943f6734849a6aed97d83af689ce7096927b52465df7bccfbcb45a7e7d14/mysql-0.0.3.tar.gz", hash = "sha256:fd7bae7d7301ce7cd3932e5ff7f77bbc8e34872108252866e08d16d6b8e8de8c", size = 2037, upload-time = "2021-05-25T19:52:16.818Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9a/52/8d29c58f6ae448a72fbc612955bd31accb930ca479a7ba7197f4ae4edec2/mysql-0.0.3-py3-none-any.whl", hash = "sha256:8893cb143a5ac525c49ef358a23b8a0dc9721a95646f7bab6ca2f384c18a6a9a", size = 1237, upload-time = "2021-05-25T19:52:15.462Z" },
-]
-
-[[package]]
-name = "mysqlclient"
-version = "2.2.7"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/61/68/810093cb579daae426794bbd9d88aa830fae296e85172d18cb0f0e5dd4bc/mysqlclient-2.2.7.tar.gz", hash = "sha256:24ae22b59416d5fcce7e99c9d37548350b4565baac82f95e149cac6ce4163845", size = 91383, upload-time = "2025-01-10T12:06:00.763Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/bb/b5/2a8a4bcba3440550f358b839638fe8ec9146fa3c9194890b4998a530c926/mysqlclient-2.2.7-cp312-cp312-win_amd64.whl", hash = "sha256:4b4c0200890837fc64014cc938ef2273252ab544c1b12a6c1d674c23943f3f2e", size = 208032, upload-time = "2025-01-10T11:56:29.879Z" },
-    { url = "https://files.pythonhosted.org/packages/29/01/e80141f1cd0459e4c9a5dd309dee135bbae41d6c6c121252fdd853001a8a/mysqlclient-2.2.7-cp313-cp313-win_amd64.whl", hash = "sha256:201a6faa301011dd07bca6b651fe5aaa546d7c9a5426835a06c3172e1056a3c5", size = 208000, upload-time = "2025-01-10T11:56:32.293Z" },
 ]
 
 [[package]]
