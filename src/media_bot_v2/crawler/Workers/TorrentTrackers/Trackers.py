@@ -566,7 +566,7 @@ def search(conf: TorrentTrackersConfig, text):
         try:
             result += tracker.search(text)
         except Exception as ex:
-            logger.error(f'При поиске по трекеру {tracker.site_name} произошла ошибка: {ex}')
+            logger.error(f'При поиске по трекеру {tracker.site_name} произошла ошибка: {ex}', exc_info=True)
     return result
 
 
