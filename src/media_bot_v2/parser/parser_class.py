@@ -4,8 +4,10 @@ import logging
 import re
 from multiprocessing import Queue
 from abc import ABC, abstractmethod
-
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
+
 import telebot
 from telebot import apihelper
 from plexapi.server import PlexServer
@@ -244,6 +246,16 @@ class MovieDBParser(BaseParser):
             "http": conf.proxy_cfg.build_proxy_str(),
             "https": conf.proxy_cfg.build_proxy_str(),
         }
+        retry_strategy = Retry(
+            total=4,  # Maximum total retry attempts
+            backoff_factor=1,  # Sleep formula: {backoff factor} * (2 ** ({number of total retries} - 1))
+            status_forcelist=[429, 500, 502, 503, 504],  # HTTP status codes to retry on
+            allowed_methods=["GET", "HEAD", "OPTIONS", "POST"],  # HTTP methods to retry
+            raise_on_status=False  # Returns final response instead of throwing MaxRetryError for status codes
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        sess.mount("http://", adapter)
+        sess.mount("https://", adapter)
         tmdbsimple.REQUESTS_SESSION = sess
         self.ia = tmdbsimple.Search()
 
